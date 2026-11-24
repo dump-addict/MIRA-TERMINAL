@@ -258,7 +258,7 @@ export function SettingsPage({ onClose, version, initial = 'general', project = 
               <Card title="Mira" id="version" flash={flash}>
                 <Line label="Version" hint={`Mira Terminal ${version ?? ''}`}><span className="text-body text-text-2 tnum">{version ?? ''}</span></Line>
                 <Line label="Updates" hint="Automatic updates arrive with the signed, published app."><SecondaryButton disabled>Check for updates</SecondaryButton></Line>
-                <Line label="Report a problem" hint="Opens an issue on GitHub. Nothing is sent without you."><SecondaryButton onClick={() => window.open('https://github.com/mira-foundry/MIRA-TERMINAL/issues/new')}>Report</SecondaryButton></Line>
+                <Line label="Report a problem" hint="Opens an issue on GitHub. Nothing is sent without you."><SecondaryButton onClick={() => window.open('https://github.com/mira-foundry/mira-terminal/issues/new')}>Report</SecondaryButton></Line>
                 <Line label="Licences" hint="Third party notices ship with the app."><span className="text-body text-text-3">THIRD_PARTY_NOTICES</span></Line>
               </Card>
             </>

@@ -6,13 +6,13 @@
   "description": "The map of your project, and one coding agent per branch",
   "license": "MIT",
   "author": "Mira Foundry",
-  "homepage": "https://github.com/mira-foundry/MIRA-TERMINAL#readme",
+  "homepage": "https://github.com/mira-foundry/mira-terminal#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mira-foundry/MIRA-TERMINAL.git"
+    "url": "git+https://github.com/mira-foundry/mira-terminal.git"
   },
   "bugs": {
-    "url": "https://github.com/mira-foundry/MIRA-TERMINAL/issues"
+    "url": "https://github.com/mira-foundry/mira-terminal/issues"
   },
   "keywords": [
     "terminal",
@@ -161,7 +161,7 @@
       {
         "provider": "github",
         "owner": "mira-foundry",
-        "repo": "MIRA-TERMINAL",
+        "repo": "mira-terminal",
         "releaseType": "draft"
       }
     ]

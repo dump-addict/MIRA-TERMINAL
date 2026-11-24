@@ -1,5 +1,5 @@
-# Homebrew cask for Mira Terminal. It lives in the tap repository dump-addict/homebrew-tap (Casks/mira-terminal.rb),
-# so that `brew install --cask dump-addict/tap/mira-terminal` works. Update `version` and both `sha256` after each
+# Homebrew cask for Mira Terminal. It lives in the tap repository mira-foundry/homebrew-tap (Casks/mira-terminal.rb),
+# so that `brew install --cask mira-foundry/tap/mira-terminal` works. Update `version` and both `sha256` after each
 # release : shasum -a 256 Mira-Terminal-macos-arm64.dmg Mira-Terminal-macos-x64.dmg
 cask "mira-terminal" do
   arch arm: "arm64", intel: "x64"
@@ -8,10 +8,10 @@ cask "mira-terminal" do
   sha256 arm:   "REPLACE_WITH_ARM64_DMG_SHA256",
          intel: "REPLACE_WITH_X64_DMG_SHA256"
 
-  url "https://github.com/dump-addict/MIRA-TERMINAL/releases/download/v#{version}/Mira-Terminal-macos-#{arch}.dmg"
+  url "https://github.com/mira-foundry/MIRA-TERMINAL/releases/download/v#{version}/Mira-Terminal-macos-#{arch}.dmg"
   name "Mira Terminal"
   desc "Terminal for all your projects, agents and tasks"
-  homepage "https://github.com/dump-addict/MIRA-TERMINAL"
+  homepage "https://github.com/mira-foundry/MIRA-TERMINAL"
 
   livecheck do
     url :url

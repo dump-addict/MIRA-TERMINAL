@@ -1,0 +1,14 @@
+allowBuilds:
+  electron: true
+  esbuild: true
+  node-pty: true
+  # Windows installer helper, unused by the macOS build
+  electron-winstaller: false
+minimumReleaseAgeExclude:
+  - sherpa-onnx-darwin-arm64@2.0.2
+  - sherpa-onnx-darwin-x64@2.0.2
+  - sherpa-onnx-linux-x64@2.0.2
+  - sherpa-onnx-node@2.0.2
+  - sherpa-onnx-win-arm64@2.0.2
+  - sherpa-onnx-win-ia32@2.0.2
+  - sherpa-onnx-win-x64@2.0.2

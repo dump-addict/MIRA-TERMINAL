@@ -1,0 +1,121 @@
+/* The app reads the same tokens as the map : skill/miraterminal/viewer/tokens.css (see DESIGN.md) */
+@import "../../../skill/miraterminal/viewer/tokens.css";
+@import "tailwindcss";
+
+/* Tailwind names mapped onto the tokens : bg-surface-1, text-text-2, border-line, rounded-sm… never hard-coded values */
+@theme inline {
+  --font-sans: var(--mira-font);
+  --font-mono: var(--mira-font-code);
+  --color-bg: var(--mira-bg);
+  --color-surface-1: var(--mira-surface-1);
+  --color-surface-2: var(--mira-surface-2);
+  --color-surface-3: var(--mira-surface-3);
+  --color-line: var(--mira-line);
+  --color-line-strong: var(--mira-line-strong);
+  --color-text: var(--mira-text);
+  --color-text-2: var(--mira-text-2);
+  --color-text-3: var(--mira-text-3);
+  --color-accent: var(--mira-accent);
+  --color-accent-hover: var(--mira-accent-hover);
+  --color-accent-soft: var(--mira-accent-soft);
+  --color-accent-text: var(--mira-accent-text);
+  --color-chrome: var(--mira-chrome);
+  --color-accent-line: var(--mira-accent-line);
+  --color-ok: var(--mira-ok);
+  --color-warn: var(--mira-warn);
+  --color-bad: var(--mira-bad);
+  --color-bad-line: var(--mira-bad-line);
+  --color-bad-soft: var(--mira-bad-soft);
+  --radius-xs: var(--mira-radius-xs);
+  --radius-sm: var(--mira-radius-sm);
+  --radius-md: var(--mira-radius);
+  --radius-lg: var(--mira-radius-lg);
+  --text-label: var(--mira-label-size);
+  --text-label--line-height: var(--mira-label-line);
+  --text-meta: var(--mira-meta-size);
+  --text-meta--line-height: var(--mira-meta-line);
+  --text-body: var(--mira-body-size);
+  --text-body--line-height: var(--mira-body-line);
+  --text-title: var(--mira-title-size);
+  --text-title--line-height: var(--mira-title-line);
+  --text-heading: var(--mira-heading-size);
+  --text-heading--line-height: var(--mira-heading-line);
+  --text-display: var(--mira-display-size);
+  --text-display--line-height: var(--mira-display-line);
+}
+
+html, body, #root { height: 100%; margin: 0; }
+body {
+  background: var(--mira-bg);
+  color: var(--mira-text);
+  font: var(--mira-body-size) / var(--mira-body-line) var(--mira-font);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+.drag { -webkit-app-region: drag; }
+.nodrag { -webkit-app-region: no-drag; }
+button { cursor: pointer; transition: background-color var(--mira-fast), color var(--mira-fast), border-color var(--mira-fast); }
+button:disabled { cursor: default; }
+:focus-visible { outline: 1px solid var(--mira-accent); outline-offset: 1px; }
+input:focus-visible, textarea:focus-visible { outline: none; }  /* text fields show focus by their caret and border, not a ring */
+.tnum { font-variant-numeric: tabular-nums; }
+.tracking-display { letter-spacing: var(--mira-display-tracking); }
+.tracking-title { letter-spacing: var(--mira-title-tracking); }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--mira-line-strong); border-radius: 8px; }
+.xterm { height: 100%; }
+/* font smoothing off : macOS default rendering */
+.no-smoothing body { -webkit-font-smoothing: auto; }
+/* reduce motion : no transitions, no animations anywhere */
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { transition: none !important; animation: none !important; }
+.xterm-viewport { background: transparent !important; }
+
+/* while an edge is dragged, the map's frame must not catch the mouse (the drag would stop over it) */
+.mira-resizing iframe { pointer-events: none; }
+
+
+/* the stage being worked on, in the diagram's progress : its bar keeps filling and starting again */
+@keyframes mira-stage { 0% { transform: translateX(-100%) } 60%, 100% { transform: translateX(0) } }
+.mira-stage { animation: mira-stage 1.6s cubic-bezier(.4, 0, .2, 1) infinite; opacity: .85 }
+@media (prefers-reduced-motion: reduce) { .mira-stage { animation: none } }
+
+/* An agent tab in the sidebar : how it says it works (st-work), finished and not seen yet (st-done), waits for you (st-need).
+   The marks are chosen in Settings › Appearance › Agent tabs ; html carries the choice (data-tab-work, -done, -needs). */
+.mira-ic { position: relative; display: grid; place-items: center }
+.mira-ic > * { transition: transform var(--mira-fast, .15s) }
+@keyframes mira-spin { to { transform: rotate(360deg) } }
+@keyframes mira-breathe { 50% { opacity: .4 } }
+@keyframes mira-sweep { 0% { background-position: 150% 0 } 100% { background-position: -50% 0 } }
+@keyframes mira-run { 0% { transform: translateX(-100%) } 100% { transform: translateX(250%) } }
+@keyframes mira-blink { 50% { opacity: .2 } }
+/* a ring around the logo : turning while it works, closed when it finished */
+html[data-tab-work="ring"] .st-work .mira-ic::after,
+html[data-tab-done="ringg"] .st-done .mira-ic::after, html[data-tab-done="ringw"] .st-done .mira-ic::after {
+  content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 1.3px solid transparent; pointer-events: none }
+html[data-tab-work="ring"] .st-work .mira-ic::after { border-top-color: var(--mira-text); border-right-color: var(--mira-text); animation: mira-spin 1s linear infinite }
+html[data-tab-done="ringg"] .st-done .mira-ic::after { border-color: var(--mira-mark-done) }
+html[data-tab-done="ringw"] .st-done .mira-ic::after { border-color: var(--mira-text) }
+html[data-tab-work="ring"] .st-work .mira-ic > *, html[data-tab-done="ringg"] .st-done .mira-ic > *, html[data-tab-done="ringw"] .st-done .mira-ic > * { transform: scale(.72) }
+/* a small mark on the logo's bottom right corner : green or white when finished, amber and blinking when it waits for you */
+html[data-tab-done="markg"] .st-done .mira-ic::after, html[data-tab-done="markw"] .st-done .mira-ic::after,
+html[data-tab-needs="mark"] .st-need .mira-ic::after, html[data-tab-needs="both"] .st-need .mira-ic::after {
+  content: ""; position: absolute; right: -3px; bottom: -3px; width: 7px; height: 7px; border-radius: 50%; box-shadow: 0 0 0 2px var(--mira-bg); pointer-events: none }
+html[data-tab-done="markg"] .st-done .mira-ic::after { background: var(--mira-mark-done-fill) }
+html[data-tab-done="markw"] .st-done .mira-ic::after { background: var(--mira-text) }
+html[data-tab-needs="mark"] .st-need .mira-ic::after, html[data-tab-needs="both"] .st-need .mira-ic::after { background: var(--mira-mark-needs-fill); animation: mira-blink 1.2s ease-in-out infinite }
+/* the name */
+html[data-tab-work="breathe"] .st-work .mira-nm { animation: mira-breathe 1.6s ease-in-out infinite }
+html[data-tab-work="shimmer"] .st-work .mira-nm {
+  background: linear-gradient(90deg, var(--mira-text-3) 0%, var(--mira-text-3) 35%, var(--mira-text) 50%, var(--mira-text-3) 65%, var(--mira-text-3) 100%);
+  background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: mira-sweep 2.2s linear infinite }
+.st-done .mira-nm { color: var(--mira-text) }
+html[data-tab-done="bold"] .st-done .mira-nm { font-weight: 600 }
+html[data-tab-done="green"] .st-done .mira-nm { color: var(--mira-mark-done) }
+html[data-tab-needs="name"] .st-need .mira-nm, html[data-tab-needs="both"] .st-need .mira-nm { color: var(--mira-mark-needs) }
+/* a light running along the bottom of the row */
+.mira-row { position: relative; overflow: hidden }
+html[data-tab-work="light"] .st-work.mira-row::after {
+  content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 40%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--mira-text), transparent); animation: mira-run 1.6s ease-in-out infinite }
+.reduce-motion .mira-ic::after, .reduce-motion .mira-nm, .reduce-motion .mira-row::after { animation: none !important }

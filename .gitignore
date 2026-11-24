@@ -1,0 +1,17 @@
+# dependencies and build output
+node_modules/
+out/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+
+# local files
+.DS_Store
+*.log
+.env
+.env.*
+
+# miraterminal: prompts of focused discussions
+.miraterminal/sessions/

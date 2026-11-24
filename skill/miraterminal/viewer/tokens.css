@@ -1,0 +1,122 @@
+/* Mira Terminal design tokens: the single source of truth for the app and the map. See DESIGN.md. */
+@font-face {
+  font-family: "Geist Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./fonts/Geist-Variable.woff2") format("woff2-variations");
+}
+
+:root {
+  /* colour */
+  --mira-bg: #000000;
+  --mira-surface-1: #0a0a0a;
+  --mira-surface-2: #111111;
+  --mira-surface-3: #171717;
+  --mira-line: #1f1f1f;
+  --mira-line-strong: #2e2e2e;
+  --mira-text: #ededed;
+  --mira-text-2: #a1a1a1;
+  --mira-text-3: #6b6b6b;
+  /* accent: neutral white, no colour (clean, like Vercel) */
+  --mira-accent: #ededed;
+  --mira-accent-hover: #ffffff;
+  --mira-accent-text: #000000;
+  --mira-accent-soft: rgba(255, 255, 255, .07);
+  --mira-accent-line: rgba(255, 255, 255, .35);
+  /* chrome: sidebar and status bar sit on pure black */
+  --mira-chrome: #000000;
+  --mira-ok: #45dd8a;
+  --mira-warn: #f5a524;
+  --mira-bad: #f26b6b;
+  /* state lines and soft fills (card borders, banners); off and unknown are neutral greys, never tinted */
+  --mira-ok-line: rgba(69, 221, 138, .45);
+  --mira-warn-line: rgba(245, 165, 36, .5);
+  --mira-bad-line: rgba(242, 107, 107, .6);
+  --mira-bad-soft: rgba(242, 107, 107, .1);
+  --mira-off: #5c5c5c;
+  --mira-unknown: #3d3d3d;
+  /* an agent's own brand colour: its logo, and the send button of its message box */
+  --mira-agent-claude: #D97757;
+  /* task statuses: one colour each (Todo is the only blue, chosen by the user); they reuse the state and swatch tokens so every theme follows */
+  --mira-status-progress: var(--mira-warn);
+  --mira-status-review: var(--mira-group-2);
+  --mira-status-todo: #7cacf8;
+  --mira-status-backlog: var(--mira-text-3);
+  --mira-status-done: var(--mira-ok);
+  --mira-status-canceled: var(--mira-bad);
+  /* the marks on an agent's tab: finished (green) and waits for you (yellow), the colours of macOS's window lights, with their slight relief */
+  --mira-mark-done: #3fbf2b;
+  --mira-mark-needs: #f7c300;
+  --mira-mark-done-fill: radial-gradient(circle at 50% 30%, #86e46a 0%, #3fbf2b 55%, #2a9a18 100%);
+  --mira-mark-needs-fill: radial-gradient(circle at 50% 30%, #ffe27a 0%, #f7c300 55%, #d9a300 100%);
+  /* task priorities: urgent, high, medium, low; shown as a tinted label, never a loud fill */
+  --mira-priority-1: #ff8080;
+  --mira-priority-2: #ffb366;
+  --mira-priority-3: #e6cf7a;
+  --mira-priority-4: #9a9a9a;
+  /* map edges: neutral by default, state colour only when a check says so; light enough to follow at a glance */
+  --mira-edge: #8f8f8f;
+  /* map group swatches: small identity marks only (8px), no blue, kept apart from the state colours */
+  --mira-group-1: #e5e5e5;
+  --mira-group-2: #c4b5fd;
+  --mira-group-3: #f9a8d4;
+  --mira-group-4: #fdba74;
+  --mira-group-5: #f0abfc;
+  --mira-group-6: #a3a3a3;
+  --mira-group-7: #fde68a;
+  --mira-group-8: #fca5a5;
+
+  /* type */
+  --mira-font: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mira-font-code: Menlo, Monaco, "Courier New", monospace;
+  --mira-label-size: 12px;
+  --mira-label-line: 16px;
+  --mira-label-weight: 500;
+  --mira-label-tracking: 0;
+  --mira-caption-size: 11px;
+  --mira-caption-line: 14px;
+  --mira-meta-size: 12px;
+  --mira-meta-line: 16px;
+  --mira-body-size: 13px;
+  --mira-body-line: 20px;
+  --mira-subtitle-size: 14px;
+  --mira-subtitle-line: 18px;
+  --mira-title-size: 16px;
+  --mira-title-line: 24px;
+  --mira-title-tracking: -.01em;
+  --mira-heading-size: 20px;
+  --mira-heading-line: 28px;
+  --mira-heading-tracking: -.02em;
+  --mira-display-size: 40px;
+  --mira-display-line: 42px;
+  --mira-display-tracking: -.045em;
+
+  /* size */
+  --mira-titlebar: 40px;   /* every tab strip, and the sidebar title bar: same height everywhere */
+  --mira-statusbar: 28px;
+  --mira-sidebar: 240px;
+  --mira-row: 28px;
+  --mira-control-sm: 24px;
+  --mira-control: 28px;
+  --mira-tab: 32px;
+  --mira-icon: 14px;
+
+  /* shape */
+  --mira-radius-xs: 4px;
+  --mira-radius-sm: 6px;
+  --mira-radius: 8px;
+  --mira-radius-lg: 12px;
+  --mira-shadow-float: 0 8px 24px rgba(0, 0, 0, .5);
+
+  /* motion */
+  --mira-fast: 120ms ease-out;
+  --mira-panel: 180ms cubic-bezier(.2, .7, .2, 1);
+}
+
+/* section labels: Geist medium, sentence case, never uppercase (like Claude's sidebar: "Projects", "Recent") */
+.mira-label {
+  font: var(--mira-label-weight) var(--mira-label-size) / var(--mira-label-line) var(--mira-font);
+  letter-spacing: var(--mira-label-tracking);
+  color: var(--mira-text-3);
+}

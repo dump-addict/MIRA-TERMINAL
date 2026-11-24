@@ -1,0 +1,101 @@
+# Builds the app when a version tag is pushed (v0.2.0, v1.0.0 ...) : macOS for Apple silicon and Intel (.dmg, .zip),
+# Windows x64 (.exe installer) and Linux x64 (.AppImage), all attached to one draft GitHub release. Publish the draft by hand once it is checked.
+#
+# Signing and notarization run only when these repository secrets exist (otherwise the builds are unsigned):
+#   CSC_LINK, CSC_KEY_PASSWORD             Developer ID Application certificate (.p12, base64) and its password
+#   APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD  Apple account used for notarization
+#   APPLE_TEAM_ID                          Apple developer team
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14   # Apple silicon
+            arch: arm64
+          - runner: macos-13   # Intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # native modules (node-pty, sherpa-onnx) are built for this runner's architecture
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - name: Build and publish to a draft release
+        run: pnpm exec electron-vite build && pnpm exec electron-builder --mac --${{ matrix.arch }} --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.CSC_LINK != '' }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # node-pty is compiled here with the runner's Visual Studio build tools
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      # unsigned for now : Windows SmartScreen warns on the first launch ("More info", then "Run anyway")
+      - name: Build and publish to a draft release
+        run: pnpm exec electron-vite build && pnpm exec electron-builder --win --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - name: Build and publish to a draft release
+        run: pnpm exec electron-vite build && pnpm exec electron-builder --linux AppImage --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

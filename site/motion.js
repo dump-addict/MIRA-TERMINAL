@@ -310,8 +310,8 @@ const tileVeil = (el, seed, dur = 700) => {
 };
 const tileReveal = (el, seed) => tileVeil(el, seed).start();
 
-/* ---------- formText : a short gust from the left brings the opening's small birds along the line ; they land as plain
-   light squares where the letters are, and the text fades in as they fade. Used for the titles and the faq's answers. */
+/* ---------- formText : a short gust from the left brings the opening's small birds along the line ; they land as tiles
+   with the background's symbols where the letters are, hold a moment, then fade while the text fades in. Used for the titles and the faq's answers. */
 const formText = (el, seed, onLand) => {
   if (still) { onLand && onLand(); return; }
   el.querySelector(':scope > canvas.wind')?.remove();
@@ -334,7 +334,7 @@ const formText = (el, seed, onLand) => {
   }
   const GL = ['S', 'X', '%', 't', '8', '@', '#'], css = getComputedStyle(document.documentElement), ink = css.getPropertyValue('--mira-text').trim() || '#0a0a0a', paper = css.getPropertyValue('--mira-bg').trim() || '#fff';
   ctx.font = `700 ${Math.max(6, C - 2)}px ui-monospace, Menlo, monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const t0 = performance.now(), FLY = 0.7, LAND = 0.85, OUT = 0.3; let landed = false;
+  const t0 = performance.now(), FLY = 0.7, LAND = 1.05, OUT = 0.45; let landed = false;
   const frame = (now) => {
     if (!cv.isConnected) return;
     // quick : under a second from the first bird to the text
@@ -353,9 +353,10 @@ const formText = (el, seed, onLand) => {
         else ctx.fillRect(X + 1, Y + C / 2 - 0.5, C - 2, 1.5);
         continue;
       }
-      // landed : a plain light square, no symbol, so the step to the text stays simple
-      const land = Math.min(1, (e - 0.72) / 0.28);
-      ctx.globalAlpha = land * fade * (0.18 + 0.14 * p.g); ctx.fillStyle = ink; ctx.fillRect(X + 1, Y + 1, C - 2, C - 2);
+      // landed : a still tile with its symbol, like the background's
+      const land = Math.min(1, (e - 0.72) / 0.28), shade = 0.24 + 0.5 * p.g, a = land * fade;
+      ctx.globalAlpha = a * shade; ctx.fillStyle = ink; ctx.fillRect(X + 0.5, Y + 0.5, C - 1, C - 1);
+      if (glyphs) { ctx.globalAlpha = a * (shade > 0.4 ? 0.85 : 0.45); ctx.fillStyle = shade > 0.4 ? paper : ink; ctx.fillText(GL[Math.floor(p.q * 97) % GL.length], X + C / 2, Y + C / 2 + 0.5); }
     }
     if (fade > 0) requestAnimationFrame(frame); else cv.remove();
   };

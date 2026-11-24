@@ -206,9 +206,10 @@
   .notes code { overflow-wrap: anywhere; }
   .dl .more h3 { font-size: 17px; line-height: 24px; font-weight: 500; letter-spacing: -0.01em; }
   .dl .more > div > p { margin-top: 6px; font-size: 15px; color: var(--mira-text-2); }
-  .brew { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 6px 6px 6px 18px; border: 1px solid var(--mira-line-2); border-radius: 8px; background: var(--mira-surface); }
-  .brew code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-size: 13.5px; }
-  .brew code::before { content: "$ "; color: var(--mira-text-3); }
+  .brew { display: flex; align-items: flex-start; gap: 12px; margin-top: 18px; padding: 6px 6px 6px 18px; border: 1px solid var(--mira-line-2); border-radius: 8px; background: var(--mira-surface); }
+  .brew code { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 4px 0; overflow-x: auto; white-space: nowrap; font-size: 13.5px; line-height: 22px; }
+  .brew code span::before { content: "$ "; color: var(--mira-text-3); }
+  .brew + p { margin-top: 12px; font-size: 14px; color: var(--mira-text-3); }
   pre.run { margin-top: 18px; padding: 18px 20px; border: 1px solid var(--mira-line-2); border-radius: 8px; background: var(--mira-surface); font-size: 13.5px; line-height: 1.8; overflow-x: auto; }
   pre.run .c { color: var(--mira-text-3); }
   .notes { display: grid; gap: 10px; margin-top: 18px; padding: 0; list-style: none; font-size: 15px; color: var(--mira-text-2); }
@@ -325,7 +326,8 @@
     <div class="more">
       <div>
         <h3>Homebrew</h3><p>On a Mac, install and update Mira from the terminal.</p>
-        <div class="brew"><code id="brew-cmd">brew install --cask dump-addict/tap/mira-terminal</code><button class="btn sm" type="button" data-copy="brew-cmd">Copy</button></div>
+        <div class="brew"><code id="brew-cmd" data-text="brew tap dump-addict/tap && brew trust --tap dump-addict/tap && brew install --cask mira-terminal"><span>brew tap dump-addict/tap</span><span>brew trust --tap dump-addict/tap</span><span>brew install --cask mira-terminal</span></code><button class="btn sm" type="button" data-copy="brew-cmd">Copy</button></div>
+        <p>Mira is not in Homebrew's main catalogue yet, so you trust its tap once. After that, <code>brew upgrade</code> keeps it up to date.</p>
         <h3 style="margin-top:40px">First launch</h3>
         <ul class="notes">
           <li><b>macOS.</b> Early builds are not signed yet: right-click Mira Terminal and choose Open, once.</li>
@@ -367,7 +369,7 @@ pnpm dev</pre>
     if (el) el.classList.add('you')
   })()
   document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => {
-    navigator.clipboard.writeText(document.getElementById(b.dataset.copy).textContent).then(() => { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy' }, 1500) })
+    const el = document.getElementById(b.dataset.copy); navigator.clipboard.writeText(el.dataset.text || el.textContent).then(() => { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy' }, 1500) })
   }))
 </script>
 </body>

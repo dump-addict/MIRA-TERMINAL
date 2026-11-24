@@ -150,7 +150,6 @@ export function SettingsPage({ onClose, version, initial = 'general', project = 
   const [section, setSection] = useState(initial)
   const [flash, setFlash] = useState<string | null>(null)
   const [agents, setAgents] = useState<AgentInfo[]>([])
-  const [mcp, setMcp] = useState<string[]>([])
   const [projects, setProjects] = useState<ProjectInfo[]>([])
   const body = useRef<HTMLDivElement>(null)
   const colorT = useRef<number>(0)
@@ -165,7 +164,7 @@ export function SettingsPage({ onClose, version, initial = 'general', project = 
     window.addEventListener('focus', back)
     return () => window.removeEventListener('focus', back)
   }, [section])
-  useEffect(() => { void refreshAgents().then(setAgents); void window.mira.agents.mcp().then(setMcp); void window.mira.projects.list().then(setProjects) }, [])
+  useEffect(() => { void refreshAgents().then(setAgents); void window.mira.projects.list().then(setProjects) }, [])
   useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape' && !q) onClose() }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [q, onClose])
 
   const hits = useMemo(() => {
@@ -254,7 +253,7 @@ export function SettingsPage({ onClose, version, initial = 'general', project = 
                 {L('keepAwake', 'Keep the computer awake', 'Long agent runs keep going when you step away. The screen can still turn off.',
                   <Choice value={s.keepAwake} options={[['off', 'Never'], ['agents', 'With agents'], ['always', 'Always']]} set={(v) => set({ keepAwake: v as Settings['keepAwake'] })} />)}
                 {L('menuBarIcon', 'Icon in the menu bar', 'Show Mira, a new terminal or a new agent from the menu bar.', <Toggle on={s.menuBarIcon} set={(v) => set({ menuBarIcon: v })} />)}
-                {L('summonShortcut', 'Bring Mira to the front', 'A shortcut that works from any app.', <Choice value={s.summonShortcut} options={[['off', 'Off'], ['Alt+Space', '⌥ Space'], ['Control+kbd(`', kbd('⌃ `)')], ['Command+Shift+Space', kbd('⌘⇧ Space')]]} set={(v) => set({ summonShortcut: v as Settings['summonShortcut'] })} />)}
+                {L('summonShortcut', 'Bring Mira to the front', 'A shortcut that works from any app.', <Choice value={s.summonShortcut} options={[['off', 'Off'], ['Alt+Space', '⌥ Space'], ['Control+`', isMac ? '⌃ `' : 'Ctrl+`'], ['Command+Shift+Space', isMac ? '⌘⇧ Space' : 'Ctrl+Shift+Space']]} set={(v) => set({ summonShortcut: v as Settings['summonShortcut'] })} />)}
               </Card>
               <Card title="Mira" id="version" flash={flash}>
                 <Line label="Version" hint={`Mira Terminal ${version ?? ''}`}><span className="text-body text-text-2 tnum">{version ?? ''}</span></Line>
@@ -814,7 +813,6 @@ function VoiceSection({ s, set, flash, L }: { s: Settings; set: (p: Parameters<t
   const load = () => void window.mira.voice.models().then(setModels)
   useEffect(() => { load(); return window.mira.voice.onProgress((p) => { setProg(p); if (!p) load() }) }, [])
   useEffect(() => { void navigator.mediaDevices?.enumerateDevices().then((d) => setMics(d.filter((x) => x.kind === 'audioinput'))) }, [])
-  const any = models.some((m) => m.installed)
   return (
     <>
       <p className="mt-2 text-body text-text-2">Speak instead of typing, in any terminal or file. Press {kbd('⌘E')} to start and stop. It runs on this computer: your voice never leaves it.</p>

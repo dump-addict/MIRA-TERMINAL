@@ -155,7 +155,7 @@
       "category": "Development",
       "executableName": "mira-terminal",
       "synopsis": "The terminal for all your projects",
-      "artifactName": "Mira-Terminal-linux-${arch}.${ext}"
+      "artifactName": "Mira-Terminal-linux-x64.${ext}"
     },
     "publish": [
       {

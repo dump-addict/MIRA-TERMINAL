@@ -8,7 +8,7 @@ import { getSettings } from './settings'
 import { accountEnv } from './accounts'
 import { isKnown, isTrusted } from './projects'
 import { noLinks } from './safepath'
-import { posixShell, PYTHON } from './platform'
+import { isWin, posixShell, PYTHON } from './platform'
 
 export type Analysis = { state: 'idle' | 'running' | 'done' | 'error' | 'stopped'; placeholder: boolean; agent: string; step: string; phase: number; startedAt: number; error: string }
 
@@ -24,7 +24,7 @@ const CMD: Record<string, string> = {
   cursor: 'cursor-agent -p --force --output-format text',
   copilot: 'copilot --allow-all-tools -p "$(cat)"',
   grok: 'grok --always-approve --no-auto-update --output-format plain -p "$(cat)"',
-  claude: `claude -p --settings '{"disableAllHooks":true}' --permission-mode acceptEdits --allowedTools 'Read Glob Grep Write Edit Bash(git ls-files:*) Bash(git log:*) Bash(python3:*)' --output-format stream-json --include-partial-messages --verbose`,
+  claude: `claude -p --settings '{"disableAllHooks":true}' --permission-mode acceptEdits --allowedTools 'Read Glob Grep Write Edit Bash(git ls-files:*) Bash(git log:*) Bash(${PYTHON}:*)' --output-format stream-json --include-partial-messages --verbose`,
   codex: 'codex exec --full-auto -',
   gemini: 'gemini --approval-mode auto_edit'
 }
@@ -66,7 +66,7 @@ function status(root: string): Analysis {
 const installedCache = new Map<string, boolean>()
 const has = (cmd: string) => new Promise<boolean>((res) => {
   if (installedCache.has(cmd)) return res(installedCache.get(cmd)!)
-  execFile(sh, ['-ilc', `command -v ${cmd}`], { timeout: 8000 }, (e, out) => { const ok = !e && /\//.test(String(out)); installedCache.set(cmd, ok); res(ok) })
+  execFile(sh, ['-ilc', `command -v ${cmd}`], { windowsHide: true, timeout: 8000 }, (e, out) => { const ok = !e && /\//.test(String(out)); installedCache.set(cmd, ok); res(ok) })
 })
 // the model the user set for an agent in Mira (Settings, Agents : Model, or --model in its extra arguments), or '' for the agent's own default
 function modelOf(agent: string): string {
@@ -149,9 +149,13 @@ export async function startAnalysis(root: string, auto = false): Promise<Analysi
   const model = modelOf(agent)
   const fastCmd = `${accountEnv(agent)}exec ${PYTHON} ${q(join(skillDir(), 'orchestrate.py'))} --root . --agent ${agent}${model ? ` --model ${q(model)}` : ''}`
   const oneCmd = `${accountEnv(agent)}exec ${CMD[agent]}${model ? ` ${agent === 'codex' || agent === 'gemini' ? '-m' : '--model'} ${q(model)}` : ''}`
-  const launch = (): ChildProcess => spawn(sh, ['-ilc', fast ? fastCmd : oneCmd], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'], detached: true, env: { ...process.env, MIRA_ANALYSIS: '1' } })
+  const launch = (): ChildProcess => spawn(sh, ['-ilc', fast ? fastCmd : oneCmd], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'], detached: !isWin, windowsHide: true, env: { ...process.env, MIRA_ANALYSIS: '1' } })
   // the readers are children of that process : stopping it stops them all
-  const kill = (p: ChildProcess): void => { try { if (p.pid) process.kill(-p.pid, 'SIGTERM') } catch { try { p.kill() } catch { /* already gone */ } } }
+  // the whole tree : the process group on macOS and Linux, taskkill /T on Windows (Git Bash leaves python as a child)
+  const kill = (p: ChildProcess): void => {
+    if (isWin) { if (p.pid) execFile('taskkill', ['/pid', String(p.pid), '/T', '/F'], { windowsHide: true }, () => {}); return }
+    try { if (p.pid) process.kill(-p.pid, 'SIGTERM') } catch { try { p.kill() } catch { /* already gone */ } }
+  }
   let proc = launch()
   const timer = setTimeout(() => finish('error', 'Took too long'), LIMIT)
   const entry: { proc: ChildProcess; a: Analysis; stopped?: boolean; kill?: () => void } = { proc, a, kill: () => kill(proc) }

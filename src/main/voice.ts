@@ -38,7 +38,7 @@ async function download(m: VoiceModel): Promise<string> {
     body.on('data', (c: Buffer) => { downloading!.done += c.length; if (Date.now() - last > 250) { last = Date.now(); send('voice:progress', { ...downloading }) } })
     await pipeline(body, createWriteStream(tmp))
     send('voice:progress', { ...downloading, done: downloading.total, unpacking: true })
-    await new Promise<void>((res, rej) => execFile(process.platform === 'darwin' ? '/usr/bin/tar' : 'tar', ['-xjf', tmp, '-C', dir()], (e) => (e ? rej(e) : res())))
+    await new Promise<void>((res, rej) => execFile(process.platform === 'darwin' ? '/usr/bin/tar' : 'tar', ['-xjf', tmp, '-C', dir()], { windowsHide: true }, (e) => (e ? rej(e) : res())))
     rmSync(tmp, { force: true })
     writeFileSync(join(modelDir(m), '.ready'), '')
     return ''

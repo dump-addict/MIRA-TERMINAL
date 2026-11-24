@@ -547,6 +547,10 @@ def open_file(rel: str) -> bool:
         return False
     for ed in (os.environ.get("MIRATERMINAL_EDITOR"), "cursor", "code"):
         exe = ed and shutil.which(ed)
+        # on Windows the editors' command is a .cmd file, run by cmd.exe : a file name with & | < > ^ % ! ( ) " in it
+        # (which a cloned repository can ship) would run a command there, so such a file is only shown in Explorer
+        if exe and sys.platform == "win32" and exe.lower().endswith((".cmd", ".bat")) and re.search(r'[&|<>^%!()"]', str(p)):
+            break
         if exe:
             # the full path : on Windows the editors' command is a .cmd file, which only runs found this way
             subprocess.Popen([exe, "-g", str(p)], start_new_session=True)

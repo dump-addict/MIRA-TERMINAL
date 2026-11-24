@@ -45,7 +45,7 @@ export function isGit(path: string): boolean { return existsSync(join(path, '.gi
 
 function run(cmd: string, args: string[], cwd: string, onLine?: (l: string) => void): Promise<{ code: number; out: string }> {
   return new Promise((resolve) => {
-    const p = spawn(cmd, args, { cwd, env: process.env })
+    const p = spawn(cmd, args, { windowsHide: true, cwd, env: process.env })
     let out = ''
     const take = (b: Buffer) => { const s = b.toString(); out += s; s.split(/\r|\n/).filter(Boolean).forEach((l) => onLine?.(l)) }
     p.stdout.on('data', take); p.stderr.on('data', take)
@@ -87,7 +87,7 @@ export function registerProjects(): void {
   // the git branch a folder of a known project is on (empty outside git)
   ipcMain.handle('projects:branch', (_e, dir: string) => {
     if (typeof dir !== 'string' || !load().some((p) => dir === p.path || dir.startsWith(p.path + sep))) return ''
-    return new Promise<string>((res) => execFile('git', ['-C', dir, 'rev-parse', '--abbrev-ref', 'HEAD'], { timeout: 3000 }, (e, out) => res(e ? '' : String(out).trim())))
+    return new Promise<string>((res) => execFile('git', ['-C', dir, 'rev-parse', '--abbrev-ref', 'HEAD'], { windowsHide: true, timeout: 3000 }, (e, out) => res(e ? '' : String(out).trim())))
   })
   ipcMain.handle('projects:list', () => load().filter((p) => existsSync(p.path)).map((p) => ({ ...p, git: isGit(p.path) })))
 

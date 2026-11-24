@@ -70,7 +70,7 @@ export function Backdrop() {
     }
     /* A gull crosses the sky on a steady course, drifting only slightly ; the small flocks scatter when it passes close. */
     const steer = (g: Gull, t: number, dt: number) => {
-      const L = LAYERS[g.layer], i = gulls.indexOf(g)
+      const L = LAYERS[g.layer]
       // each keeps roughly its heading : only a slight, slow drift to one side then the other, never a circle
       const dive = 0
       let turn = (Math.sin(t * 0.05 + g.phase) * 0.6 + Math.sin(t * 0.023 + g.phase * 2.3) * 0.4) * 0.05

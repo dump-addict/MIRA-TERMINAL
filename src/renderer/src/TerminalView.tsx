@@ -11,6 +11,9 @@ import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { isMac } from './platform'
 
+// the keys of Mira's shortcuts with Ctrl+Shift on Windows and Linux (see platform.ts)
+const APP_KEYS = /^(Key[TWKPBEM]|Comma|BracketLeft|BracketRight|Digit[1-6])$/
+
 // the terminal font chosen in settings, then the design's code font as a fallback
 const fontOf = (f?: string) => {
   const base = getComputedStyle(document.documentElement).getPropertyValue('--mira-font-code').trim() || 'Menlo, monospace'
@@ -82,11 +85,12 @@ export function TerminalView({ composer, onPty, cwd, run, agent, label, active, 
     term.open(el)
     // Windows and Linux : Ctrl+Shift+C copies, Ctrl+Shift+V pastes (Ctrl+C stays the shell's interrupt) ; macOS uses ⌘
     if (!isMac) term.attachCustomKeyEventHandler((ev) => {
-      if (ev.type !== 'keydown' || !ev.ctrlKey || !ev.shiftKey || ev.altKey) return true
-      if (ev.code === 'KeyC' && term.hasSelection()) { void navigator.clipboard.writeText(term.getSelection()); return false }
-      if (ev.code === 'KeyV') { void navigator.clipboard.readText().then((t) => { if (t) { pasting.current = true; term.paste(t) } }); return false }
-      // the app's own shortcuts (Ctrl+Shift+T, +K…) are not typed into the shell
-      return false
+      if (!ev.ctrlKey || !ev.shiftKey || ev.altKey || ev.metaKey) return true
+      if (ev.code === 'KeyC' && term.hasSelection()) { ev.preventDefault(); if (ev.type === 'keydown') void navigator.clipboard.writeText(term.getSelection()); return false }
+      // the browser would paste a second time (Ctrl+Shift+V is also its own paste), skipping the multi-line check
+      if (ev.code === 'KeyV') { ev.preventDefault(); if (ev.type === 'keydown') void navigator.clipboard.readText().then((t) => { if (t) { pasting.current = true; term.paste(t) } }); return false }
+      // the app's own shortcuts are not typed into the shell ; every other Ctrl+Shift key (Ctrl+_ undo, Ctrl+^, Ctrl+@) still is
+      return !APP_KEYS.test(ev.code)
     })
     fit.fit()
     api.current = { term, fit }

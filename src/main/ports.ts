@@ -18,14 +18,15 @@ const lsof = (args: string[]) => exec(process.platform === 'darwin' ? '/usr/sbin
 /* Windows has no lsof : netstat gives the listening ports and their process, tasklist the process names (the folder a
    server was started in is not known there, so its project is not either) */
 async function windowsListeners(): Promise<string> {
-  const [net, tasks] = await Promise.all([exec('netstat', ['-ano', '-p', 'TCP']), exec('tasklist', ['/FO', 'CSV', '/NH'])])
+  const [net, tasks] = await Promise.all([exec('netstat', ['-ano']), exec('tasklist', ['/FO', 'CSV', '/NH'])])
   const names = new Map<string, string>()
   for (const l of tasks.split(/\r?\n/)) { const m = l.match(/^"([^"]+)","(\d+)"/); if (m) names.set(m[2], m[1].replace(/\.exe$/i, '')) }
   // the same lines lsof -F pcn prints : p<pid>, c<command>, n<host>:<port>
   const out: string[] = []
   for (const l of net.split(/\r?\n/)) {
-    const m = l.trim().match(/^TCP\s+(\S+):(\d+)\s+\S+\s+LISTENING\s+(\d+)$/i)
-    if (m) out.push(`p${m[3]}`, `c${names.get(m[3]) ?? 'process'}`, `n${m[1] === '0.0.0.0' ? '*' : m[1]}:${m[2]}`)
+    // the state word is translated on non-English Windows : a listening socket is the one with no remote end
+    const m = l.trim().match(/^TCP\s+(\S+):(\d+)\s+(?:0\.0\.0\.0:0|\[::\]:0)\s+\S+\s+(\d+)$/i)
+    if (m) out.push(`p${m[3]}`, `c${names.get(m[3]) ?? 'process'}`, `n${m[1] === '0.0.0.0' || m[1] === '[::]' ? '*' : m[1]}:${m[2]}`)
   }
   return out.join('\n')
 }
@@ -68,7 +69,8 @@ export async function listPorts(): Promise<Port[]> {
       const pr = projects.find((p) => cwd === p.path || cwd.startsWith(p.path + sep))
       // an agent's own process names itself with a bare version number (Claude Code does) : stopping it would end a session
       const internal = NOISE.test(x.command) || /^\d+\.\d+\.\d+$/.test(x.command) || x.pid === process.pid || mapServerPids().includes(x.pid)
-      const mine = !internal && (!!pr || x.command === 'ssh' || (cwd.startsWith(home) && cwd !== home))
+      // Windows does not tell the folder a server runs in : any listener that is not a known app counts as the user's
+      const mine = !internal && (!!pr || x.command === 'ssh' || (cwd.startsWith(home) && cwd !== home) || (process.platform === 'win32' && !x.lan))
       return { ...x, cwd, project: pr?.name ?? null, mine }
     })
     .sort((a, b) => Number(b.mine) - Number(a.mine) || Number(!!b.project) - Number(!!a.project) || a.port - b.port)

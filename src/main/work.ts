@@ -31,7 +31,7 @@ async function gh(): Promise<string | null> {
   return ghPath
 }
 const runGh = (bin: string, args: string[], cwd: string) => new Promise<{ ok: boolean; out: string }>((res) =>
-  execFile(bin, args, { cwd, timeout: 20000, env: { ...process.env, GH_PROMPT_DISABLED: '1', NO_COLOR: '1' } }, (e, out, err) => res({ ok: !e, out: String(out ?? '') || String(err ?? '') })))
+  execFile(bin, args, { windowsHide: true, cwd, timeout: 20000, env: { ...process.env, GH_PROMPT_DISABLED: '1', NO_COLOR: '1' } }, (e, out, err) => res({ ok: !e, out: String(out ?? '') || String(err ?? '') })))
 
 export function registerWork(): void {
   ipcMain.handle('ideas:list', () => load())

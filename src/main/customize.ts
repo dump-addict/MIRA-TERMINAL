@@ -3,7 +3,7 @@
 import { ipcMain, shell } from 'electron'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { basename, join, resolve, sep } from 'node:path'
+import { dirname, basename, join, resolve, sep } from 'node:path'
 import { isKnown } from './projects'
 
 export type Kind = 'plugin' | 'mcp' | 'skill' | 'subagent' | 'rule' | 'command' | 'hook'
@@ -111,4 +111,5 @@ export function registerCustomize(): void {
     return ok && /\.(md|json|jsonc|toml|ya?ml|txt)$/i.test(r) && existsSync(r) ? shell.openPath(r) : 'refused'
   })
 }
-const isKnownRoot = (p: string) => { let d = p; while (d && d !== '/') { if (isKnown(d)) return true; d = resolve(d, '..') } return false }
+// up to the root of the drive : / on macOS and Linux, C:\\ on Windows
+const isKnownRoot = (p: string) => { for (let d = resolve(p); ; d = dirname(d)) { if (isKnown(d)) return true; if (dirname(d) === d) return false } }

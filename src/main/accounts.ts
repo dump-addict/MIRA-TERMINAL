@@ -26,7 +26,7 @@ const inRoot = (p: string) => resolve(p).startsWith(root() + sep)
 
 const sh = posixShell()
 const run = (cmd: string, env: Record<string, string> = {}) =>
-  new Promise<string>((res) => execFile(sh, ['-ilc', cmd], { timeout: 10000, env: { ...process.env, ...env } }, (_e, out) => res(String(out ?? ''))))
+  new Promise<string>((res) => execFile(sh, ['-ilc', cmd], { windowsHide: true, timeout: 10000, env: { ...process.env, ...env } }, (_e, out) => res(String(out ?? ''))))
 
 /* the Keychain entry Claude Code 2.1+ uses for a config folder */
 export const claudeKeychainService = (dir: string | null) =>

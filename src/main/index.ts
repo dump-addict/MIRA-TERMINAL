@@ -79,10 +79,11 @@ export function createWindow(): BrowserWindow {
   win.webContents.on('before-input-event', (e, input) => {
     // ⌘⇧N : a new window
     // the shortcut keys : ⌘ on macOS ; Ctrl+Shift elsewhere (Ctrl alone belongs to the shell), and ⌘⇧ becomes Ctrl+Alt
-    const mod = isMac ? input.meta && !input.control : input.control && !input.meta
+    const altGr = !isMac && (input.modifiers ?? []).some((m) => m.toLowerCase() === 'altgraph')
+    const mod = !altGr && (isMac ? input.meta && !input.control : input.control && !input.meta)
     const plain = mod && (isMac ? !input.shift && !input.alt : input.shift && !input.alt)
     const shifted = mod && (isMac ? input.shift && !input.alt : input.alt && !input.shift)
-    if (input.type === 'keyDown' && shifted && input.code === 'KeyN') { e.preventDefault(); if (!input.isAutoRepeat) createWindow(); return }
+    if (input.type === 'keyDown' && shifted && (input.key.toLowerCase() === 'n' || input.code === 'KeyN')) { e.preventDefault(); if (!input.isAutoRepeat) createWindow(); return }
     const isE = input.key.toLowerCase() === 'e' || input.code === 'KeyE'
     if (input.type === 'keyDown' && isE && plain) {
       e.preventDefault()

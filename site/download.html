@@ -3,23 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Download · Mira Terminal</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
-<meta name="description" content="Download Mira Terminal for macOS, Windows and Linux. A free, open source terminal for Claude Code, Codex, Gemini, Grok and every coding agent.">
+<title>Download Mira Terminal</title>
+<meta name="description" content="Download Mira Terminal for macOS, Windows and Linux. Free and open source.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>document.documentElement.classList.add('js')</script>
 <style>
-  /* One design system for the whole page (DESIGN.md, on white paper) :
-     a 1440 px frame with side hairlines, every section opened by the same head (chip, title, text),
-     content laid in cells split by 1 px lines, app fragments drawn like the app, tiles as the only pictures.
-     No blur, no gradient fills, motion on opacity and transform only. */
+  /* Download : one screen, no scroll. The opening's birds behind, the title, a button per system (the visitor's in black),
+     Homebrew in one line, and the one tip that matters for the first launch. Same tokens and header as the home page. */
   :root {
     --mira-bg: #ffffff; --mira-text: #0a0a0a; --mira-text-2: #5c5c5c; --mira-text-3: #8f8f8f;
     --mira-line: #ebebeb; --mira-line-2: #dedede; --mira-surface: #fafafa; --mira-surface-2: #f3f3f3; --line-hover: #c9c9c9;
     --ok: #18a058; --warn: #e5940f; --claude: #d97757;
     --col: 1184px; --frame: 1440px; --gut: 32px;
+    --blur: 14px;
     --h-xl: clamp(36px, calc(38.72px + 0.9vw), 56px); --h-lg: clamp(30px, calc(28.48px + 0.75vw), 42.88px);
     --out: cubic-bezier(.2,.7,.2,1);
     --head: 72px;
@@ -29,8 +27,35 @@
   body { background: var(--mira-bg); color: var(--mira-text); font: 400 16px/24px Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: clip; }
   a { color: inherit; text-decoration: none; }
   code, pre { font-family: "Geist Mono", ui-monospace, Menlo, monospace; }
-  .col { max-width: var(--col); margin: 0 auto; padding: 0 var(--gut); }
-  h1, h2, h3.big { font-weight: 500; letter-spacing: -0.032em; line-height: .99; text-wrap: balance; }
+  .txt { font-size: 17px; line-height: 28.05px; color: var(--mira-text-2); }
+  header.top { position: sticky; top: 0; z-index: 20; height: var(--head); margin-bottom: calc(-1 * var(--head)); background: transparent; border-bottom: 1px solid transparent; transition: background .18s, border-color .18s; }
+  header.top.scrolled { background: var(--mira-bg); border-bottom-color: var(--mira-line); }
+  header.top .bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 100%; padding: 0 32px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 17px; }
+  .brand svg { width: 24px; height: 20px; }
+  header.top .links { display: flex; gap: 20px; }
+  header.top .links a { padding: 6px 4px; font-size: 14px; line-height: 21px; font-weight: 500; color: var(--mira-text-2); transition: color .12s; }
+  header.top .links a:hover { color: var(--mira-text); }
+  header.top .act { display: flex; justify-content: flex-end; }
+  header.top .act .btn svg { width: 14px; height: 14px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 2px; font-weight: 500; font-size: 14px; border: 1px solid var(--mira-line-2); color: var(--mira-text); background: transparent; cursor: pointer; transition: background .12s, border-color .12s; white-space: nowrap; }
+  .btn:hover { background: var(--mira-surface-2); border-color: var(--line-hover); }
+  .btn.primary { background: var(--mira-text); color: var(--mira-bg); border-color: var(--mira-text); font-size: 13px; }
+  .btn.primary:hover { background: #262626; border-color: #262626; }
+  .btn.lg { height: 40px; padding: 0 16px; font-size: 14px; border-radius: 2px; }
+  .btn.sm { height: 24px; padding: 0 8px; border-radius: 2px; font-size: 12px; }
+  .sky { position: absolute; pointer-events: none; }
+  .sky .grid, .sky canvas { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+  .sky .grid { opacity: .5; background-image: linear-gradient(var(--mira-line) 1px, transparent 1px), linear-gradient(90deg, var(--mira-line) 1px, transparent 1px); background-size: 12px 12px; transform-origin: 50% 20%; transform: scale(var(--z, 1)); }
+  .js [data-words] .w { display: inline-block; opacity: 0; filter: blur(8px); transform: translateY(.25em); transition: opacity .8s var(--out), transform .8s var(--out), filter .8s var(--out); transition-delay: calc(var(--i) * 45ms + var(--d, 0ms)); }
+  .js [data-words].in .w { filter: none; }
+  .js [data-words].in .w { opacity: 1; transform: none; }
+  .js .reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s var(--out), transform .7s var(--out); transition-delay: var(--d, 0ms); }
+  .js .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .js [data-words] .w, .js .reveal { opacity: 1; transform: none; filter: none; transition: none; } }
+  canvas.wind { position: absolute; z-index: 8; pointer-events: none; }
+  .forming > :not(canvas) { opacity: 0 !important; transition: none !important; }
+  .js [data-form] .w { filter: none !important; transform: none !important; transition: opacity .4s var(--out) !important; transition-delay: 0s !important; }
   h1 > span:not(.w), h2 > span:not(.w), h3.big > span:not(.w) { color: var(--mira-text-2); }
   .chip { display: inline-flex; align-items: center; height: 24px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--mira-line-2); background: var(--mira-surface-2); font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: -0.01em; color: var(--mira-text-2); }
   .txt { font-size: 17px; line-height: 28.05px; color: var(--mira-text-2); }
@@ -82,222 +107,55 @@
   @keyframes swap { from { opacity: 0; transform: translateY(4px); } }
 
   /* how things arrive : rising a little, word by word for titles */
-  .js [data-words] .w { display: inline-block; opacity: 0; transform: translateY(.25em); transition: opacity .6s var(--out), transform .6s var(--out); transition-delay: calc(var(--i) * 40ms + var(--d, 0ms)); }
+  .js [data-words] .w { display: inline-block; opacity: 0; filter: blur(8px); transform: translateY(.25em); transition: opacity .8s var(--out), transform .8s var(--out), filter .8s var(--out); transition-delay: calc(var(--i) * 45ms + var(--d, 0ms)); }
+  .js [data-words].in .w { filter: none; }
+  .js .astep .w { display: inline-block; opacity: 0; filter: blur(6px); transform: translateY(.2em); transition: opacity .6s var(--out), transform .6s var(--out), filter .6s var(--out); transition-delay: calc(var(--i) * 18ms); }
+  .js .astep h3 .w { transition-delay: calc(var(--i) * 50ms); }
+  .js .astep.on .w { opacity: 1; filter: none; transform: none; }
   .js [data-words].in .w { opacity: 1; transform: none; }
   .js .reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s var(--out), transform .7s var(--out); transition-delay: var(--d, 0ms); }
   .js .reveal.in { opacity: 1; transform: none; }
   .read .w { color: var(--mira-text-3); transition: color .25s; }
   .read .w.lit { color: var(--mira-text); }
-  @media (prefers-reduced-motion: reduce) { .js [data-words] .w, .js .reveal { opacity: 1; transform: none; transition: none; } .caret { animation: none; } }
-
-  /* navigation : solid white, a hairline once the page moves */
-  header.top { position: sticky; top: 0; z-index: 20; height: var(--head); background: var(--mira-bg); border-bottom: 1px solid transparent; transition: border-color .18s; }
-  header.top.scrolled { border-bottom-color: var(--mira-line); }
-  header.top .bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 100%; padding: 0 32px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 17px; }
-  .brand svg { width: 24px; height: 20px; }
-  header.top .links { display: flex; gap: 20px; }
-  header.top .links a { padding: 6px 4px; font-size: 14px; line-height: 21px; font-weight: 500; color: var(--mira-text-2); transition: color .12s; }
-  header.top .links a:hover { color: var(--mira-text); }
-  header.top .act { display: flex; justify-content: flex-end; }
-  header.top .act .btn svg { width: 14px; height: 14px; }
-  .btn { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 4px; font-weight: 500; font-size: 14px; border: 1px solid var(--mira-line-2); color: var(--mira-text); background: transparent; cursor: pointer; transition: background .12s, border-color .12s; white-space: nowrap; }
-  .btn:hover { background: var(--mira-surface-2); border-color: var(--line-hover); }
-  .btn.primary { background: var(--mira-text); color: var(--mira-bg); border-color: var(--mira-text); font-size: 13px; }
-  .btn.primary:hover { background: #262626; border-color: #262626; }
-  .btn.lg { height: 40px; padding: 0 16px; font-size: 14px; border-radius: 5px; }
-  .btn.sm { height: 24px; padding: 0 8px; border-radius: 3px; font-size: 12px; }
-
-  /* opening : the text in the middle of the first screen, the top of the video showing below it */
-  .hero { position: relative; overflow: hidden; border-top: 0; }
-  .sky { position: absolute; pointer-events: none; }
-  .sky .grid, .sky canvas { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-mask-image: var(--fade); mask-image: var(--fade); }
-  .sky .grid { opacity: .5; background-image: linear-gradient(var(--mira-line) 1px, transparent 1px), linear-gradient(90deg, var(--mira-line) 1px, transparent 1px); background-size: 12px 12px; }
-  .hero .sky { inset: 0 0 auto 0; height: 760px; --fade: radial-gradient(ellipse 40% 36% at 50% 30%, rgba(0,0,0,.3) 30%, #000 100%); }
-  .hero .col { position: relative; min-height: calc(100svh - var(--head) - 120px); display: flex; flex-direction: column; justify-content: center; padding-bottom: 24px; text-align: center; }
-  h1 { font-size: var(--h-xl); max-width: 900px; margin: 0 auto; }
-  .hero .txt { max-width: 660px; margin: 28px auto 0; text-wrap: pretty; }
-  .cta { display: flex; justify-content: center; gap: 8px; margin-top: 32px; flex-wrap: wrap; }
-  .stage { position: relative; width: min(1120px, calc(100vw - 172px)); margin: 0 auto; padding: 6px; border-radius: 12px; border: 1px solid var(--mira-line-2); background: var(--mira-surface); box-shadow: 0 -20px 80px rgba(0,0,0,.07); }
-  /* the bottom of the video blurs, and the whole frame fades into the page */
-  .stage { -webkit-mask-image: linear-gradient(#000 52%, transparent 96%); mask-image: linear-gradient(#000 52%, transparent 96%); }
-  .stage .screen::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 50%; z-index: 5; pointer-events: none; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); -webkit-mask-image: linear-gradient(transparent, #000 70%); mask-image: linear-gradient(transparent, #000 70%); }
-  .stage .screen { position: relative; border-radius: 7px; overflow: hidden; background: #0a0a0a; aspect-ratio: 1500 / 938; }
-  .stage .screen video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .3s var(--out); }
-  .stage .screen video.on { opacity: 1; }
-  /* the pages of the demo : a bar of tabs on the top edge of the frame, a line fills under the one playing */
-  .views { position: relative; z-index: 6; display: flex; gap: 4px; width: max-content; max-width: calc(100vw - 32px); margin: 28px auto 0; padding: 4px; border: 1px solid var(--mira-line-2); border-radius: 6px; background: var(--mira-bg); box-shadow: 0 8px 24px rgba(0,0,0,.06); }
-  .views button { position: relative; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border: 0; border-radius: 3px; background: transparent; font: 500 13px/1 Geist, sans-serif; color: var(--mira-text-2); cursor: pointer; white-space: nowrap; transition: background .12s, color .12s, box-shadow .12s; }
-  .views button:hover { color: var(--mira-text); background: var(--mira-surface); }
-  .views button.on { color: var(--mira-text); background: var(--mira-surface-2); box-shadow: inset 0 0 0 1px var(--mira-line-2); }
-  .views button svg { width: 14px; height: 14px; }
-  .views button i { position: absolute; left: 10px; right: 10px; bottom: 3px; height: 1px; background: var(--mira-text); transform-origin: left; transform: scaleX(var(--p, 0)); opacity: 0; }
-  .views button.on i { opacity: 1; }
-  .ptr { position: absolute; left: 60%; top: 53%; z-index: 3; pointer-events: none; transform: translate(-2px, -2px); }
-  .ptr svg { display: block; width: 22px; height: 22px; transition: transform .12s; }
-  .ptr span { position: absolute; left: 18px; top: 18px; padding: 3px 9px; border-radius: 7px; background: #ededed; color: #000; font-size: 12px; line-height: 16px; font-weight: 600; white-space: nowrap; }
-  .ptr.tap svg { transform: scale(.82); }
-
-  /* the row of agents */
-  .strip { margin: 44px 0; border-top: 0; }
-  .strip .in { max-width: 1100px; margin: 0 auto; padding: 16px 32px 36px; text-align: center; }
-  .strip p { font-size: 14px; line-height: 20px; color: var(--mira-text-2); margin-bottom: 12px; }
-  .strip .row2 { display: flex; justify-content: space-between; align-items: center; min-height: 72px; font-size: 17px; font-weight: 500; }
-  .strip .row2 span { flex: 1; }
-  .strip .row2 span + span { border-left: 1px solid var(--mira-line); }
-
-
-  /* product : the text holds on the left, the panels go by on the right (the right column is hatched, as before) */
-  .arc .two { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--mira-line); }
-  .arc .left { padding: 0 48px 0 88px; }
-  .arc .sticky { position: sticky; top: calc(50vh - 220px + var(--head) / 2); height: 440px; margin: 98px 0; }
-  .astep { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; opacity: 0; transform: translateY(12px); transition: opacity .3s var(--out), transform .3s var(--out); pointer-events: none; }
-  .astep.on { opacity: 1; transform: none; pointer-events: auto; }
-  .astep h3 { font-size: var(--h-xl); font-weight: 500; letter-spacing: -0.032em; line-height: .99; max-width: 440px; padding-bottom: .08em; }
-  .astep p { font-size: 17px; line-height: 28.05px; color: var(--mira-text-2); max-width: 420px; margin-top: 20px; }
-  .checks { list-style: none; padding: 0; margin-top: 27px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 20px; font-weight: 500; }
-  .checks li { display: flex; gap: 10px; align-items: center; }
-  .checks li svg { width: 16px; height: 16px; flex: none; color: var(--mira-text-2); }
-  .arc .right { position: relative; border-left: 1px solid var(--mira-line); padding: 0 56px 98px; }
-  .rsky { position: sticky; top: var(--head); height: calc(100vh - var(--head)); margin: 0 -56px; overflow: hidden; pointer-events: none; -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 45%, transparent 100%); mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 45%, transparent 100%); }
-  .rsky .grid, .rsky canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .rsky .grid { opacity: .5; background-image: linear-gradient(var(--mira-line) 1px, transparent 1px), linear-gradient(90deg, var(--mira-line) 1px, transparent 1px); background-size: 12px 12px; }
-  .arc .panels { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 22vh; margin-top: calc(-100vh + var(--head) + 98px); }
-  .panel { position: relative; height: 440px; padding: 6px; border: 1px solid var(--mira-line-2); border-radius: 12px; background: var(--mira-surface); box-shadow: 0 24px 64px rgba(0,0,0,.1); }
-  .panel .screen { position: absolute; inset: 6px; border-radius: 7px; overflow: hidden; background: #0a0a0a; }
-  .panel .screen video { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .panel .grid12 { position: absolute; inset: 0; opacity: .6; -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 30%, transparent 100%); mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 30%, transparent 100%); }
-  .panel canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .panel .win { position: absolute; z-index: 2; width: auto; opacity: 0; transform: translateY(8px); transition: opacity .3s var(--out), transform .3s var(--out); }
-  .panel.on .win { opacity: 1; transform: none; transition-delay: .15s; }
-  .panel.on .win + .win { transition-delay: .3s; }
-  .panel .win .wh { border-bottom: 0; padding-right: 16px; }
-  .panel .w1 { left: -24px; top: 28px; } .panel .w2 { right: -24px; bottom: 28px; }
-
-  /* in the details : each cell plays one little interface */
-  .minis .art .win { width: 300px; }
-  .minis .wb.pad { padding: 12px; gap: 10px; }
-  .minis .row.flat { padding: 0; height: 24px; }
-  .minis .att { display: flex; gap: 6px; min-height: 22px; }
-  .minis .typing { min-height: 60px; font-size: 13px; line-height: 20px; }
-
-  /* numbers, in a row of cells */
-  .nums .cell { padding: 48px 32px 56px; }
-  .nums .art { height: 112px; margin-bottom: 24px; }
-  .nums .n { font-size: 40px; line-height: 44px; font-weight: 500; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-  .nums .l { margin-top: 8px; font-size: 14px; line-height: 20px; color: var(--mira-text-2); }
-
-  /* download: one card per file, the visitor's own system outlined, Homebrew and the source below */
-  .dl .cell { display: flex; flex-direction: column; text-align: left; padding: 32px 32px 28px; transition: background .12s; }
-  .dl .cell .os { width: 28px; height: 28px; margin-bottom: 28px; color: var(--mira-text); }
-  .dl .cell h3 { font-size: 20px; line-height: 26px; }
-  .dl .cell p { margin: 6px 0 0; font-size: 15px; }
-  .dl .cell code { display: block; margin-top: 20px; font-size: 12px; line-height: 16px; color: var(--mira-text-3); word-break: break-all; }
-  .dl .cell .btn { align-self: flex-start; margin-top: 24px; }
-  .dl .cell .btn svg { width: 14px; height: 14px; }
-  .dl .cell .mine { position: absolute; top: 28px; right: 28px; display: none; }
-  .dl .cell.you { background: var(--mira-surface); box-shadow: inset 0 0 0 1px var(--mira-text); }
-  .dl .cell.you .mine { display: inline-flex; }
-  .dl .cell:not(.you) .btn.primary { background: transparent; color: var(--mira-text); border-color: var(--mira-line-2); }
-  .dl .cell:not(.you) .btn.primary:hover { background: var(--mira-surface-2); border-color: var(--line-hover); }
-  .dl .more { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--mira-line); border-top: 1px solid var(--mira-line); }
-  .dl .more > div { background: var(--mira-bg); padding: 48px 40px 56px; }
-  .dl .more > div, .dl .cell { min-width: 0; }
-  .notes code { overflow-wrap: anywhere; }
-  .dl .more h3 { font-size: 17px; line-height: 24px; font-weight: 500; letter-spacing: -0.01em; }
-  .dl .more > div > p { margin-top: 6px; font-size: 15px; color: var(--mira-text-2); }
-  .brew { display: flex; align-items: flex-start; gap: 12px; margin-top: 18px; padding: 6px 6px 6px 18px; border: 1px solid var(--mira-line-2); border-radius: 8px; background: var(--mira-surface); }
-  .brew code { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 4px 0; overflow-x: auto; white-space: nowrap; font-size: 13.5px; line-height: 22px; }
-  .brew code span::before { content: "$ "; color: var(--mira-text-3); }
-  .brew + p { margin-top: 12px; font-size: 14px; color: var(--mira-text-3); }
-  pre.run { margin-top: 18px; padding: 18px 20px; border: 1px solid var(--mira-line-2); border-radius: 8px; background: var(--mira-surface); font-size: 13.5px; line-height: 1.8; overflow-x: auto; }
-  pre.run .c { color: var(--mira-text-3); }
-  .notes { display: grid; gap: 10px; margin-top: 18px; padding: 0; list-style: none; font-size: 15px; color: var(--mira-text-2); }
-  .notes b { font-weight: 500; color: var(--mira-text); }
-  .notes code { font-size: 13px; color: var(--mira-text); }
-  @media (max-width: 860px) { .dl .more { grid-template-columns: 1fr; } .dl .more > div { padding: 40px 24px 48px; } }
-  @media (max-width: 560px) { .dl .cells.c4 { grid-template-columns: 1fr; } }
-
-  /* questions : the title on the left, the list on the right */
-  #faq .wrap { display: grid; grid-template-columns: 5fr 7fr; column-gap: 64px; align-items: start; padding: 144px 160px; }
-  #faq h2 { font-size: var(--h-lg); margin-top: 22px; }
-  .faq { border-top: 1px solid var(--mira-line); }
-  details { border-bottom: 1px solid var(--mira-line); padding: 20px 0; }
-  summary { list-style: none; cursor: pointer; font-size: 16px; font-weight: 500; display: flex; justify-content: space-between; gap: 16px; }
-  summary::-webkit-details-marker { display: none; }
-  summary::after { content: "+"; color: var(--mira-text-3); font-weight: 400; }
-  details[open] summary::after { content: "−"; }
-  details p { margin-top: 10px; color: var(--mira-text-2); max-width: 720px; font-size: 15px; }
-
-  /* the last call, over the birds again */
-  .end { position: relative; overflow: hidden; }
-  .end .sky { inset: 0; --fade: linear-gradient(#000, #000); }
-  .end .sky .grid { opacity: .7; }
-  .end .col { position: relative; display: grid; place-items: center; padding-top: 160px; padding-bottom: 160px; }
-  .ecard { width: min(560px, 100%); padding: 6px; border: 1px solid var(--mira-line-2); border-radius: 12px; background: var(--mira-surface); box-shadow: 0 24px 64px rgba(0,0,0,.1); }
-  .ecard .in { display: flex; flex-direction: column; min-height: 340px; padding: 40px 36px 36px; border: 1px solid var(--mira-line); border-radius: 7px; background: var(--mira-bg); }
-  .ecard h2 { font-size: var(--h-lg); max-width: 420px; }
-  .ecard .txt { max-width: 400px; margin-top: 18px; font-size: 16px; line-height: 26px; }
-  .ecard .go { display: flex; align-items: center; justify-content: space-between; height: 56px; margin-top: auto; padding: 0 6px 0 20px; border-radius: 4px; background: var(--mira-text); color: var(--mira-bg); font: 500 13px/1 Geist, sans-serif; letter-spacing: .08em; text-transform: uppercase; transition: background .15s; }
-  .ecard .go:hover { background: #262626; }
-  .ecard .go .px { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 3px; background-color: rgba(255,255,255,.08); background-image: radial-gradient(rgba(255,255,255,.22) 1px, transparent 1.2px); background-size: 4px 4px; transition: transform .2s var(--out); }
-  .ecard .go:hover .px { transform: translateX(3px); }
-  .ecard .go .px svg { width: 18px; height: 18px; }
-  .end .alt { margin-top: 12px; font-size: 13px; color: var(--mira-text-3); text-align: center; }
-  .end .alt a { color: var(--mira-text-2); text-decoration: underline; text-underline-offset: 3px; }
-
-  footer { border-top: 1px solid var(--mira-line); }
-  footer .col { display: flex; padding-top: 164px; padding-bottom: 96px; }
-  footer .brand { align-self: flex-start; }
-  footer .cols { margin-left: auto; display: grid; grid-template-columns: repeat(3, 202px); column-gap: 66px; }
-  footer h3 { font-size: 14px; line-height: 21px; font-weight: 600; margin-bottom: 17px; }
-  footer ul { list-style: none; padding: 0; display: grid; }
-  footer li a { display: block; height: 34px; font-size: 14px; color: var(--mira-text-2); }
-  footer li a:hover { color: var(--mira-text); }
-
-  @media (max-width: 1200px) { .arc .left { padding-left: 40px; } #faq .wrap { padding: 112px 64px; } .cells.c4 { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 860px) {
-    :root { --gut: 20px; --head: 64px; }
-    header.top .links { display: none; } header.top .bar { grid-template-columns: 1fr auto; padding: 0 20px; }
-    .hero .col { min-height: calc(100svh - var(--head) - 90px); }
-    .stage { width: calc(100vw - 24px); }
-    .views button { padding: 0 10px; } .views button span { display: none; }
-    .shead { padding: 88px 20px 40px; }
-    .strip .row2 { flex-wrap: wrap; gap: 12px 0; } .strip .row2 span { flex: 0 0 50%; border: 0 !important; }
-    .cells.c2, .cells.c3, .cells.c4 { grid-template-columns: 1fr; }
-    .cell { padding: 48px 20px 56px; }
-    .arc .two { grid-template-columns: 1fr; }
-    .arc .left { padding: 0 20px; }
-    .arc .sticky { top: var(--head); z-index: 5; height: auto; margin: 0; padding: 24px 0; background: var(--mira-bg); border-bottom: 1px solid var(--mira-line); }
-    .astep { position: relative; inset: auto; display: none; } .astep.on { display: flex; } .astep h3 { font-size: 30px; } .astep p { font-size: 15px; line-height: 24px; margin-top: 10px; } .checks { display: none; }
-    .arc .right { border-left: 0; padding: 24px 20px 64px; } .rsky { display: none; } .arc .panels { gap: 16px; margin-top: 0; } .panel { height: 320px; } .panel .win { display: none; }
-    #faq .wrap { grid-template-columns: 1fr; padding: 72px 20px; } .faq { margin-top: 32px; }
-    .end .col { padding-top: 64px; padding-bottom: 64px; } .ecard .in { padding: 28px 22px 22px; min-height: 300px; }
-    footer .col { flex-direction: column; gap: 40px; padding-top: 64px; } footer .cols { margin: 0; grid-template-columns: repeat(2, 1fr); row-gap: 32px; }
+  @media (prefers-reduced-motion: reduce) {
+    .js [data-words] .w, .js .reveal, .js .astep .w { opacity: 1; transform: none; filter: none; transition: none; } .caret { animation: none; }
+    .js .hero h1 .w { filter: none; } .js .hero .sky { opacity: 1; transform: none; transition: none; } .js .hero .stage { translate: none; }
   }
-
-  /* features : a list on the left, the part of the app it talks about playing on the right */
-  .fx { display: grid; grid-template-columns: 1fr 1.15fr; border-top: 1px solid var(--mira-line); }
-  .fx-list { display: flex; flex-direction: column; border-right: 1px solid var(--mira-line); }
-  .fx-item { position: relative; display: block; width: 100%; padding: 28px 40px; border: 0; border-bottom: 1px solid var(--mira-line); background: var(--mira-bg); text-align: left; font: inherit; color: inherit; cursor: pointer; transition: background .18s var(--out); }
-  .fx-item:last-child { border-bottom: 0; }
-  .fx-item:hover { background: var(--mira-surface); }
-  .fx-item h3 { display: flex; align-items: center; gap: 12px; font-size: 20px; line-height: 28px; font-weight: 500; letter-spacing: -0.02em; color: var(--mira-text-3); transition: color .18s var(--out); }
-  .fx-item h3 small { font: 500 12px/1 Geist, sans-serif; color: var(--mira-text-3); }
-  .fx-item.on h3 { color: var(--mira-text); }
-  .fx-item p { display: grid; grid-template-rows: 0fr; opacity: 0; font-size: 16px; line-height: 24px; color: var(--mira-text-2); transition: grid-template-rows .35s var(--out), opacity .35s var(--out), margin .35s var(--out); }
-  .fx-item p > span { overflow: hidden; max-width: 440px; }
-  .fx-item.on p { grid-template-rows: 1fr; opacity: 1; margin-top: 10px; }
-  .fx-item i { position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--mira-text); transform-origin: left; transform: scaleX(var(--p, 0)); opacity: 0; z-index: 1; }
-  .fx-item.on i { opacity: 1; }
-  .fx-stage { position: relative; display: grid; place-items: center; padding: 56px; overflow: hidden; }
-  .fx-stage > .grid12 { position: absolute; inset: 0; opacity: .6; -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 20%, transparent 70%); mask-image: radial-gradient(circle at 50% 50%, #000 20%, transparent 70%); }
-  .fx-win { position: relative; width: min(520px, 100%); padding: 6px; border-radius: 12px; border: 1px solid var(--mira-line-2); background: var(--mira-surface); box-shadow: 0 24px 64px rgba(0,0,0,.1); }
-  .fx-win .screen { position: relative; aspect-ratio: 1; border-radius: 7px; overflow: hidden; background: #0a0a0a; }
-  .fx-win video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.03); transition: opacity .4s var(--out), transform .6s var(--out); }
-  .fx-win video.on { opacity: 1; transform: none; }
-  .fx-more { padding: 28px 40px; border-top: 1px solid var(--mira-line); text-align: center; }
-  @media (max-width: 900px) { .fx { grid-template-columns: 1fr; } .fx-list { border-right: 0; border-bottom: 1px solid var(--mira-line); } .fx-stage { order: -1; padding: 32px 20px; } .fx-item { padding: 22px 24px; } }
+  /* the tiles that hide a picture or an answer until it is seen (motion.js, tileVeil) */
+  canvas.veil { position: absolute; inset: 0; z-index: 8; width: 100%; height: 100%; pointer-events: none; }
+  section h2, .hero h1, .astep h3, .eq p .tx { position: relative; } .eq p .tx { display: block; }
+  /* while the wind draws a text with tiles, the text itself waits under them (motion.js, formText) */
+  .forming > :not(canvas) { opacity: 0 !important; transition: none !important; }
+  .eq p .tx > .w { transition: opacity .4s var(--out); }
+  /* a text drawn by the gust then simply fades in : no word by word, no blur */
+  .js [data-form] .w, .js .astep h3 .w { filter: none !important; transform: none !important; transition: opacity .4s var(--out) !important; transition-delay: 0s !important; }
+  canvas.wind { position: absolute; z-index: 8; pointer-events: none; }
+  canvas.wind { position: absolute; z-index: 8; pointer-events: none; }
+  .forming > :not(canvas) { opacity: 0 !important; transition: none !important; }
+  .js [data-form] .w { filter: none !important; transform: none !important; transition: opacity .4s var(--out) !important; transition-delay: 0s !important; }
+  h1 > span:not(.w) { color: var(--mira-text-2); }
+  header.top { margin-bottom: calc(-1 * var(--head)); background: transparent; }
+  html, body { height: 100%; }
+  .dl { position: relative; height: 100svh; min-height: 640px; overflow: hidden; border: 0; }
+  .dl .sky { inset: 0; --fade: radial-gradient(ellipse 42% 46% at 50% 50%, rgba(0,0,0,.18) 35%, #000 100%); }
+  .dl-in { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--head) 24px 32px; text-align: center; }
+  .dl h1 { position: relative; font-size: var(--h-xl); font-weight: 500; letter-spacing: -0.032em; line-height: .99; }
+  .dl .lead { max-width: 520px; margin-top: 18px; font-size: 17px; line-height: 28px; color: var(--mira-text-2); }
+  .oss { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: min(980px, 100%); margin-top: 40px; }
+  .osb { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: center; gap: 2px 12px; padding: 16px; border: 1px solid var(--mira-line-2); border-radius: 2px; background: var(--mira-bg); text-align: left; transition: border-color .2s var(--out), background .2s var(--out), transform .2s var(--out); }
+  .osb svg { grid-row: 1 / 3; width: 22px; height: 22px; }
+  .osb b { display: block; font-size: 15px; font-weight: 500; } .osb small { display: block; font-size: 13px; color: var(--mira-text-3); }
+  .osb em { grid-column: 1 / 3; margin-top: 12px; height: 32px; line-height: 30px; border: 1px solid var(--mira-line-2); border-radius: 2px; font-style: normal; font-size: 13px; font-weight: 500; text-align: center; }
+  .osb:hover { border-color: var(--line-hover); transform: translateY(-2px); }
+  .osb.mine { border-color: var(--mira-text); } .osb.mine em { background: var(--mira-text); border-color: var(--mira-text); color: var(--mira-bg); }
+  .brew { display: flex; align-items: center; gap: 12px; width: min(980px, 100%); margin-top: 12px; padding: 6px 6px 6px 16px; border: 1px solid var(--mira-line-2); border-radius: 2px; background: var(--mira-bg); text-align: left; }
+  .brew small { flex: none; font-size: 13px; font-weight: 500; }
+  .brew code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-size: 13px; color: var(--mira-text-2); }
+  .brew code::before { content: "$ "; color: var(--mira-text-3); }
+  .tip { max-width: 640px; margin-top: 22px; font-size: 13px; line-height: 20px; color: var(--mira-text-3); }
+  .tip a { color: var(--mira-text-2); text-decoration: underline; text-underline-offset: 3px; }
+  @media (max-width: 860px) { :root { --gut: 20px; --head: 64px; } header.top .links { display: none; } header.top .bar { grid-template-columns: 1fr auto; padding: 0 20px; }
+    .dl { height: auto; min-height: 100svh; } .oss { grid-template-columns: 1fr 1fr; } .brew { flex-wrap: wrap; } }
 </style>
 </head>
 <body>
@@ -309,68 +167,43 @@
 <header class="top">
   <div class="bar">
     <a class="brand" href="index.html"><svg><use href="#mark"/></svg>Mira</a>
-    <nav class="links"><a href="index.html#product">Product</a><a href="index.html#features">Features</a><a href="index.html#faq">FAQ</a><a href="https://github.com/dump-addict/MIRA-TERMINAL">GitHub</a></nav>
+    <nav class="links"><a href="index.html#product">Product</a><a href="features.html">Features</a><a href="index.html#faq">FAQ</a><a href="https://github.com/mira-foundry/MIRA-TERMINAL">GitHub</a></nav>
     <div class="act"><a class="btn primary" href="download.html">Download<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
   </div>
 </header>
 
-<section class="dl" id="download" style="border-top:0">
-  <div class="frame">
-    <div class="shead"><h2 data-words>Get Mira. <span>Free, for good.</span></h2><p class="txt">macOS, Windows and Linux. Open source, no account, nothing to sign in to but your own agents.</p></div>
-    <div class="cells c4">
-      <div class="cell" data-os="mac-arm"><svg class="os" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.19-1.73-1.36-.14-2.65.8-3.34.8-.69 0-1.75-.78-2.88-.76-1.48.02-2.85.86-3.61 2.19-1.54 2.67-.39 6.62 1.11 8.79.73 1.06 1.6 2.25 2.75 2.2 1.1-.04 1.52-.71 2.85-.71 1.33 0 1.71.71 2.88.69 1.19-.02 1.94-1.08 2.66-2.14.84-1.23 1.19-2.42 1.21-2.48-.03-.01-2.32-.89-2.34-3.54zM14.18 6.13c.61-.74 1.02-1.76.91-2.78-.88.04-1.94.59-2.57 1.32-.56.65-1.06 1.69-.93 2.69.98.08 1.98-.5 2.59-1.23z"/></svg><span class="tag mine">Your system</span><h3>macOS</h3><p>Apple silicon DMG</p><code>Mira-Terminal-macos-arm64.dmg</code><a class="btn primary" href="https://github.com/dump-addict/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-macos-arm64.dmg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"/></svg>Download</a></div>
-      <div class="cell" data-os="mac-intel"><svg class="os" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.19-1.73-1.36-.14-2.65.8-3.34.8-.69 0-1.75-.78-2.88-.76-1.48.02-2.85.86-3.61 2.19-1.54 2.67-.39 6.62 1.11 8.79.73 1.06 1.6 2.25 2.75 2.2 1.1-.04 1.52-.71 2.85-.71 1.33 0 1.71.71 2.88.69 1.19-.02 1.94-1.08 2.66-2.14.84-1.23 1.19-2.42 1.21-2.48-.03-.01-2.32-.89-2.34-3.54zM14.18 6.13c.61-.74 1.02-1.76.91-2.78-.88.04-1.94.59-2.57 1.32-.56.65-1.06 1.69-.93 2.69.98.08 1.98-.5 2.59-1.23z"/></svg><span class="tag mine">Your system</span><h3>macOS Intel</h3><p>Intel DMG</p><code>Mira-Terminal-macos-x64.dmg</code><a class="btn primary" href="https://github.com/dump-addict/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-macos-x64.dmg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"/></svg>Download</a></div>
-      <div class="cell" data-os="win"><svg class="os" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.1 10.4 4v7.3H3zM11.3 3.9 21 2.5v8.8h-9.7zM3 12.2h7.4v7.3L3 18.4zM11.3 12.2H21V21l-9.7-1.4z"/></svg><span class="tag mine">Your system</span><h3>Windows</h3><p>Windows 10/11 x64 installer</p><code>Mira-Terminal-windows-x64.exe</code><a class="btn primary" href="https://github.com/dump-addict/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-windows-x64.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"/></svg>Download</a></div>
-      <div class="cell" data-os="linux"><svg class="os" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-2.2 0-3.5 1.8-3.5 4.2 0 1.5-.4 2.6-1.3 3.9C6 12.7 5 14.6 5 16.6 5 19.3 7.7 21 12 21s7-1.7 7-4.4c0-2-1-3.9-2.2-5.5-.9-1.3-1.3-2.4-1.3-3.9C15.5 4.8 14.2 3 12 3z"/><circle cx="10.3" cy="7.6" r=".6" fill="currentColor"/><circle cx="13.7" cy="7.6" r=".6" fill="currentColor"/><path d="M10.6 9.6 12 10.6l1.4-1"/></svg><span class="tag mine">Your system</span><h3>Linux</h3><p>Universal AppImage</p><code>Mira-Terminal-linux-x64.AppImage</code><a class="btn primary" href="https://github.com/dump-addict/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-linux-x64.AppImage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"/></svg>Download</a></div>
+<section class="dl hero-dl">
+  <div class="sky" aria-hidden="true"><div class="grid"></div><canvas id="sky2"></canvas></div>
+  <div class="dl-in">
+    <h1 data-words data-form>Get Mira. <span>Free, for good.</span></h1>
+    <p class="lead reveal" style="--d:300ms">macOS, Windows and Linux. Open source, no account.</p>
+    <div class="oss reveal" style="--d:420ms">
+      <a class="osb" data-os="mac" href="https://github.com/mira-foundry/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-macos-arm64.dmg" download><svg viewBox="0 0 24 24"><path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.9-.9-3.1-.8-1.6 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.4-.9-2.4-3.8zM14.1 5.8c.6-.8 1.1-1.9 1-3-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.9 1 .1 2.1-.5 2.7-1.3z" fill="currentColor" stroke="none"/></svg><span><b>macOS</b><small>Apple silicon</small></span><em>Download</em></a>
+      <a class="osb" data-os="mac-intel" href="https://github.com/mira-foundry/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-macos-x64.dmg" download><svg viewBox="0 0 24 24"><path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.9-.9-3.1-.8-1.6 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.4-.9-2.4-3.8zM14.1 5.8c.6-.8 1.1-1.9 1-3-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.9 1 .1 2.1-.5 2.7-1.3z" fill="currentColor" stroke="none"/></svg><span><b>macOS</b><small>Intel</small></span><em>Download</em></a>
+      <a class="osb" data-os="windows" href="https://github.com/mira-foundry/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-windows-x64.exe" download><svg viewBox="0 0 24 24"><path d="M3 5.5 10.5 4.4v7.1H3zM11.5 4.3 21 3v8.5h-9.5zM3 12.5h7.5v7.1L3 18.5zM11.5 12.5H21V21l-9.5-1.3z" fill="currentColor" stroke="none"/></svg><span><b>Windows</b><small>10 and 11, x64</small></span><em>Download</em></a>
+      <a class="osb" data-os="linux" href="https://github.com/mira-foundry/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-linux-x64.AppImage" download><svg viewBox="0 0 24 24"><path d="M12 3c-2 0-3 1.6-3 3.6 0 1.3.3 2.2-.6 3.6C7.3 11.8 6 13.8 6 15.6c0 .9.3 1.6.8 2.1-.6.5-1.8.6-1.8 1.6 0 1 1.5 1.2 3 1.6 1.2.3 2 .9 2.9.9.8 0 1.3-.5 1.1-.9 1 .4 2.1.4 3.1 0-.2.4.3.9 1.1.9.9 0 1.7-.6 2.9-.9 1.5-.4 3-.6 3-1.6 0-1-1.2-1.1-1.8-1.6.5-.5.8-1.2.8-2.1 0-1.8-1.3-3.8-2.4-5.4-.9-1.4-.6-2.3-.6-3.6C15 4.6 14 3 12 3z" fill="currentColor" stroke="none"/></svg><span><b>Linux</b><small>AppImage, x64</small></span><em>Download</em></a>
     </div>
-    <div class="more">
-      <div>
-        <h3>Homebrew</h3><p>On a Mac, install and update Mira from the terminal.</p>
-        <div class="brew"><code id="brew-cmd" data-text="brew tap dump-addict/tap && brew trust --tap dump-addict/tap && brew install --cask mira-terminal"><span>brew tap dump-addict/tap</span><span>brew trust --tap dump-addict/tap</span><span>brew install --cask mira-terminal</span></code><button class="btn sm" type="button" data-copy="brew-cmd">Copy</button></div>
-        <p>Mira is not in Homebrew's main catalogue yet, so you trust its tap once. After that, <code>brew upgrade</code> keeps it up to date.</p>
-        <h3 style="margin-top:40px">First launch</h3>
-        <ul class="notes">
-          <li><b>macOS.</b> Early builds are not signed yet: right-click Mira Terminal and choose Open, once.</li>
-          <li><b>Windows.</b> If SmartScreen warns you, choose More info, then Run anyway. Agents run in Git Bash, so install <a href="https://git-scm.com/download/win" style="text-decoration:underline">Git for Windows</a> first.</li>
-          <li><b>Linux.</b> Make the AppImage executable with <code>chmod +x Mira-Terminal-linux-x64.AppImage</code>, then run it.</li>
-          <li><b>Everywhere.</b> At least one coding agent installed and signed in, and Python 3 for the architecture diagram.</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Build from source</h3><p>Node 24, pnpm 12 and Python 3.</p>
-<pre class="run">git clone https://github.com/dump-addict/MIRA-TERMINAL.git
-cd MIRA-TERMINAL
-pnpm install
-pnpm dev</pre>
-        <p style="margin-top:18px;font-size:15px;color:var(--mira-text-2)">Every release and its notes are on <a href="https://github.com/dump-addict/MIRA-TERMINAL/releases" style="text-decoration:underline">GitHub Releases</a>.</p>
-      </div>
-    </div>
+    <div class="brew reveal" style="--d:520ms"><small>Homebrew</small><code id="brew">brew tap mira-foundry/tap &amp;&amp; brew trust --tap mira-foundry/tap &amp;&amp; brew install --cask mira-terminal</code><button class="btn sm" type="button" id="copy">Copy</button></div>
+    <p class="tip reveal" style="--d:600ms" id="tip">Every release and its notes are on <a href="https://github.com/mira-foundry/MIRA-TERMINAL/releases">GitHub Releases</a>.</p>
   </div>
 </section>
 
-<footer>
-  <div class="col">
-    <a class="brand" href="index.html"><svg><use href="#mark"/></svg></a>
-    <div class="cols">
-      <div><h3>Product</h3><ul><li><a href="index.html#product">Overview</a></li><li><a href="features.html">Features</a></li><li><a href="download.html">Download</a></li><li><a href="index.html#faq">FAQ</a></li></ul></div>
-      <div><h3>Learn</h3><ul><li><a href="https://github.com/dump-addict/MIRA-TERMINAL">GitHub</a></li><li><a href="https://github.com/dump-addict/MIRA-TERMINAL/issues">Issues</a></li></ul></div>
-      <div><h3>Legal</h3><ul><li><a href="https://github.com/dump-addict/MIRA-TERMINAL/blob/main/LICENSE">Licence</a></li></ul></div>
-    </div>
-  </div>
-</footer>
-
 <script type="module" src="motion.js"></script>
 <script>
-  // outline the card of the visitor's system; Apple silicon and Intel Macs cannot be told apart reliably, so a Mac gets the Apple silicon card
+  // the visitor's system : its button in black, and the one tip for its first launch
   (() => {
     const ua = navigator.userAgent, plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || ''
-    const os = /Win/i.test(plat + ua) ? 'win' : /Mac/i.test(plat + ua) ? 'mac-arm' : /Linux|X11/i.test(plat + ua) && !/Android/i.test(ua) ? 'linux' : ''
-    const el = os && document.querySelector('.dl [data-os="' + os + '"]')
-    if (el) el.classList.add('you')
+    const os = /Win/i.test(plat + ua) ? 'windows' : /Mac/i.test(plat + ua) ? 'mac' : /Linux|X11/i.test(plat + ua) && !/Android/i.test(ua) ? 'linux' : ''
+    const b = document.querySelector(`.osb[data-os="${os}"]`); if (b) b.classList.add('mine')
+    const tips = {
+      mac: 'Early builds are not signed yet: the first time, right-click Mira Terminal and choose Open.',
+      windows: 'If SmartScreen warns you, choose More info, then Run anyway. Agents run in Git Bash, so install <a href="https://git-scm.com/download/win">Git for Windows</a> first.',
+      linux: 'Make the AppImage executable with <code>chmod +x Mira-Terminal-linux-x64.AppImage</code>, then run it.',
+    }
+    const tip = document.getElementById('tip'); if (tips[os]) tip.innerHTML = tips[os] + ' All releases on <a href="https://github.com/mira-foundry/MIRA-TERMINAL/releases">GitHub</a>.'
+    const copy = document.getElementById('copy')
+    copy.addEventListener('click', async () => { try { await navigator.clipboard.writeText(document.getElementById('brew').textContent); copy.textContent = 'Copied' } catch { copy.textContent = 'Select it' } setTimeout(() => (copy.textContent = 'Copy'), 1600) })
   })()
-  document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => {
-    const el = document.getElementById(b.dataset.copy); navigator.clipboard.writeText(el.dataset.text || el.textContent).then(() => { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy' }, 1500) })
-  }))
 </script>
 </body>
 </html>

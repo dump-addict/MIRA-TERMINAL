@@ -59,6 +59,6 @@ Versions, tags and releases are handled by the maintainers: pushing a `v*` tag b
 
 ## Getting help
 
-Open an [issue](https://github.com/dump-addict/MIRA-TERMINAL/issues/new/choose) for bugs, ideas and questions.
+Open an [issue](https://github.com/mira-foundry/MIRA-TERMINAL/issues/new/choose) for bugs, ideas and questions.
 
 By contributing, you agree that your contributions are licensed under the [MIT License](../LICENSE), and you agree to follow the [Code of Conduct](./CODE_OF_CONDUCT.md).

@@ -362,16 +362,17 @@
   .eq h3 small { padding-top: .45em; font-size: 13px; line-height: 1; font-weight: 400; letter-spacing: 0; font-variant-numeric: tabular-nums; }
   /* a closed row is as tall as its question : the answer only takes room once it opens */
   .eq p { max-height: 0; overflow: hidden; font-size: 16px; line-height: 26px; color: var(--mira-text-2); opacity: 0; transform: translateX(-12px); transition: opacity .35s var(--out), transform .35s var(--out), max-height .45s var(--out); }
-  .eq.on h3 { color: var(--mira-text); } .eq.on p { max-height: 240px; opacity: 1; transform: none; }
+  .eq.on h3 { color: var(--mira-text); } .eq.on p { max-height: 240px; opacity: 1; transform: none; overflow: visible; }
+  /* (an open answer lets the gust's birds fly in from beyond its left edge) */
   .eq p { position: relative; }
   /* the tiles that hide a picture or an answer until it is seen (motion.js, tileVeil) */
   canvas.veil { position: absolute; inset: 0; z-index: 8; width: 100%; height: 100%; pointer-events: none; }
   section h2, .hero h1, .astep h3, .eq p .tx { position: relative; } .eq p .tx { display: block; }
   /* while the wind draws a text with tiles, the text itself waits under them (motion.js, formText) */
   .forming > :not(canvas) { opacity: 0 !important; transition: none !important; }
-  .eq p .tx > .w { transition: opacity .3s var(--out); }
+  .eq p .tx > .w { transition: opacity .4s var(--out); }
   /* a text drawn by the gust then simply fades in : no word by word, no blur */
-  .js [data-form] .w, .js .astep h3 .w { filter: none !important; transform: none !important; transition: opacity .3s var(--out) !important; transition-delay: 0s !important; }
+  .js [data-form] .w, .js .astep h3 .w { filter: none !important; transform: none !important; transition: opacity .4s var(--out) !important; transition-delay: 0s !important; }
   canvas.wind { position: absolute; z-index: 8; pointer-events: none; }
   .ask { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 40px; flex-wrap: wrap; }
   .ask p { font-size: 16px; color: var(--mira-text-2); }
@@ -435,7 +436,7 @@
 <header class="top">
   <div class="bar">
     <a class="brand" href="#"><svg><use href="#mark"/></svg>Mira</a>
-    <nav class="links"><a href="#product">Product</a><a href="features.html">Features</a><a href="#faq">FAQ</a><a href="https://github.com/dump-addict/MIRA-TERMINAL">GitHub</a></nav>
+    <nav class="links"><a href="#product">Product</a><a href="features.html">Features</a><a href="#faq">FAQ</a><a href="https://github.com/mira-foundry/MIRA-TERMINAL">GitHub</a></nav>
     <div class="act"><a class="btn primary" href="download.html">Download<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
   </div>
 </header>
@@ -445,7 +446,7 @@
   <div class="col">
     <h1 data-words>All in view.<br><span>Your projects, agents and tasks.</span></h1>
     <p class="txt reveal" style="--d:700ms">Your agents, your projects and your work, in one terminal built for the way you code now.</p>
-    <div class="cta reveal" style="--d:820ms"><a class="btn primary lg dl-cta" href="download.html">Download</a><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL">View on GitHub</a></div>
+    <div class="cta reveal" style="--d:820ms"><a class="btn primary lg dl-cta" href="download.html">Download</a><a class="btn lg" href="https://github.com/mira-foundry/MIRA-TERMINAL">View on GitHub</a></div>
   </div>
   <div class="stage reveal" style="--d:900ms">
     <div class="screen">
@@ -559,7 +560,7 @@
       <div class="eq" tabindex="0"><h3><small>05</small>Will my terminal still work the same way?</h3><p>Yes. The message box sits on top of the agent’s own input: the real terminal runs underneath, so every command, shortcut and menu works exactly as before. One click goes back to the plain terminal.</p></div>
       <div class="eq" tabindex="0"><h3><small>06</small>Which systems are supported?</h3><p>macOS (Apple silicon and Intel), Windows 10 and 11, and Linux as an AppImage. On a Mac you can also install it with Homebrew.</p></div>
       </div>
-      <div class="ask"><p>Still a question? We answer on GitHub.</p><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL/issues">Ask a question<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+      <div class="ask"><p>Still a question? We answer on GitHub.</p><a class="btn lg" href="https://github.com/mira-foundry/MIRA-TERMINAL/issues">Ask a question<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
     </div>
   </div>
 </section>
@@ -570,7 +571,7 @@
     <div class="col" id="get">
       <h2 data-words>Ready to see it all? <span>Get Mira now.</span></h2>
       <p class="txt reveal">Free and open source. Your agents, your accounts, your machine.</p>
-      <div class="cta reveal" style="--d:120ms"><a class="btn primary lg dl-cta" href="download.html">Download</a><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL">View on GitHub</a></div>
+      <div class="cta reveal" style="--d:120ms"><a class="btn primary lg dl-cta" href="download.html">Download</a><a class="btn lg" href="https://github.com/mira-foundry/MIRA-TERMINAL">View on GitHub</a></div>
     </div>
   </div>
 </section>
@@ -580,10 +581,10 @@
     <div class="fgrid">
       <div class="fsay"><a class="brand" href="#" aria-label="Mira"><svg><use href="#mark"/></svg></a><p>All in view.<br><span>Your projects, agents and tasks.</span></p><small>© 2026 Mira · MIT</small></div>
       <div><h3>Product</h3><ul><li><a href="#product">Overview</a></li><li><a href="features.html">Features</a></li><li><a href="download.html">Download</a></li></ul></div>
-      <div><h3>Learn</h3><ul><li><a href="#faq">FAQ</a></li><li><a href="https://github.com/dump-addict/MIRA-TERMINAL/issues">Issues</a></li><li><a href="https://github.com/dump-addict/MIRA-TERMINAL/blob/main/.github/CONTRIBUTING.md">Contribute</a></li></ul></div>
+      <div><h3>Learn</h3><ul><li><a href="#faq">FAQ</a></li><li><a href="https://github.com/mira-foundry/MIRA-TERMINAL/issues">Issues</a></li><li><a href="https://github.com/mira-foundry/MIRA-TERMINAL/blob/main/.github/CONTRIBUTING.md">Contribute</a></li></ul></div>
       <!-- TODO: the Discord and X addresses are not known yet -->
-      <div><h3>Community</h3><ul><li><a href="https://github.com/dump-addict/MIRA-TERMINAL">GitHub</a></li><li><a href="#" data-todo="discord">Discord</a></li><li><a href="#" data-todo="x">X</a></li></ul></div>
-      <div><h3>Legal</h3><ul><li><a href="https://github.com/dump-addict/MIRA-TERMINAL/blob/main/LICENSE">License</a></li></ul></div>
+      <div><h3>Community</h3><ul><li><a href="https://github.com/mira-foundry/MIRA-TERMINAL">GitHub</a></li><li><a href="#" data-todo="discord">Discord</a></li><li><a href="#" data-todo="x">X</a></li></ul></div>
+      <div><h3>Legal</h3><ul><li><a href="https://github.com/mira-foundry/MIRA-TERMINAL/blob/main/LICENSE">License</a></li></ul></div>
     </div>
   </div>
   <!-- the last thing on the page : the name, drawn with the birds' tiles -->
@@ -591,15 +592,6 @@
 </footer>
 
 <script type="module" src="motion.js"></script>
-<script>
-  // the main button names the visitor's system; it always leads to the download page, which has every file
-  (() => {
-    const ua = navigator.userAgent, plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || ''
-    const name = /Win/i.test(plat + ua) ? 'Windows' : /Mac/i.test(plat + ua) ? 'Mac' : /Linux|X11/i.test(plat + ua) && !/Android/i.test(ua) ? 'Linux' : ''
-    if (name) document.querySelectorAll('.dl-cta').forEach((b) => (b.textContent = 'Download for ' + name))
-  })()
-</script>
-
 <script>
   /* The demo, one page at a time like the app : each tab plays its part of a video, then the next tab starts.
      A click jumps to a page. Agents and Tasks are parts of demo.mp4 ; a page with its own file shows up

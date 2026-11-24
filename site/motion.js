@@ -323,7 +323,8 @@ const formText = (el, seed, onLand) => {
   const ctx = cv.getContext('2d'); ctx.setTransform(d, 0, 0, d, 0, 0);
   // the shape of the text : each word drawn where it sits, in its own font
   const words = [...el.querySelectorAll('.w')], fs = parseFloat(getComputedStyle(words[0] || el).fontSize) || 16;
-  const C = Math.max(5, Math.round(fs / 4.6)), glyphs = C >= 8, off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d');
+  // tiles of at least 8 px, with their symbols, even on small text : the answers look like the titles
+  const C = Math.max(8, Math.round(fs / 4.6)), glyphs = true, off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d');
   for (const w of words) { const r = w.getBoundingClientRect(), cs = getComputedStyle(w); o.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; o.letterSpacing = cs.letterSpacing; o.textBaseline = 'alphabetic';
     o.fillText(w.textContent, r.left - box.left + PL, r.top - box.top + PAD + parseFloat(cs.fontSize) * 0.86); }
   const px = o.getImageData(0, 0, W, H).data, hh = (x, y, s) => { const v = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453; return v - Math.floor(v); };
@@ -337,8 +338,8 @@ const formText = (el, seed, onLand) => {
   const t0 = performance.now(), FLY = 0.7, LAND = 1.05, OUT = 0.45; let landed = false;
   const frame = (now) => {
     if (!cv.isConnected) return;
-    // quick : under a second from the first bird to the text
-    const t = (now - t0) / 1000 * 1.7; ctx.clearRect(0, 0, W, H);
+    // a little over a second from the first bird to the text
+    const t = (now - t0) / 1000 * 1.3; ctx.clearRect(0, 0, W, H);
     if (!landed && t > LAND) { landed = true; el.classList.remove('forming'); onLand && onLand(); }
     const fade = t > LAND ? Math.max(0, 1 - (t - LAND) / OUT) : 1;
     for (const p of parts) {

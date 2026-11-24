@@ -142,7 +142,7 @@ export function registerAgents(): void {
       // would turn a finished tab into one that asks something
       cfg.hooks = { UserPromptSubmit: h('working'), PreToolUse: h('working'), Notification: h('needs', 'permission_prompt|elicitation_dialog'), PermissionRequest: h('needs'), Stop: h('done') }
       if (st.markCommits && own.attribution === undefined && own.includeCoAuthoredBy === undefined) {
-        cfg.attribution = { commit: 'Made with Mira Terminal and Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>', pr: 'Made with [Mira Terminal](https://github.com/dump-addict/MIRA-TERMINAL) and Claude Code' }
+        cfg.attribution = { commit: 'Made with Mira Terminal and Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>', pr: 'Made with [Mira Terminal](https://github.com/mira-foundry/MIRA-TERMINAL) and Claude Code' }
       }
       if (Object.keys(cfg).length) extra.push('--settings', q(JSON.stringify(cfg)))
     }

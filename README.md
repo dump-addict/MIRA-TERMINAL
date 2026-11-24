@@ -4,10 +4,10 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/license-MIT-ededed?style=flat&labelColor=000000" alt="License: MIT" />
-  <a href="https://github.com/dump-addict/MIRA-TERMINAL/releases"><img src="https://img.shields.io/github/v/release/dump-addict/MIRA-TERMINAL?include_prereleases&style=flat&labelColor=000000&color=ededed&label=release" alt="Latest release" /></a>
+  <a href="https://github.com/mira-foundry/MIRA-TERMINAL/releases"><img src="https://img.shields.io/github/v/release/mira-foundry/MIRA-TERMINAL?include_prereleases&style=flat&labelColor=000000&color=ededed&label=release" alt="Latest release" /></a>
   <img src="https://img.shields.io/badge/macOS%20%7C%20Windows%20%7C%20Linux-ededed?style=flat&labelColor=000000" alt="Platforms: macOS, Windows and Linux" />
   <img src="https://img.shields.io/badge/status-early%20preview-f5a524?style=flat&labelColor=000000" alt="Status: early preview" />
-  <a href="https://github.com/dump-addict/MIRA-TERMINAL/actions/workflows/ci.yml"><img src="https://github.com/dump-addict/MIRA-TERMINAL/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/mira-foundry/MIRA-TERMINAL/actions/workflows/ci.yml"><img src="https://github.com/mira-foundry/MIRA-TERMINAL/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
 <h2 align="center">All in view. Your projects, agents and tasks.</h2>
@@ -16,7 +16,7 @@
   A terminal made for coding agents. Run them side by side, see a live map of every project, and keep every task on one board, on your machine.
 </p>
 
-<h3 align="center"><a href="https://github.com/dump-addict/MIRA-TERMINAL/releases/latest"><ins>Download Mira</ins></a> &nbsp;&nbsp; <a href="#features"><ins>See the features →</ins></a></h3>
+<h3 align="center"><a href="https://github.com/mira-foundry/MIRA-TERMINAL/releases/latest"><ins>Download Mira</ins></a> &nbsp;&nbsp; <a href="#features"><ins>See the features →</ins></a></h3>
 
 <p align="center">
   <img src="docs/assets/readme-hero.jpg" alt="Mira Terminal with Claude Code, Codex and Gemini CLI in one window and the live map of the project on the right" width="960" />
@@ -127,20 +127,20 @@ Mira finds these on your Mac and gives each one its logo, its message box and it
 
 | System | File |
 |---|---|
-| macOS, Apple silicon | [`Mira-Terminal-macos-arm64.dmg`](https://github.com/dump-addict/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-macos-arm64.dmg) |
-| macOS, Intel | [`Mira-Terminal-macos-x64.dmg`](https://github.com/dump-addict/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-macos-x64.dmg) |
-| Windows 10/11, x64 | [`Mira-Terminal-windows-x64.exe`](https://github.com/dump-addict/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-windows-x64.exe) |
-| Linux, x64 | [`Mira-Terminal-linux-x64.AppImage`](https://github.com/dump-addict/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-linux-x64.AppImage) |
+| macOS, Apple silicon | [`Mira-Terminal-macos-arm64.dmg`](https://github.com/mira-foundry/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-macos-arm64.dmg) |
+| macOS, Intel | [`Mira-Terminal-macos-x64.dmg`](https://github.com/mira-foundry/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-macos-x64.dmg) |
+| Windows 10/11, x64 | [`Mira-Terminal-windows-x64.exe`](https://github.com/mira-foundry/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-windows-x64.exe) |
+| Linux, x64 | [`Mira-Terminal-linux-x64.AppImage`](https://github.com/mira-foundry/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-linux-x64.AppImage) |
 
 On a Mac you can also use Homebrew. Mira is not in Homebrew's main catalogue yet, so you add its tap and trust it once; after that, `brew upgrade` keeps Mira up to date:
 
 ```bash
-brew tap dump-addict/tap
-brew trust --tap dump-addict/tap
+brew tap mira-foundry/tap
+brew trust --tap mira-foundry/tap
 brew install --cask mira-terminal
 ```
 
-Every release and its notes are on [GitHub Releases](https://github.com/dump-addict/MIRA-TERMINAL/releases).
+Every release and its notes are on [GitHub Releases](https://github.com/mira-foundry/MIRA-TERMINAL/releases).
 
 **First launch.** Early builds are not signed yet, so your system warns you once:
 
@@ -155,7 +155,7 @@ You also need at least one coding agent CLI installed and signed in, and Python 
 **Requirements:** Node.js 24 or newer, pnpm 12, Python 3, and a C++ toolchain to compile the native terminal module: the Xcode Command Line Tools on macOS (`xcode-select --install`), Visual Studio Build Tools on Windows, `build-essential` on Linux.
 
 ```bash
-git clone https://github.com/dump-addict/MIRA-TERMINAL.git mira-terminal
+git clone https://github.com/mira-foundry/MIRA-TERMINAL.git mira-terminal
 cd mira-terminal
 pnpm install   # also rebuilds node-pty for Electron
 pnpm dev
@@ -206,7 +206,7 @@ The look follows one small design system, described in [`DESIGN.md`](DESIGN.md):
 
 ## Contributing
 
-Contributions are welcome. Read [`CONTRIBUTING.md`](.github/CONTRIBUTING.md) before opening a pull request, and open an [issue](https://github.com/dump-addict/MIRA-TERMINAL/issues/new/choose) for bugs and ideas.
+Contributions are welcome. Read [`CONTRIBUTING.md`](.github/CONTRIBUTING.md) before opening a pull request, and open an [issue](https://github.com/mira-foundry/MIRA-TERMINAL/issues/new/choose) for bugs and ideas.
 
 Found a security issue? Please report it privately, as described in [`SECURITY.md`](.github/SECURITY.md).
 

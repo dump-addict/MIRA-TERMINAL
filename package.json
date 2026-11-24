@@ -5,14 +5,14 @@
   "private": true,
   "description": "The map of your project, and one coding agent per branch",
   "license": "MIT",
-  "author": "dump-addict",
-  "homepage": "https://github.com/dump-addict/MIRA-TERMINAL#readme",
+  "author": "Mira Foundry",
+  "homepage": "https://github.com/mira-foundry/MIRA-TERMINAL#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dump-addict/MIRA-TERMINAL.git"
+    "url": "git+https://github.com/mira-foundry/MIRA-TERMINAL.git"
   },
   "bugs": {
-    "url": "https://github.com/dump-addict/MIRA-TERMINAL/issues"
+    "url": "https://github.com/mira-foundry/MIRA-TERMINAL/issues"
   },
   "keywords": [
     "terminal",
@@ -160,7 +160,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "dump-addict",
+        "owner": "mira-foundry",
         "repo": "MIRA-TERMINAL",
         "releaseType": "draft"
       }

@@ -34,13 +34,16 @@ function split(el) {
 }
 // every title comes out of a blur word by word, every paragraph rises in : marked here so the markup stays plain
 document.querySelectorAll('section h2, .cell h3').forEach((h) => { if (!h.closest('.astep')) h.setAttribute('data-words', ''); });
+// the titles are drawn by the wind first (formText) : that one adds their "in"
+document.querySelectorAll('section h2, .hero h1').forEach((h) => h.setAttribute('data-form', ''));
+document.querySelectorAll('.eq p').forEach((p) => { const sp = document.createElement('span'); sp.className = 'tx'; sp.append(...p.childNodes); p.append(sp); split(sp); });
 document.querySelectorAll('.shead .txt, .cell > p, .cell > .num, .end p').forEach((el, i) => { if (!el.classList.contains('reveal')) { el.classList.add('reveal'); el.style.setProperty('--d', (el.matches('.cell > p') ? 120 : 0) + 'ms'); } });
 document.querySelectorAll('[data-words], .read').forEach(split);
 // the steps of the strengths : their words come in each time the step comes to the front
 document.querySelectorAll('.astep h3, .astep p').forEach(split);
 
 const seen = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); seen.unobserve(e.target); } }), { rootMargin: '0px 0px -10% 0px' });
-document.querySelectorAll('[data-words], .reveal').forEach((el) => seen.observe(el));
+document.querySelectorAll('[data-words]:not([data-form]), .reveal').forEach((el) => seen.observe(el));
 
 /* ---------- smooth scroll : the wheel sets a target, the page glides to it ; anything else that scrolls (keys, links, the bar) is followed */
 if (!still && matchMedia('(pointer: fine)').matches) {
@@ -147,6 +150,8 @@ if (arc) {
     if (best === on) return;
     on = best;
     slides.forEach((s, i) => s.classList.toggle('on', i === on));
+    // the title of the step in front comes out from under the tiles
+    if (typeof formText === 'function') formText(slides[on].querySelector('h3'), 60 + on);
     segs.forEach((s, i) => s.classList.toggle('on', i <= on));
     panels.forEach((p, i) => {
       p.classList.toggle('on', i === on);
@@ -290,8 +295,8 @@ const tileVeil = (el, seed, dur = 700) => {
     ctx.font = `700 ${C - 3}px ui-monospace, Menlo, monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const u = t0 ? (now - t0) / dur : 0, cols = Math.ceil(W / C), rws = Math.ceil(H / C); let left = 0;
     for (let y = 0; y < rws; y++) for (let x = 0; x < cols; x++) {
-      const when = (x / cols) * 0.7 + hh(x, y, seed) * 0.3; if (u > when + 0.15) continue; left++;
-      const k = u > when ? 1 - (u - when) / 0.15 : 1, g = hh(x, y, 3 + seed);
+      const when = (x / cols) * 0.68 + hh(x, y, seed) * 0.3; if (u > when + 0.24) continue; left++;
+      const f = u > when ? (u - when) / 0.24 : 0, k = 1 - f * f * (3 - 2 * f), g = hh(x, y, 3 + seed);
       ctx.globalAlpha = k; ctx.fillStyle = paper; ctx.fillRect(x * C, y * C, C, C);
       if (g < 0.4) continue;
       ctx.globalAlpha = k * (0.12 + 0.3 * g); ctx.fillStyle = ink; ctx.fillRect(x * C + 1, y * C + 1, C - 1, C - 1);
@@ -304,14 +309,69 @@ const tileVeil = (el, seed, dur = 700) => {
   return { start() { if (t0) return; t0 = performance.now(); requestAnimationFrame(frame); } };
 };
 const tileReveal = (el, seed) => tileVeil(el, seed).start();
-// the pictures of the page come out from under the tiles the first time they are seen
-document.querySelectorAll('.hero .stage .screen, .arc .panel .screen, .how .mock').forEach((el, i) => {
-  const v = tileVeil(el, i + 7, el.matches('.how .mock') ? 900 : 1300);
-  new IntersectionObserver(([e], o) => { if (!e.isIntersecting) return; o.disconnect(); setTimeout(() => v.start(), el.closest('.hero') ? 700 : 80); }, { threshold: 0.2 }).observe(el);
+
+/* ---------- formText : a short gust from the left brings the opening's small birds along the line ; they land as plain
+   light squares where the letters are, and the text fades in as they fade. Used for the titles and the faq's answers. */
+const formText = (el, seed, onLand) => {
+  if (still) { onLand && onLand(); return; }
+  el.querySelector(':scope > canvas.wind')?.remove();
+  el.classList.add('forming');
+  const box = el.getBoundingClientRect(), PL = 200, PAD = 24;
+  const W = Math.ceil(box.width) + PL + PAD, H = Math.ceil(box.height) + PAD * 2;
+  const cv = document.createElement('canvas'); cv.className = 'wind'; el.append(cv);
+  const d = devicePixelRatio || 1; cv.width = W * d; cv.height = H * d; cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.style.left = -PL + 'px'; cv.style.top = -PAD + 'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(d, 0, 0, d, 0, 0);
+  // the shape of the text : each word drawn where it sits, in its own font
+  const words = [...el.querySelectorAll('.w')], fs = parseFloat(getComputedStyle(words[0] || el).fontSize) || 16;
+  const C = Math.max(5, Math.round(fs / 4.6)), glyphs = C >= 8, off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d');
+  for (const w of words) { const r = w.getBoundingClientRect(), cs = getComputedStyle(w); o.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; o.letterSpacing = cs.letterSpacing; o.textBaseline = 'alphabetic';
+    o.fillText(w.textContent, r.left - box.left + PL, r.top - box.top + PAD + parseFloat(cs.fontSize) * 0.86); }
+  const px = o.getImageData(0, 0, W, H).data, hh = (x, y, s) => { const v = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453; return v - Math.floor(v); };
+  const parts = [];
+  for (let y = 0; y + C <= H; y += C) for (let x = PL; x + C <= W; x += C) {
+    let a = 0; for (let j = 1; j < C; j += 2) for (let i = 1; i < C; i += 2) a += px[((y + j) * W + x + i) * 4 + 3];
+    a /= Math.ceil(C / 2) ** 2 * 255; if (a > 0.28) parts.push({ x, y, r: hh(x, y, seed), g: hh(x, y, seed + 9), q: hh(x, y, seed + 4) });
+  }
+  const GL = ['S', 'X', '%', 't', '8', '@', '#'], css = getComputedStyle(document.documentElement), ink = css.getPropertyValue('--mira-text').trim() || '#0a0a0a', paper = css.getPropertyValue('--mira-bg').trim() || '#fff';
+  ctx.font = `700 ${Math.max(6, C - 2)}px ui-monospace, Menlo, monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const t0 = performance.now(), FLY = 0.7, LAND = 0.85, OUT = 0.3; let landed = false;
+  const frame = (now) => {
+    if (!cv.isConnected) return;
+    // quick : under a second from the first bird to the text
+    const t = (now - t0) / 1000 * 1.7; ctx.clearRect(0, 0, W, H);
+    if (!landed && t > LAND) { landed = true; el.classList.remove('forming'); onLand && onLand(); }
+    const fade = t > LAND ? Math.max(0, 1 - (t - LAND) / OUT) : 1;
+    for (const p of parts) {
+      // the gust : from just left of the line, the left of the text first
+      const delay = p.r * 0.22 + ((p.x - PL) / Math.max(1, box.width)) * 0.3, e = Math.min(1, Math.max(0, (t - delay) / FLY)); if (e <= 0) continue;
+      const k = 1 - Math.pow(1 - e, 3), D = 40 + p.q * 120 + (p.x - PL) * 0.15;
+      const X = p.x - (1 - k) * D, Y = p.y + (1 - k) * (p.g - 0.5) * 24 + Math.sin(e * Math.PI) * 4;
+      if (e < 0.72) {
+        // a small bird on the way, its wings beating
+        ctx.globalAlpha = (0.35 + 0.4 * p.g) * fade; ctx.fillStyle = ink;
+        if (glyphs) { const flap = Math.sin(now / 80 + p.x * 0.3 + p.y); ctx.fillText(flap > 0.35 ? 'v' : flap < -0.35 ? '^' : '-', X + C / 2, Y + C / 2); }
+        else ctx.fillRect(X + 1, Y + C / 2 - 0.5, C - 2, 1.5);
+        continue;
+      }
+      // landed : a plain light square, no symbol, so the step to the text stays simple
+      const land = Math.min(1, (e - 0.72) / 0.28);
+      ctx.globalAlpha = land * fade * (0.18 + 0.14 * p.g); ctx.fillStyle = ink; ctx.fillRect(X + 1, Y + 1, C - 2, C - 2);
+    }
+    if (fade > 0) requestAnimationFrame(frame); else cv.remove();
+  };
+  requestAnimationFrame(frame);
+};
+// the titles : the opening's at once, the others when they are seen ; their words then come out of the blur
+document.querySelectorAll('[data-form]').forEach((el, i) => {
+  const go = () => formText(el, 40 + i, () => el.classList.add('in'));
+  if (el.closest('.hero')) { setTimeout(go, 150); return; }
+  new IntersectionObserver(([e], o) => { if (!e.isIntersecting) return; o.disconnect(); go(); }, { rootMargin: '0px 0px -12% 0px' }).observe(el);
 });
+// the pictures only rise in (their cell's reveal) : the tiles are for the titles and the faq's answers
+
 
 const rows = [...document.querySelectorAll('.eq')];
-const openRow = (r) => { if (r.classList.contains('on')) return; rows.forEach((x) => x.classList.toggle('on', x === r)); tileReveal(r.querySelector('p'), rows.indexOf(r)); };
+const openRow = (r) => { if (r.classList.contains('on')) return; rows.forEach((x) => x.classList.toggle('on', x === r)); formText(r.querySelector('p .tx'), rows.indexOf(r)); };
 rows.forEach((r) => { r.addEventListener('mouseenter', () => openRow(r)); r.addEventListener('focus', () => openRow(r)); r.addEventListener('click', () => openRow(r)); });
 
 /* ---------- the footer's name : "Mira" across the whole width, made of tiles like the birds, light and frayed at the edges ; the tiles part under the mouse */

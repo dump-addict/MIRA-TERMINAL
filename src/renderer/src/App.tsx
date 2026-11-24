@@ -1,19 +1,19 @@
 /* Mira Terminal shell : projects on the left, panes of tabs (terminals, agents, notes, the map), status bar */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { WifiOff, ChevronLeft, ChevronRight, ChevronsRight, ShieldOff, Hand, ListTodo, GitPullRequest, FolderGit2, FolderOpen, FolderPlus, GitBranch, Map as MapIcon, PanelLeft, Plus, FileText, FileCode2, Search, Settings as Gear, Coffee, Puzzle, Mic, SquareTerminal, Sparkles, X } from 'lucide-react'
+import { WifiOff, ChevronLeft, ChevronRight, ChevronsRight, ShieldOff, ListTodo, GitPullRequest, FolderOpen, GitBranch, Map as MapIcon, PanelLeft, Plus, FileText, FileCode2, Search, Settings as Gear, Coffee, Puzzle, Mic, SquareTerminal, Sparkles, X } from 'lucide-react'
 import { TerminalView } from './TerminalView'
 import { NoteView } from './NoteView'
 import { EditorView } from './EditorView'
 import { Explorer } from './Explorer'
 import { MapView, postToMap, fromMap } from './MapView'
 import { Welcome } from './Welcome'
-import { IconButton, Label, PrimaryButton, Row, SecondaryButton, ICON } from './ui'
+import { IconButton, PrimaryButton, Row, SecondaryButton, ICON } from './ui'
 import { AgentIcon, NewMenu, UsageMeters, listAgents } from './agents'
 import * as L from './layout'
 import { Palette, actionIcons } from './Palette'
 import { SettingsPage } from './SettingsPage'
 import { PortsMeter } from './Ports'
-import { KindIcon, StatusIcon } from './kinds'
+import { KindIcon } from './kinds'
 import { type Part } from './tasks'
 import { TodoPage, isOpen, type TodoFilter } from './TodoPage'
 import { ReviewsPage } from './ReviewsPage'
@@ -76,7 +76,6 @@ export function App() {
   const [settingsSection, setSettingsSection] = useState('general')
   const [version, setVersion] = useState<string>()
   const st = useSettings()
-  const mapOn = st?.mapEnabled !== false
   // keep the computer awake while an agent tab is open (or always, or never : set from the status bar)
   const agentsOpen = tabs.some((t) => t.agent)
   const awakeMode = st?.keepAwake ?? 'agents'

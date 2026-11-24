@@ -65,14 +65,16 @@ def ask(prompt: str, model: str | None = None, effort: str | None = "", timeout=
             cmd = [A.bin, "-p", "--output-format", "text", "--mode", "ask", "--trust"] + (["--model", model] if model else [])
         elif agent == "copilot":
             # its prompt is an argument, not standard input: a part too large for a command line cannot be sent
-            if len(text) > 180_000:
+            # Windows cuts a command line at 32 767 characters (8 191 through the copilot.cmd shim)
+            if len(text) > (7_000 if sys.platform == "win32" else 120_000):
                 return {"result": "", "wall": 0, "error": "part too large for this agent"}
             cmd, text = [A.bin, "--no-color"] + (["--model", model] if model else []) + ["-p", text], ""
         elif agent == "grok":
-            # headless, no tool is approved: it can only answer. Its prompt is an argument too
-            if len(text) > 180_000:
-                return {"result": "", "wall": 0, "error": "part too large for this agent"}
-            cmd, text = [A.bin, "--no-auto-update", "--output-format", "plain"] + (["--model", model] if model else []) + ["-p", text], ""
+            # headless, no tool is approved: it can only answer. The prompt goes through a file (a command line is too short)
+            prompt_file = out_file + ".prompt"
+            with open(prompt_file, "w", encoding="utf-8") as fh:
+                fh.write(text)
+            cmd, text = [A.bin, "--no-auto-update", "--output-format", "plain"] + (["--model", model] if model else []) + ["--prompt-file", prompt_file], ""
         else:
             return {"result": "", "wall": 0, "error": f"unknown agent {agent}"}
     try:
@@ -81,6 +83,8 @@ def ask(prompt: str, model: str | None = None, effort: str | None = "", timeout=
         STATS["errors"].append(str(e)[:200])
         return {"result": "", "wall": time.time() - t0, "error": str(e)[:200]}
     STATS["calls"] += 1
+    if os.path.exists(out_file + ".prompt"):
+        os.remove(out_file + ".prompt")
     if agent != "claude":
         res = ""
         if agent == "codex" and os.path.exists(out_file):
@@ -602,7 +606,6 @@ def run():
 
     # --- mechanical assembly --------------------------------------------------------------------------------------
     nodes, where, extmap, alias = build_nodes(d, o, pblocks)
-    gids0 = [g[0] for g in d.get("groups", []) if isinstance(g, list) and len(g) >= 4]
     ranges = defaultdict(list)   # path -> [(start, end, node)]
     known = set(SRC) | set(TESTS)
     for i, b in enumerate(pblocks):

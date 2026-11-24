@@ -11,7 +11,7 @@ const MAX = 5 * 1024 * 1024
 /* the project a path belongs to, or null : every file call checks it */
 function rootOf(p: string): string | null {
   const r = resolve(p)
-  if (r.split(sep).includes('.git')) return null
+  if (r.split(sep).some((x) => x.toLowerCase() === '.git')) return null
   const pr = listProjects().map((x) => resolve(x.path)).filter((x) => r === x || r.startsWith(x + sep)).sort((a, b) => b.length - a.length)[0]
   // a link inside the project (docs/setup.md -> ~/.ssh/config) would reach outside it
   return pr && noLinks(pr, r) ? pr : null

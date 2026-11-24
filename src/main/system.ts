@@ -1,5 +1,5 @@
 /* System : session restore file, open a project in another app, launch at login, menu bar icon, global shortcut */
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, shell, Tray } from 'electron'
+import { app, globalShortcut, ipcMain, Menu, nativeImage, shell, Tray } from 'electron'
 import { execFile } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -39,8 +39,8 @@ function apply(s: Settings): void {
   }
   if (!s.menuBarIcon && tray) { tray.destroy(); tray = null }
   // a global shortcut brings Mira to the front from any app
-  if (shortcut && shortcut !== s.summonShortcut) { globalShortcut.unregister(shortcut); shortcut = null }
-  if (s.summonShortcut !== 'off' && !shortcut) { try { if (globalShortcut.register(s.summonShortcut, show)) shortcut = s.summonShortcut } catch { /* taken */ } }
+  if (shortcut && shortcut !== s.summonShortcut) { globalShortcut.unregister(shortcut.replace('Command+', 'CommandOrControl+')); shortcut = null }
+  if (s.summonShortcut !== 'off' && !shortcut) { try { if (globalShortcut.register(s.summonShortcut.replace('Command+', 'CommandOrControl+'), show)) shortcut = s.summonShortcut } catch { /* taken */ } }
 }
 
 export function registerSystem(create: () => void): void {

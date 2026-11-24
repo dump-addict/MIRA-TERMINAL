@@ -51,6 +51,7 @@ function start(root: string): Promise<string> {
 function launch(root: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const proc = spawn(PYTHON, [join(skillDir(), 'server.py'), '--root', root, '--port', '4710', '--no-open'], {
+      windowsHide: true,
       env: { ...process.env, MIRA_EMBEDDED: '1', MIRA_TRUSTED: isTrusted(root) ? '1' : '0', PYTHONUNBUFFERED: '1' }
     })
     let done = false

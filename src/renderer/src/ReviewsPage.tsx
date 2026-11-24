@@ -4,6 +4,7 @@ import { ExternalLink, FolderGit2, GitBranch, GitPullRequest, GitPullRequestDraf
 import type { ProjectInfo, Pull, Reviews } from '../../preload'
 import { AgentIcon } from './agents'
 import { IconButton, PrimaryButton, SecondaryButton, ICON } from './ui'
+import { platform } from './platform'
 
 const ago = (iso: string) => {
   const s = (Date.now() - new Date(iso).getTime()) / 1000
@@ -39,7 +40,7 @@ export function ReviewsPage({ projects, reviews, loading, onRefresh, onReview, o
             <div className="flex items-center gap-3 rounded-md border border-line-strong p-4">
               <GitPullRequest size={18} className="shrink-0 text-text-2" />
               <div className="min-w-0 flex-1"><div className="text-body text-text">Connect GitHub</div><div className="text-meta text-text-3">The GitHub command line tool is not installed</div></div>
-              <PrimaryButton onClick={() => onRun('brew install gh && gh auth login', 'Install GitHub')}>Install and connect</PrimaryButton>
+              <PrimaryButton onClick={() => onRun(`${platform === 'win32' ? 'winget install --id GitHub.cli -e' : platform === 'linux' ? 'echo "Install gh with your package manager: https://github.com/cli/cli#installation"' : 'brew install gh'} && gh auth login`, 'Install GitHub')}>Install and connect</PrimaryButton>
             </div>
           )}
           {!noGh && signedOut && (

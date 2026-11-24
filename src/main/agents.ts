@@ -32,7 +32,7 @@ const FLAGS: Record<string, Partial<Record<'default' | 'edits' | 'plan' | 'yolo'
 
 const sh = posixShell()
 const run = (file: string, args: string[], timeout = 5000) =>
-  new Promise<string>((res) => execFile(file, args, { timeout }, (_err, out) => res(String(out ?? "").trim())))
+  new Promise<string>((res) => execFile(file, args, { windowsHide: true, timeout }, (_err, out) => res(String(out ?? "").trim())))
 
 // an interactive login shell knows the user's full PATH (a GUI app does not) : each agent is resolved to its full path
 async function installed(): Promise<Record<string, string>> {

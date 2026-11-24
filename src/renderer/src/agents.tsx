@@ -63,7 +63,7 @@ export function NewMenu({ onClose, onTerminal, onAgent, onNote, onMap, onAddAgen
     ...tabs.filter((t) => t.title.toLowerCase().includes(ql)).map((t) => ({ id: `tab${t.key}`, label: t.title, icon: <ArrowRight size={ICON} />, hint: 'Open tab', run: () => onTab(t.key) })),
     ...kinds.filter((k) => k.label.toLowerCase().includes(ql)).map((k) => ({ ...k, icon: <span className="scale-[.875]">{k.icon}</span>, hint: k.hint ?? 'New' })),
     ...agents.filter((a) => a.label.toLowerCase().includes(ql) || a.cmd.includes(ql)).map((a) => ({ id: a.id, label: a.label, icon: <AgentIcon id={a.id} />, off: !a.installed, hint: a.installed ? undefined : 'Not installed', run: () => onAgent(a) }))
-  ] : shown.map((a, i) => ({ id: a.id, label: a.label, icon: <AgentIcon id={a.id} />, hint: kbd(`⌘⇧${agents.indexOf(a) + 1}`), run: () => onAgent(a) }))
+  ] : shown.map((a) => ({ id: a.id, label: a.label, icon: <AgentIcon id={a.id} />, hint: kbd(`⌘⇧${agents.indexOf(a) + 1}`), run: () => onAgent(a) }))
   const live = list.filter((x) => !x.off)
   const pick = (x?: Item) => { if (x && !x.off) { x.run(); onClose() } }
   useEffect(() => {

@@ -49,7 +49,7 @@ function countFiles(dir: string, budget = { n: 4000 }): number {
   }
   return c
 }
-function keyFiles(root: string, rel: string, files: string[]) {
+function keyFiles(rel: string, files: string[]) {
   const pick = files.filter((f) => KEY_FILES.test(f)).concat(files.filter((f) => !KEY_FILES.test(f))).slice(0, 5)
   return pick.map((f) => ({ path: rel ? `${rel}/${f}` : f, role: '' }))
 }
@@ -81,12 +81,12 @@ export function buildStructureMap(root: string) {
     const id = slug(d)
     const sub = list(join(root, d))
     const n = countFiles(join(root, d))
-    nodes.push({ id, label: d, group, kind, status: 'live', summary: `${n} file${n === 1 ? '' : 's'}`, files: keyFiles(root, d, sub.files), tech: [] })
+    nodes.push({ id, label: d, group, kind, status: 'live', summary: `${n} file${n === 1 ? '' : 's'}`, files: keyFiles(d, sub.files), tech: [] })
     // subfolders: folded into their parent in the "Essential" view
     for (const s of sub.dirs.slice(0, 12)) {
       const sn = countFiles(join(root, d, s))
       const ss = list(join(root, d, s))
-      nodes.push({ id: `${id}--${slug(s)}`, parent: id, label: s, group, kind, status: 'live', summary: `${sn} file${sn === 1 ? '' : 's'}`, files: keyFiles(root, `${d}/${s}`, ss.files), tech: [] })
+      nodes.push({ id: `${id}--${slug(s)}`, parent: id, label: s, group, kind, status: 'live', summary: `${sn} file${sn === 1 ? '' : 's'}`, files: keyFiles(`${d}/${s}`, ss.files), tech: [] })
     }
   }
   // root files: a "Root" block if any are useful

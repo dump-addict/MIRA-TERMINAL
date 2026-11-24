@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Object workshop</title>
+<link rel="stylesheet" href="/viewer/tokens.css">
+<script type="importmap">{ "imports": { "three": "/viewer/vendor/three.module.min.js" } }</script>
+<style>
+  :root { --bg: var(--mira-bg); --chrome: var(--mira-chrome, #000); --bg2: var(--mira-surface-2); --card: var(--mira-surface-1); --line: var(--mira-line); --line2: var(--mira-line-strong);
+    --text: var(--mira-text); --text2: var(--mira-text-2); --muted: var(--mira-text-3); --accent: var(--mira-accent); --accent-text: var(--mira-accent-text); --sans: var(--mira-font); }
+  :root[data-amb="light"] { --bg: #eceaf4; --chrome: #eceaf4; --bg2: #ffffff; --card: #f7f6fb; --line: #dedbe9; --line2: #c9c4dc; --text: #24222f; --text2: #57536b; --muted: #8a87a0; --accent: #24222f; --accent-text: #ffffff; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 400 13px/20px var(--sans); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 20px; background: var(--chrome); border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+  .grow { flex: 1; }
+  .seg { display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 2px; }
+  .seg button { border: 0; background: none; padding: 3px 10px; border-radius: 4px; color: var(--text2); font-weight: 500; transition: background-color 120ms ease-out, color 120ms ease-out; }
+  .seg button.on { background: var(--line2); color: var(--text); }
+  .btn { height: 30px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); padding: 0 12px; border-radius: 6px; font-weight: 500; transition: background-color 120ms ease-out; }
+  .btn:hover { background: var(--mira-accent-hover); }
+  #picked { color: var(--text2); font-size: 12px; }
+  main { padding: 8px 20px 60px; max-width: 1180px; margin: 0 auto; }
+  section { padding: 18px 0 6px; border-bottom: 1px solid var(--line); }
+  section h2 { margin: 0 0 10px; font-size: 14px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+  section h2 code { font: 500 11px var(--mira-font-code); color: var(--muted); }
+  .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .cell { border: 1px solid var(--line); border-radius: 8px; background: var(--card); overflow: hidden; transition: border-color 120ms ease-out; }
+  .cell.on { border-color: var(--mira-accent-line); }
+  .view { height: 250px; cursor: grab; touch-action: none; }
+  .view:active { cursor: grabbing; }
+  .foot { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--line); }
+  .letter { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 4px; background: var(--line); font-weight: 600; font-size: 12px; }
+  .cell.on .letter { background: var(--accent); color: var(--accent-text); }
+  .name { flex: 1; font-weight: 500; }
+  .pick { border: 1px solid var(--line2); background: none; border-radius: 6px; padding: 3px 10px; font-weight: 500; color: var(--text2); transition: background-color 120ms ease-out, color 120ms ease-out; }
+  .cell.on .pick { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+  canvas#c { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+  @media (max-width: 760px) { .row { grid-template-columns: 1fr; } header { padding: 0 16px; } main { padding: 8px 16px 60px; } #picked { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Object workshop</h1>
+  <div class="seg" id="amb"><button data-amb="dark">Dark</button><button data-amb="light">Light</button></div>
+  <div class="grow"></div>
+  <span id="picked"></span>
+  <button class="btn" id="copy">Copy my picks</button>
+</header>
+<main id="list"></main>
+<canvas id="c"></canvas>
+<script type="module" src="/viewer/workshop.js"></script>
+</body>
+</html>

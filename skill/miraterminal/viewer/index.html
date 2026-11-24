@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mira Terminal</title>
+<link rel="stylesheet" href="/viewer/tokens.css">
+<link rel="stylesheet" href="/viewer/style.css">
+<script type="importmap">{ "imports": { "three": "/viewer/vendor/three.module.min.js" } }</script>
+</head>
+<body data-token="__TOKEN__">
+<header class="bar">
+  <button class="ibtn" id="side-toggle" title="Side panel"></button>
+  <div class="brand"><span class="logo"></span><span id="pname">Mira Terminal</span></div>
+  <div class="seg" id="mode">
+    <button data-mode="2d" class="on">Diagram</button>
+    <button data-mode="3d">3D</button>
+  </div>
+  <div class="seg" id="depth">
+    <button data-depth="essential" class="on">Essential</button>
+    <button data-depth="all">All</button>
+  </div>
+  <div class="grow"></div>
+  <div class="counts" id="counts"></div>
+  <label class="search"><span id="search-ic"></span><input id="search" placeholder="Search" autocomplete="off" spellcheck="false"></label>
+  <button class="btn" id="recheck" title="Rerun checks (R)"><span class="spin"></span>Check</button>
+</header>
+
+<aside id="side">
+  <div class="side-in">
+    <div id="psum" class="side-sum"></div>
+    <div class="side-sec">
+      <div class="side-h">Flows</div>
+      <div id="flows"></div>
+    </div>
+    <div class="side-sec">
+      <div class="side-h">Watch list</div>
+      <div id="issues"></div>
+    </div>
+  </div>
+</aside>
+
+<main id="stage">
+  <div id="d2" class="view">
+    <div id="world">
+      <div id="zones"></div>
+      <svg id="edges" width="1" height="1"></svg>
+      <div id="elabels"></div>
+      <div id="cards"></div>
+    </div>
+  </div>
+  <div id="d3" class="view" hidden></div>
+  <div id="zoomctl">
+    <button class="ibtn" data-z="in" title="Zoom in"></button>
+    <button class="ibtn" data-z="out" title="Zoom out"></button>
+    <button class="ibtn" data-z="fit" title="Show the whole map (F)"></button>
+    <button class="ibtn" data-z="reset" title="Put the blocks back where they were drawn"></button>
+  </div>
+  <div id="flowbar" hidden></div>
+  <div id="empty" hidden>
+    <div class="empty-card"><div class="empty-title">No map yet</div><code>/miraterminal</code></div>
+  </div>
+</main>
+
+<div id="tip" hidden></div>
+<aside id="panel" hidden>
+  <div class="ph"><span class="kind" id="pkind"></span><button class="ibtn" id="pclose" title="Close (Esc)"></button></div>
+  <div id="pbody"></div>
+</aside>
+<div id="toast" hidden></div>
+
+<script type="module" src="/viewer/app.js"></script>
+</body>
+</html>

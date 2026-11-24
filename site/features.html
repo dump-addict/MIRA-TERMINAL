@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Features, Mira Terminal</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<meta name="description" content="Everything Mira Terminal does: every agent side by side, a live diagram of your code, tasks, reviews and the tools around them. A free, open source terminal for Claude Code, Codex, Gemini and every coding agent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* the same tokens as the app (skill/miraterminal/viewer/tokens.css) */
+  :root {
+    --mira-bg: #000000; --mira-text: #ededed; --mira-text-2: #a1a1a1; --mira-text-3: #6b6b6b;
+    --mira-line: #1f1f1f; --mira-line-2: #2e2e2e; --mira-surface: #0a0a0a; --mira-surface-2: #141414;
+    --mira-ok: #45dd8a; --radius: 12px; --page: 1680px;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { background: var(--mira-bg); color-scheme: dark; scroll-behavior: smooth; }
+  body { background: var(--mira-bg); color: var(--mira-text); font: 400 15px/1.55 Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  code, pre { font-family: "Geist Mono", ui-monospace, Menlo, monospace; }
+  .wrap { max-width: var(--page); margin: 0 auto; padding: 0 clamp(20px, 2.2vw, 32px); }
+
+  /* navigation */
+  nav { position: sticky; top: 0; z-index: 20; background: rgba(0,0,0,.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--mira-line); }
+  nav .wrap { display: flex; align-items: center; gap: 28px; height: 56px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+  .brand svg { width: 22px; height: 18px; }
+  nav .links { display: flex; gap: 22px; color: var(--mira-text-2); font-size: 14px; }
+  nav .links a:hover { color: var(--mira-text); }
+  nav .right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 9px; font-weight: 500; font-size: 14px; border: 1px solid var(--mira-line-2); color: var(--mira-text); background: transparent; cursor: pointer; transition: background .15s, border-color .15s; }
+  .btn:hover { background: var(--mira-surface-2); border-color: #3a3a3a; }
+  .btn.primary { background: var(--mira-text); color: #000; border-color: var(--mira-text); }
+  .btn.primary:hover { background: #fff; }
+  .btn.lg { height: 46px; padding: 0 20px; font-size: 15px; border-radius: 11px; }
+  .btn svg { width: 16px; height: 16px; }
+
+  /* hero, over the birds of the app's home page */
+  .hero { position: relative; overflow: hidden; padding: 64px 0 48px; border-bottom: 1px solid var(--mira-line); }
+  .hero .sky { position: absolute; inset: 0; pointer-events: none; }
+  .hero .sky .grid, .hero .sky canvas { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+  .hero .sky .grid { opacity: .38; background-image: linear-gradient(var(--mira-line) 1px, transparent 1px), linear-gradient(90deg, var(--mira-line) 1px, transparent 1px); background-size: 12px 12px; }
+  .hero .sky { --fade: radial-gradient(ellipse 42% 34% at 50% 30%, rgba(0,0,0,.35) 30%, #000 100%); }
+  .hero .wrap { position: relative; text-align: center; }
+  h1 { font-size: clamp(36px, 6.4vw, 68px); line-height: 1.04; letter-spacing: -0.04em; font-weight: 600; text-wrap: balance; }
+  h1 span { color: var(--mira-text-2); }
+  .lead { max-width: 620px; margin: 22px auto 0; color: var(--mira-text-2); font-size: 17px; text-wrap: pretty; }
+  .cta { display: flex; justify-content: center; gap: 10px; margin-top: 26px; flex-wrap: wrap; }
+  .note { margin-top: 14px; color: var(--mira-text-3); font-size: 13px; }
+  .shot { position: relative; margin: 40px auto 0; max-width: var(--page); padding: 0 clamp(20px, 2.2vw, 32px); }
+  .shot img { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--mira-line-2); box-shadow: 0 40px 120px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.02); }
+
+  /* sections */
+  section.block { padding: 64px 0; border-bottom: 1px solid var(--mira-line); }
+  .eyebrow { color: var(--mira-text-3); font-size: 13px; font-weight: 500; margin-bottom: 14px; }
+  h2 { font-size: clamp(28px, 4vw, 42px); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; max-width: 720px; text-wrap: balance; }
+  h2 span { color: var(--mira-text-2); }
+  .sub { margin-top: 14px; max-width: 600px; color: var(--mira-text-2); font-size: 16px; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 32px; background: var(--mira-line); border: 1px solid var(--mira-line); border-radius: var(--radius); overflow: hidden; }
+  .card { background: var(--mira-bg); padding: 28px 26px 30px; }
+  .card .ico { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--mira-line-2); border-radius: 9px; margin-bottom: 18px; color: var(--mira-text); }
+  .card .ico svg { width: 17px; height: 17px; }
+  .card h3 { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+  .card p { margin-top: 6px; color: var(--mira-text-2); font-size: 14px; }
+
+  .split { display: grid; grid-template-columns: 1fr 1.5fr; gap: 56px; align-items: center; }
+  .split img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--mira-line-2); }
+  .ticks { list-style: none; padding: 0; margin-top: 26px; display: grid; gap: 12px; }
+  .ticks li { display: flex; gap: 12px; color: var(--mira-text-2); font-size: 15px; }
+  .ticks li b { color: var(--mira-text); font-weight: 500; }
+  .ticks svg { flex: none; width: 16px; height: 16px; margin-top: 3px; color: var(--mira-text); }
+
+  .agents { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+  .agents span { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border: 1px solid var(--mira-line-2); border-radius: 999px; font-size: 14px; color: var(--mira-text); }
+
+  /* download */
+  .platforms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 28px; }
+  .platform { border: 1px solid var(--mira-line-2); border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; gap: 6px; }
+  .platform h3 { font-size: 16px; font-weight: 500; }
+  .platform p { color: var(--mira-text-2); font-size: 14px; }
+  .platform .soon { margin-top: 12px; color: var(--mira-text-3); font-size: 13px; }
+  pre.run { margin-top: 18px; padding: 18px 20px; border: 1px solid var(--mira-line-2); border-radius: var(--radius); background: var(--mira-surface); color: var(--mira-text); font-size: 13.5px; line-height: 1.8; overflow-x: auto; }
+  pre.run .c { color: var(--mira-text-3); }
+
+  /* questions */
+  .faq { margin-top: 28px; border-top: 1px solid var(--mira-line); }
+  details { border-bottom: 1px solid var(--mira-line); padding: 20px 0; }
+  summary { list-style: none; cursor: pointer; font-size: 16px; font-weight: 500; display: flex; justify-content: space-between; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--mira-text-3); font-weight: 400; }
+  details[open] summary::after { content: "−"; }
+  details p { margin-top: 10px; color: var(--mira-text-2); max-width: 720px; }
+
+  .end { text-align: center; padding: 72px 0; }
+  .end h2 { margin: 0 auto; }
+  footer { padding: 40px 0 60px; color: var(--mira-text-3); font-size: 13px; }
+  footer .wrap { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+  footer a:hover { color: var(--mira-text); }
+
+  @media (max-width: 860px) {
+    nav .links { display: none; }
+    .hero { padding: 48px 0 36px; }
+    .grid3, .platforms { grid-template-columns: 1fr; }
+    .split { grid-template-columns: 1fr; gap: 32px; }
+    section.block { padding: 48px 0; }
+    .shot { padding: 0 16px; margin-top: 44px; }
+  }
+
+  /* features page */
+  .top { padding: 56px 0 40px; border-bottom: 1px solid var(--mira-line); text-align: center; }
+  .top .lead { margin-top: 16px; }
+  .feat { padding: 52px 0; border-bottom: 1px solid var(--mira-line); }
+  .feat .head { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: end; }
+  .feat .head p { color: var(--mira-text-2); font-size: 16px; max-width: 520px; }
+  .feat .grid3 { margin-top: 28px; }
+  .feat .card h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .feat .shot2 { margin-top: 28px; }
+  .feat .shot2 img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--mira-line-2); }
+  .index { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 24px; }
+  .index a { display: inline-flex; align-items: center; height: 32px; padding: 0 13px; border: 1px solid var(--mira-line-2); border-radius: 999px; font-size: 13px; color: var(--mira-text-2); }
+  .index a:hover { color: var(--mira-text); border-color: #3a3a3a; }
+  @media (max-width: 860px) { .feat .head { grid-template-columns: 1fr; gap: 12px; } .feat { padding: 40px 0; } }
+
+  /* showcase : one card per feature, a piece of the real app on top, its name and one sentence under it */
+  .show { padding: 44px 0 52px; border-bottom: 1px solid var(--mira-line); }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .fcard { border: 1px solid var(--mira-line-2); border-radius: 16px; overflow: hidden; background: var(--mira-surface); display: flex; flex-direction: column; }
+  .fcard .pic { height: 250px; overflow: hidden; border-bottom: 1px solid var(--mira-line); background: #000; }
+  .fcard .pic img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: left top; }
+  .fcard .pic.fit img { object-fit: contain; object-position: center; padding: 0 18px; }
+  .fcard .txt { padding: 22px 24px 26px; }
+  .fcard h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; }
+  .fcard p { margin-top: 8px; color: var(--mira-text-2); font-size: 15px; }
+  @media (max-width: 860px) { .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="index.html"><svg viewBox="0 0 164 136" fill="currentColor" aria-hidden="true"><polygon points="0,136 26,136 68,0 42,0"/><polygon points="48,136 74,136 98,58 72,58"/><polygon points="96,136 122,136 164,0 138,0"/></svg>Mira</a>
+    <div class="links"><a href="features.html">Features</a><a href="index.html#agents">Agents</a><a href="index.html#download">Download</a><a href="index.html#faq">FAQ</a></div>
+    <div class="right">
+      <a class="btn" href="https://github.com/dump-addict/MIRA-TERMINAL"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.4-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>GitHub</a>
+      <a class="btn primary" href="index.html#download">Download</a>
+    </div>
+  </div>
+</nav>
+
+<header class="top">
+  <div class="wrap">
+    <h1>Everything it does.<br><span>In one window.</span></h1>
+    <p class="lead">Mira Terminal brings your coding agents, your projects and your tasks together. Here is all of it, part by part.</p>
+    <div class="index"><a href="#agents">Agents</a><a href="#box">Message box</a><a href="#map">Architecture diagram</a><a href="#tasks">Tasks</a><a href="#tools">Around the work</a><a href="#safety">Safety</a></div>
+  </div>
+</header>
+
+<section class="show">
+  <div class="wrap">
+    <div class="cards">
+      <article class="fcard"><div class="pic "><img src="img/f-agents.jpg" alt="Every agent, side by side" loading="lazy"></div><div class="txt"><h3>Every agent, side by side</h3><p>Claude Code on top, Codex under it, Gemini in the next tab. Split the window the way the work needs.</p></div></article>
+      <article class="fcard"><div class="pic "><img src="img/f-map.jpg" alt="A live diagram of your code" loading="lazy"></div><div class="txt"><h3>A live diagram of your code</h3><p>Mira reads the project and draws how it is built. Every link is proven by a line of the code.</p></div></article>
+      <article class="fcard"><div class="pic fit"><img src="img/f-sidebar.jpg" alt="All your projects open" loading="lazy"></div><div class="txt"><h3>All your projects open</h3><p>Each project keeps its agents, its terminals and its tasks. Jump from one to the other in a click.</p></div></article>
+      <article class="fcard"><div class="pic "><img src="img/f-tasks.jpg" alt="Tasks you can hand over" loading="lazy"></div><div class="txt"><h3>Tasks you can hand over</h3><p>A board for every project. Give a task to an agent and start it from its card.</p></div></article>
+      <article class="fcard"><div class="pic fit"><img src="img/f-box.jpg" alt="A message box per agent" loading="lazy"></div><div class="txt"><h3>A message box per agent</h3><p>Files, screenshots and dictation go in like a paste. The keyboard never leaves the terminal.</p></div></article>
+      <article class="fcard"><div class="pic fit"><img src="img/f-usage.jpg" alt="Your limits at a glance" loading="lazy"></div><div class="txt"><h3>Your limits at a glance</h3><p>How much of each account is used, right in the status bar.</p></div></article>
+    </div>
+  </div>
+</section>
+
+<section class="feat" id="agents">
+  <div class="wrap">
+    <div class="head"><div><div class="eyebrow">Agents</div><h2>Every agent, <span>side by side.</span></h2></div><p>Claude Code, Codex, Gemini, Cursor, Copilot and Grok run in the same window, each in its own tab. No more hunting through terminal windows to find which one is waiting for you.</p></div>
+    <div class="grid3"><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Five agents, one window</h3><p>Open any of them in a tab, split the window in panes, or open a second window for another project.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>See who needs you</h3><p>A tab shows when its agent is working, when it waits for your answer and when it is done. A sound or a notification can tell you too.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Your limits at a glance</h3><p>The bar at the bottom shows how much of your session and weekly limit is used, and when it resets.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Several accounts</h3><p>Keep a work and a personal account for Claude and for Codex, and switch in one click.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>The model you choose</h3><p>Each agent uses its own default model, or the one you set for it in Mira. One model, never a mix.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Your rules for every agent</h3><p>Ask first, accept edits, plan only: set it once for all agents, or agent by agent.</p></div></div>
+  </div>
+</section>
+
+<section class="feat" id="box">
+  <div class="wrap">
+    <div class="head"><div><div class="eyebrow">Message box</div><h2>Type like in the app, <span>keep the terminal.</span></h2></div><p>Under each agent sits a message box shaped like that agent's own app. The keyboard stays in the terminal, so every command, shortcut and menu of the agent still works.</p></div>
+    <div class="grid3"><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Files and screenshots</h3><p>Drop a file, pick one, or take a screenshot: it lands in the agent's input as a path it can read.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Dictation</h3><p>Hold a key and speak. Your words are written into the input, and you check them before sending.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Always in sync</h3><p>The box shows what the agent has in its own input, with its caret, its suggestions and its warnings.</p></div></div>
+  </div>
+</section>
+
+<section class="feat" id="map">
+  <div class="wrap">
+    <div class="head"><div><div class="eyebrow">Architecture diagram</div><h2>A live diagram <span>of your code.</span></h2></div><p>Open a project and Mira draws its architecture: the apps, the services, the data stores, the outside systems and what moves between them.</p></div>
+    <div class="grid3"><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Drawn for you</h3><p>Several readers go through the code at once. The diagram shows up in about a minute on a mid-size project.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Every link is proven</h3><p>Each link carries the file and the line that shows it. A link that cannot be found in the code is not drawn.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Start from a block</h3><p>Click a block to open an agent already focused on that part: its files, its links and its open points.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Flows, step by step</h3><p>Follow a sign-in or a payment across the diagram, one step at a time.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Live status</h3><p>Blocks can show whether a service answers, a port is open or a variable is set, when you trust the project.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>2D or 3D</h3><p>A flat diagram to read, or a scene to walk through. Both follow your theme.</p></div></div>
+    <div class="shot2"><img src="img/app.jpg" alt="Mira Terminal with Claude Code in a tab and the project's live diagram on the right" width="2400" height="1500" loading="lazy"></div>
+  </div>
+</section>
+
+<section class="feat" id="tasks">
+  <div class="wrap">
+    <div class="head"><div><div class="eyebrow">Tasks</div><h2>Plan the work, <span>hand it to an agent.</span></h2></div><p>A board, a list and a table for the tasks of all your projects. A task can be given to an agent and started in one click.</p></div>
+    <div class="grid3"><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Board, list, table</h3><p>Six statuses with their colours, priorities, and a view grouped by status or by project.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>An agent per task</h3><p>Choose who does it. Start opens that agent in the project with the task as its brief.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Saved in your repository</h3><p>Tasks live in a file of the project. No server, no account, and your team gets them with the code.</p></div></div>
+    <div class="shot2"><img src="img/tasks.jpg" alt="The Tasks board across three projects" width="2400" height="1500" loading="lazy"></div>
+  </div>
+</section>
+
+<section class="feat" id="tools">
+  <div class="wrap">
+    <div class="head"><div><div class="eyebrow">Around the work</div><h2>The small things <span>you stop doing by hand.</span></h2></div><p>The tools you would otherwise keep open in five other windows.</p></div>
+    <div class="grid3"><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Reviews</h3><p>The pull requests of every project in one list, with who wrote them and where they stand.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Search everything</h3><p>Projects, tabs, files, blocks of the diagram and actions, from one box.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Files and notes</h3><p>Browse a project, open a file in an editor tab, keep notes in Markdown next to the code.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Local servers</h3><p>See which ports are open on your machine and which project started them.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Stays awake</h3><p>Your Mac does not sleep while an agent is still working.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Your theme</h3><p>Colours, fonts and terminal settings: the whole app follows, the diagram too.</p></div></div>
+  </div>
+</section>
+
+<section class="feat" id="safety">
+  <div class="wrap">
+    <div class="head"><div><div class="eyebrow">Safety</div><h2>Your code <span>stays yours.</span></h2></div><p>Mira runs on your machine. It has no server and no account, and it stores no key.</p></div>
+    <div class="grid3"><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Nothing leaves your machine</h3><p>Your code goes to your agent, as it would in any terminal, and nowhere else.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Secrets out of reach</h3><p>Agents can be kept away from .env files, private keys and cloud credentials.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Ask before deleting</h3><p>Removing files or resetting a repository asks you first, even when edits are accepted.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Trust, project by project</h3><p>A project you just cloned cannot run its own checks until you say so.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Open source</h3><p>Read the code, build it yourself, change what you want.</p></div><div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M5 12l4 4L19 7"/></svg></div><h3>Free</h3><p>No plan and no trial. You only need the agents you already use.</p></div></div>
+  </div>
+</section>
+
+<section class="end">
+  <div class="wrap">
+    <h2>All in view. <span>Your projects, agents and tasks.</span></h2>
+    <div class="cta"><a class="btn primary lg" href="index.html#download">Download</a><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL">View the code</a></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Mira Terminal</span>
+    <a href="https://github.com/dump-addict/MIRA-TERMINAL">GitHub</a>
+    <a href="index.html#faq">FAQ</a>
+    <span style="margin-left:auto">Open source</span>
+  </div>
+</footer>
+</body>
+</html>

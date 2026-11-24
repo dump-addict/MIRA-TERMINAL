@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mira Terminal</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<meta name="description" content="All in view: your projects, agents and tasks. A free, open source terminal for Claude Code, Codex, Gemini and every coding agent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+  /* One design system for the whole page (DESIGN.md, on white paper) :
+     a 1440 px frame with side hairlines, every section opened by the same head (chip, title, text),
+     content laid in cells split by 1 px lines, app fragments drawn like the app, tiles as the only pictures.
+     No blur, no gradient fills, motion on opacity and transform only. */
+  :root {
+    --mira-bg: #ffffff; --mira-text: #0a0a0a; --mira-text-2: #5c5c5c; --mira-text-3: #8f8f8f;
+    --mira-line: #ebebeb; --mira-line-2: #dedede; --mira-surface: #fafafa; --mira-surface-2: #f3f3f3; --line-hover: #c9c9c9;
+    --ok: #18a058; --warn: #e5940f; --claude: #d97757;
+    --col: 1184px; --frame: 1440px; --gut: 32px;
+    --blur: 14px;
+    --h-xl: clamp(36px, calc(38.72px + 0.9vw), 56px); --h-lg: clamp(30px, calc(28.48px + 0.75vw), 42.88px);
+    --out: cubic-bezier(.2,.7,.2,1);
+    --head: 72px;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { background: var(--mira-bg); color-scheme: light; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { background: var(--mira-bg); color: var(--mira-text); font: 400 16px/24px Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: clip; }
+  a { color: inherit; text-decoration: none; }
+  code, pre { font-family: "Geist Mono", ui-monospace, Menlo, monospace; }
+  .col { max-width: var(--col); margin: 0 auto; padding: 0 var(--gut); }
+  h1, h2, h3.big { font-weight: 500; letter-spacing: -0.032em; line-height: .99; text-wrap: balance; }
+  h1 > span:not(.w), h2 > span:not(.w), h3.big > span:not(.w) { color: var(--mira-text-2); }
+  .chip { display: inline-flex; align-items: center; height: 24px; padding: 0 6px; border-radius: 8px; border: 1px solid var(--mira-line-2); background: var(--mira-surface-2); font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: -0.01em; color: var(--mira-text-2); }
+  .txt { font-size: 17px; line-height: 28.05px; color: var(--mira-text-2); }
+
+  /* the frame and the section head, the same everywhere */
+  section { border-top: 1px solid var(--mira-line); }
+  .frame { position: relative; max-width: var(--frame); margin: 0 auto; border-left: 1px solid var(--mira-line); border-right: 1px solid var(--mira-line); }
+  .shead { padding: 144px 32px 56px; text-align: center; }
+  .shead .chip { margin-bottom: 22px; }
+  .shead h2 { font-size: var(--h-lg); max-width: 760px; margin: 0 auto; }
+  .shead .txt { max-width: 600px; margin: 22px auto 0; text-wrap: pretty; }
+  .hatch { background-image: repeating-linear-gradient(135deg, transparent 0 11px, rgba(0,0,0,.035) 11px 12px); }
+  .grid12 { background-image: linear-gradient(var(--mira-line) 1px, transparent 1px), linear-gradient(90deg, var(--mira-line) 1px, transparent 1px); background-size: var(--cell, 12px) var(--cell, 12px); }
+
+  /* cells : the content of a section, split by hairlines, edge to edge in the frame */
+  .cells { display: grid; gap: 1px; background: var(--mira-line); border-top: 1px solid var(--mira-line); }
+  .cells.c2 { grid-template-columns: repeat(2, 1fr); } .cells.c3 { grid-template-columns: repeat(3, 1fr); } .cells.c4 { grid-template-columns: repeat(4, 1fr); }
+  .cell { position: relative; overflow: hidden; background: var(--mira-bg); padding: 56px 40px 64px; text-align: center; }
+  .cell .art { position: relative; height: 260px; display: grid; place-items: center; margin-bottom: 40px; }
+  .cell .art > .grid12 { position: absolute; inset: -56px -40px 0; opacity: .6; -webkit-mask-image: radial-gradient(circle at 50% 55%, #000 15%, transparent 65%); mask-image: radial-gradient(circle at 50% 55%, #000 15%, transparent 65%); }
+  .cell h3 { font-size: 24px; line-height: 30px; font-weight: 500; letter-spacing: -0.02em; }
+  .cell p { margin: 14px auto 0; max-width: 360px; font-size: 16px; line-height: 24px; color: var(--mira-text-2); }
+
+  /* app fragments : drawn with the app's own pieces (rows 28 px, radius 6, cards radius 8, chips radius 4) */
+  .win { position: relative; width: min(320px, 100%); border: 1px solid var(--mira-line-2); border-radius: 8px; background: var(--mira-bg); text-align: left; overflow: hidden; }
+  .win.float { box-shadow: 0 8px 24px rgba(0,0,0,.06); }
+  .wh { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 12px; border-bottom: 1px solid var(--mira-line); font-size: 13px; line-height: 18px; font-weight: 500; }
+  .wh small { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--mira-text-3); }
+  .wh .sub { display: block; font-size: 12px; line-height: 16px; font-weight: 400; color: var(--mira-text-3); }
+  .wb { display: grid; gap: 4px; padding: 6px; }
+  .wt { padding: 4px 12px 12px; }
+  .wt b { display: block; font-size: 14px; line-height: 20px; font-weight: 500; }
+  .wt span { display: block; margin-top: 2px; font-size: 13px; line-height: 19px; color: var(--mira-text-2); }
+  .row { display: flex; align-items: center; gap: 10px; height: 28px; padding: 0 8px; border-radius: 6px; font-size: 13px; color: var(--mira-text-2); }
+  .row.sel { background: var(--mira-surface-2); color: var(--mira-text); }
+  .row em { margin-left: auto; font-style: normal; font-size: 12px; color: var(--mira-text-3); }
+  .row em b { font-weight: 400; color: var(--mira-text); }
+  .sd { width: 8px; height: 8px; border-radius: 0; background: var(--mira-text-3); flex: none; }
+  .tile { display: grid; place-items: center; width: 24px; height: 24px; flex: none; border-radius: 4px; background: var(--mira-text); color: var(--mira-bg); font: 700 12px/1 Geist, sans-serif; }
+  .tabs { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--mira-line); border-radius: 6px; }
+  .tabs span { flex: 1; height: 24px; line-height: 24px; text-align: center; border-radius: 4px; font-size: 12px; color: var(--mira-text-2); transition: background .18s var(--out), color .18s var(--out), box-shadow .18s var(--out); }
+  .tabs span.on { background: var(--mira-surface-2); color: var(--mira-text); box-shadow: inset 0 0 0 1px var(--mira-line-2); }
+  .tag { display: inline-flex; align-items: center; height: 22px; padding: 0 6px; border: 1px solid var(--mira-line-2); border-radius: 4px; font-size: 12px; color: var(--mira-text-2); }
+  .meter { height: 6px; border-radius: 3px; background: var(--mira-surface-2); overflow: hidden; }
+  .meter i { display: block; height: 100%; width: calc(var(--f, .62) * 100%); background: var(--mira-text); transition: width .4s var(--out); }
+  .caret { display: inline-block; width: 6px; height: 14px; margin-left: 2px; vertical-align: -2px; background: var(--mira-text); animation: caret 1s steps(1) infinite; }
+  @keyframes caret { 50% { opacity: 0; } }
+  .swap { animation: swap .3s var(--out); }
+  @keyframes swap { from { opacity: 0; transform: translateY(4px); } }
+
+  /* how things arrive : rising a little, word by word for titles */
+  .js [data-words] .w { display: inline-block; opacity: 0; filter: blur(8px); transform: translateY(.25em); transition: opacity .8s var(--out), transform .8s var(--out), filter .8s var(--out); transition-delay: calc(var(--i) * 45ms + var(--d, 0ms)); }
+  .js [data-words].in .w { filter: none; }
+  .js .astep .w { display: inline-block; opacity: 0; filter: blur(6px); transform: translateY(.2em); transition: opacity .6s var(--out), transform .6s var(--out), filter .6s var(--out); transition-delay: calc(var(--i) * 18ms); }
+  .js .astep h3 .w { transition-delay: calc(var(--i) * 50ms); }
+  .js .astep.on .w { opacity: 1; filter: none; transform: none; }
+  .js [data-words].in .w { opacity: 1; transform: none; }
+  .js .reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s var(--out), transform .7s var(--out); transition-delay: var(--d, 0ms); }
+  .js .reveal.in { opacity: 1; transform: none; }
+  .read .w { color: var(--mira-text-3); transition: color .25s; }
+  .read .w.lit { color: var(--mira-text); }
+  @media (prefers-reduced-motion: reduce) {
+    .js [data-words] .w, .js .reveal, .js .astep .w { opacity: 1; transform: none; filter: none; transition: none; } .caret { animation: none; }
+    .js .hero h1 .w { filter: none; } .js .hero .sky { opacity: 1; transform: none; transition: none; } .js .hero .stage { translate: none; }
+  }
+
+  /* navigation : solid white, a hairline once the page moves */
+  /* the header sits on the birds of the opening, and takes the page's white once the page moves */
+  header.top { position: sticky; top: 0; z-index: 20; height: var(--head); margin-bottom: calc(-1 * var(--head)); background: transparent; border-bottom: 1px solid transparent; transition: background .18s, border-color .18s; }
+  header.top.scrolled { background: var(--mira-bg); border-bottom-color: var(--mira-line); }
+  header.top .bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 100%; padding: 0 32px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 17px; }
+  .brand svg { width: 24px; height: 20px; }
+  header.top .links { display: flex; gap: 20px; }
+  header.top .links a { padding: 6px 4px; font-size: 14px; line-height: 21px; font-weight: 500; color: var(--mira-text-2); transition: color .12s; }
+  header.top .links a:hover { color: var(--mira-text); }
+  header.top .act { display: flex; justify-content: flex-end; }
+  header.top .act .btn svg { width: 14px; height: 14px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 2px; font-weight: 500; font-size: 14px; border: 1px solid var(--mira-line-2); color: var(--mira-text); background: transparent; cursor: pointer; transition: background .12s, border-color .12s; white-space: nowrap; }
+  .btn:hover { background: var(--mira-surface-2); border-color: var(--line-hover); }
+  .btn.primary { background: var(--mira-text); color: var(--mira-bg); border-color: var(--mira-text); font-size: 13px; }
+  .btn.primary:hover { background: #262626; border-color: #262626; }
+  .btn.lg { height: 40px; padding: 0 16px; font-size: 14px; border-radius: 2px; }
+  .btn.sm { height: 24px; padding: 0 8px; border-radius: 2px; font-size: 12px; }
+
+  /* opening : the text in the middle of the first screen, the top of the video showing below it.
+     The birds come in slowly and the title comes out of a blur (the only blur of the page) ;
+     as you scroll, the text goes up and out while the camera moves closer to the birds. */
+  .hero { position: relative; overflow: clip; border-top: 0; padding-top: var(--head); }
+  .sky { position: absolute; pointer-events: none; }
+  .sky .grid, .sky canvas { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+  .sky .grid { opacity: .5; background-image: linear-gradient(var(--mira-line) 1px, transparent 1px), linear-gradient(90deg, var(--mira-line) 1px, transparent 1px); background-size: 12px 12px; transform-origin: 50% 20%; transform: scale(var(--z, 1)); }
+  /* the birds and the grid run behind the whole opening, the demo included, and fade out at its bottom */
+  .hero .sky { inset: 0; --fade: radial-gradient(ellipse 40% 26% at 50% 22%, rgba(0,0,0,.3) 30%, #000 100%), linear-gradient(#000 70%, transparent); }
+  .hero .sky .grid, .hero .sky canvas { -webkit-mask-composite: source-in; mask-composite: intersect; }
+  .js .hero .sky { opacity: 0; transform: scale(1.06); transition: opacity 1.6s var(--out), transform 2.4s var(--out); }
+  .js .hero.on .sky { opacity: 1; transform: none; }
+  /* the text sits in the middle of the first screen ; the demo shows its top in the last --peek of it.
+     The padding above the text matches that space, so the text stays centred on the screen. */
+  .hero .col { --peek: clamp(160px, 28svh, 300px); position: relative; min-height: calc(100svh - var(--head) - var(--peek)); padding-top: calc(var(--peek) - var(--head)); display: flex; flex-direction: column; justify-content: center; text-align: center; }
+  .js .hero h1 .w { filter: blur(var(--blur)); transform: translateY(.08em); transition: opacity 1s var(--out), transform 1s var(--out), filter 1s var(--out); transition-delay: calc(var(--i) * 70ms + 150ms); }
+  .js .hero h1.in .w { filter: none; }
+  h1 { font-size: var(--h-xl); max-width: 900px; margin: 0 auto; }
+  .hero .txt { max-width: 660px; margin: 28px auto 0; text-wrap: pretty; }
+  .cta { display: flex; justify-content: center; gap: 8px; margin-top: 32px; flex-wrap: wrap; }
+  .hero .stage { transform-origin: 50% 100%; will-change: transform; }
+  .js .hero .stage { translate: 0 16px; } .js .hero .stage.in { translate: none; }
+  .stage { position: relative; width: min(1280px, calc(100vw - 96px)); margin: 0 auto; padding: 6px; border-radius: 12px; border: 1px solid var(--mira-line-2); background: var(--mira-surface); box-shadow: 0 -20px 80px rgba(0,0,0,.07); }
+  /* the bottom of the video blurs, and the whole frame fades into the page */
+  /* the very bottom of the demo fades into the page, across the whole width ; the tabs sit just under it */
+  .hero .veil { position: absolute; left: -50vw; right: -50vw; bottom: -160px; z-index: 5; height: calc(25% + 160px); background: linear-gradient(rgba(255,255,255,0), var(--mira-bg) calc(100% - 160px)); pointer-events: none; }
+  .stage .screen { position: relative; border-radius: 7px; overflow: hidden; background: var(--mira-bg); box-shadow: inset 0 0 0 1px var(--mira-line); aspect-ratio: 1500 / 938; }
+  /* the clips are recordings of the app in its dark theme : turned light on this white page, each colour kept on its own hue */
+  .stage .screen video, .panel .screen video { filter: invert(1) hue-rotate(180deg); }
+  .stage .screen video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .3s var(--out); }
+  .stage .screen video.on { opacity: 1; }
+  /* the pages of the demo : a bar of tabs on the top edge of the frame, a line fills under the one playing */
+  .views { position: relative; z-index: 6; display: flex; gap: 4px; width: max-content; max-width: calc(100vw - 32px); margin: -64px auto 0; padding: 4px; border: 1px solid var(--mira-line-2); border-radius: 3px; background: var(--mira-bg); box-shadow: 0 8px 24px rgba(0,0,0,.06); }
+  .views button { position: relative; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border: 0; border-radius: 2px; background: transparent; font: 500 13px/1 Geist, sans-serif; color: var(--mira-text-2); cursor: pointer; white-space: nowrap; transition: background .12s, color .12s, box-shadow .12s; }
+  .views button:hover { color: var(--mira-text); background: var(--mira-surface); }
+  .views button.on { color: var(--mira-text); background: var(--mira-surface-2); box-shadow: inset 0 0 0 1px var(--mira-line-2); }
+  .views button svg { width: 14px; height: 14px; }
+  .views button i { position: absolute; left: 10px; right: 10px; bottom: 3px; height: 1px; background: var(--mira-text); transform-origin: left; transform: scaleX(var(--p, 0)); opacity: 0; }
+  .views button.on i { opacity: 1; }
+  /* the map scene over the demo : positions are shares of the screen, read on the recording */
+  .scene { position: absolute; inset: 0; z-index: 4; pointer-events: none; font: 12px/16px Geist, sans-serif; color: var(--mira-text); }
+  .scene > * { position: absolute; opacity: 0; transition: opacity .35s var(--out), transform .45s var(--out); }
+  .sc-ring { left: 86.9%; top: 34.6%; width: 9.6%; height: 9%; border: 2px solid var(--claude); border-radius: 7px; transform: scale(1.15); }
+  .scene.s1 .sc-ring, .scene.s2 .sc-ring, .scene.s3 .sc-ring { opacity: 1; transform: none; }
+  .sc-panel { right: 2.6%; top: 9%; width: 25.5%; padding: 14px; border: 1px solid var(--mira-line-2); border-radius: 6px; background: var(--mira-bg); box-shadow: 0 16px 48px rgba(0,0,0,.14); transform-origin: 70% 90%; transform: scale(.25); }
+  .scene.s2 .sc-panel, .scene.s3 .sc-panel { opacity: 1; transform: none; }
+  .sc-panel .si { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .sp-h { display: flex; align-items: center; gap: 8px; color: var(--mira-text-3); } .sp-h .si:first-child { color: var(--mira-text-2); } .sp-h .si:last-child { margin-left: auto; }
+  .sc-panel > b { display: block; margin-top: 6px; font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .sc-panel > p { margin-top: 3px; color: var(--mira-text-2); }
+  .sp-c { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; } .sp-c span { display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 6px; border: 1px solid var(--mira-line-2); border-radius: 4px; color: var(--mira-text-2); }
+  .sp-c .ok { color: var(--ok); } .sp-c .ok i { width: 6px; height: 6px; background: currentColor; }
+  .sc-panel > code { display: block; margin-top: 10px; font-size: 11px; color: var(--mira-text-3); }
+  .sp-t { display: flex; align-items: center; gap: 8px; height: 30px; margin-top: 10px; padding: 0 10px; border: 1px solid var(--mira-line); border-radius: 4px; color: var(--mira-text-2); } .sp-t em { margin-left: auto; font-style: normal; color: var(--mira-text-3); }
+  .sp-go { display: flex; align-items: center; justify-content: center; gap: 8px; height: 32px; margin-top: 14px; border-radius: 2px; background: var(--mira-text); color: var(--mira-bg); font-weight: 500; transition: transform .15s var(--out), background .15s; }
+  .sp-go svg { width: 14px; height: 14px; } .scene.s3 .sp-go { transform: scale(.96); background: #333; }
+  .sc-tab { left: 38.4%; top: 1.6%; display: flex; align-items: center; gap: 7px; height: 3.6%; padding: 0 12px; border: 1px solid var(--mira-line-2); border-bottom-color: var(--mira-bg); border-radius: 6px 6px 0 0; background: var(--mira-bg); font-size: 11px; font-weight: 500; transform: translateY(6px); }
+  .sc-tab svg { width: 12px; height: 12px; }
+  .sc-term { left: 17.6%; top: 5.3%; width: 33.9%; height: 54%; padding: 18px 20px; background: var(--mira-bg); font: 11px/20px "Geist Mono", ui-monospace, Menlo, monospace; color: var(--mira-text-2); }
+  .scene.s4 .sc-tab, .scene.s4 .sc-term { opacity: 1; transform: none; }
+  .st-l { opacity: 0; transform: translateY(4px); transition: opacity .3s var(--out), transform .3s var(--out); } .st-l b { color: var(--mira-text); font-weight: 500; }
+  .scene.s4 .st-l { opacity: 1; transform: none; } .scene.s4 .st-l:nth-child(2) { transition-delay: .5s; } .scene.s4 .st-l:nth-child(3) { transition-delay: 1.1s; } .scene.s4 .st-l:nth-child(4) { transition-delay: 1.6s; }
+  .st-l .cur { display: inline-block; width: 7px; height: 14px; vertical-align: -2px; background: var(--mira-text); animation: caret 1s steps(1) infinite; }
+  .screen.playing .ptr { transition: left .9s var(--out), top .9s var(--out); }
+  .ptr { position: absolute; left: 60%; top: 53%; z-index: 3; pointer-events: none; transform: translate(-2px, -2px); }
+  .ptr svg { display: block; width: 22px; height: 22px; transition: transform .12s; }
+  .ptr span { position: absolute; left: 18px; top: 18px; padding: 3px 9px; border-radius: 7px; background: var(--mira-text); color: var(--mira-bg); font-size: 12px; line-height: 16px; font-weight: 600; white-space: nowrap; }
+  .ptr.tap svg { transform: scale(.82); }
+
+  /* the row of agents */
+  /* the agents Mira works with : each one in its own card, the cards going by in a loop, faded at both ends ; a hover stops them */
+  .strip { border-top: 0; }
+  .strip .shead { padding-top: 120px; padding-bottom: 56px; }
+  .band { overflow: hidden; padding: 0 0 120px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); }
+  .band .track { display: flex; width: max-content; animation: band 36s linear infinite; }
+  .band:hover .track { animation-play-state: paused; }
+  .band .set { display: flex; gap: 12px; padding-right: 12px; }
+  @keyframes band { to { transform: translateX(-50%); } }
+  .mi { display: flex; align-items: center; justify-content: center; gap: 14px; min-width: 248px; height: 112px; padding: 0 40px; border: 1px solid var(--mira-line-2); border-radius: 2px; background: var(--mira-bg); font-size: 26px; line-height: 32px; font-weight: 500; letter-spacing: -0.02em; white-space: nowrap; transition: border-color .2s var(--out), background .2s var(--out); }
+  .mi:hover { border-color: var(--line-hover); background: var(--mira-surface); }
+  .mi svg, .mi img { display: block; width: 32px; height: 32px; flex: none; }
+  @media (prefers-reduced-motion: reduce) { .band .track { animation: none; } }
+
+
+  /* product : the text holds on the left, the panels go by on the right (the right column is hatched, as before) */
+  .arc .two { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--mira-line); }
+  .arc .left { padding: 0 48px 0 88px; }
+  .arc .sticky { position: sticky; top: calc(50vh - 220px + var(--head) / 2); height: 440px; margin: 98px 0; }
+  .astep { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; opacity: 0; transform: translateY(12px); transition: opacity .3s var(--out), transform .3s var(--out); pointer-events: none; }
+  .astep.on { opacity: 1; transform: none; pointer-events: auto; }
+  .astep h3 { font-size: var(--h-xl); font-weight: 500; letter-spacing: -0.032em; line-height: .99; max-width: 440px; padding-bottom: .08em; }
+  .astep p { font-size: 17px; line-height: 28.05px; color: var(--mira-text-2); max-width: 420px; margin-top: 20px; }
+  .checks { list-style: none; padding: 0; margin-top: 27px; display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 20px; font-weight: 500; }
+  .checks li { display: flex; gap: 10px; align-items: center; }
+  .checks li svg { width: 16px; height: 16px; flex: none; color: var(--mira-text-2); }
+  .arc .right { position: relative; border-left: 1px solid var(--mira-line); padding: 0 56px 98px; }
+  .rsky { position: sticky; top: var(--head); height: calc(100vh - var(--head)); margin: 0 -56px; overflow: hidden; pointer-events: none; -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 45%, transparent 100%); mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 45%, transparent 100%); }
+  .rsky .grid, .rsky canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .rsky .grid { opacity: .5; background-image: linear-gradient(var(--mira-line) 1px, transparent 1px), linear-gradient(90deg, var(--mira-line) 1px, transparent 1px); background-size: 12px 12px; }
+  .arc .panels { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 22vh; margin-top: calc(-100vh + var(--head) + 98px); }
+  .panel { position: relative; height: 440px; padding: 6px; border: 1px solid var(--mira-line-2); border-radius: 12px; background: var(--mira-surface); box-shadow: 0 24px 64px rgba(0,0,0,.1); }
+  .panel .screen { position: absolute; inset: 6px; border-radius: 7px; overflow: hidden; background: var(--mira-bg); box-shadow: inset 0 0 0 1px var(--mira-line); }
+  .panel .screen video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .accts { position: relative; width: min(340px, 86%); }
+  .accts .meter { margin: 2px 8px 8px; height: 4px; }
+  .panel .screen.center { display: grid; place-items: center; }
+  .panel .screen.center canvas { position: relative; inset: auto; }
+  .panel .grid12 { position: absolute; inset: 0; opacity: .6; -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 30%, transparent 100%); mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 30%, transparent 100%); }
+  .panel canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .panel .win { position: absolute; z-index: 2; width: auto; opacity: 0; transform: translateY(8px); transition: opacity .3s var(--out), transform .3s var(--out); }
+  .panel.on .win { opacity: 1; transform: none; transition-delay: .15s; }
+  .panel.on .win + .win { transition-delay: .3s; }
+  .panel .win .wh { border-bottom: 0; padding-right: 16px; }
+
+  /* how it works : three cells, each with its animated tile and a line that types or counts */
+  .how .cell .art { margin-bottom: 32px; }
+  .how .art canvas.field { position: absolute; inset: -56px -40px 0; width: calc(100% + 80px); height: calc(100% + 56px); opacity: .7; }
+  .mock { position: relative; z-index: 1; width: 220px; margin-top: -26px; border: 1px solid var(--mira-line-2); border-radius: 8px; background: var(--mira-bg); box-shadow: 0 16px 40px rgba(0,0,0,.08); font-size: 12px; line-height: 16px; text-align: left; }
+  .mh { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-bottom: 1px solid var(--mira-line); font-weight: 500; }
+  .ml { position: relative; display: grid; padding: 6px; } .ml span { position: relative; height: 26px; line-height: 26px; padding: 0 8px; color: var(--mira-text-2); font-family: Geist, sans-serif; }
+  .ml .sel { position: absolute; left: 6px; right: 6px; top: 6px; height: 26px; border-radius: 4px; background: var(--mira-surface-2); animation: pick 6s var(--out) infinite; }
+  @keyframes pick { 0%, 15% { transform: translateY(0); } 25%, 40% { transform: translateY(26px); } 50%, 100% { transform: translateY(52px); } }
+  .mf { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--mira-line); } .mf small { font-family: Geist, sans-serif; color: var(--mira-text-3); }
+  .mf .go { padding: 3px 10px; border-radius: 2px; background: var(--mira-text); color: var(--mira-bg); font-weight: 500; animation: press 6s var(--out) infinite; }
+  @keyframes press { 0%, 58% { transform: none; opacity: .55; } 62% { transform: scale(.92); opacity: 1; } 66%, 100% { transform: none; opacity: 1; } }
+  .m-map { width: 240px; padding: 10px 6px; height: 160px; overflow: visible; background-color: var(--mira-bg); background-image: radial-gradient(var(--mira-line-2) 1px, transparent 1px); background-size: 12px 12px; }
+  .m-map .bk rect { fill: var(--mira-bg); stroke: var(--mira-text-3); stroke-width: 1; rx: 4; } .m-map text { font: 500 11px Geist, sans-serif; fill: var(--mira-text); text-anchor: middle; }
+  .m-map .bk { opacity: 0; transform-box: fill-box; animation: block 6s var(--out) infinite; } .m-map .b2 { animation-delay: .4s; } .m-map .b3 { animation-delay: .8s; }
+  @keyframes block { 0% { opacity: 0; transform: translateY(6px); } 10%, 88% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+  .m-map .ln { fill: none; stroke: var(--mira-text); stroke-width: 1.4; stroke-dasharray: 160; stroke-dashoffset: 160; animation: draw 6s var(--out) infinite; } .m-map .l2 { animation-delay: .3s; } .m-map .l3 { animation-delay: .6s; }
+  @keyframes draw { 0%, 20% { stroke-dashoffset: 160; opacity: 1; } 45%, 88% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+  .m-board { width: 240px; height: 150px; padding: 8px; } .m-board .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; height: 100%; }
+  .m-board .cols > div { border-radius: 4px; background: var(--mira-surface); padding: 6px; } .m-board small { font: 500 10px Geist, sans-serif; color: var(--mira-text-3); }
+  .m-board .card { position: absolute; left: 14px; top: 38px; width: 64px; padding: 6px; border: 1px solid var(--mira-line-2); border-radius: 4px; background: var(--mira-bg); box-shadow: 0 4px 12px rgba(0,0,0,.06); animation: move 6s var(--out) infinite; }
+  .m-board .card b { display: block; font-size: 10px; line-height: 13px; font-weight: 500; } .m-board .card span { display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 9px; color: var(--mira-text-3); white-space: nowrap; } .m-board .card i { width: 6px; height: 6px; background: var(--claude); }
+  @keyframes move { 0%, 20% { transform: none; } 40%, 60% { transform: translateX(76px); } 80%, 100% { transform: translateX(152px); } }
+  @media (prefers-reduced-motion: reduce) { .ml .sel, .mf .go, .m-map .bk, .m-map .ln, .m-board .card { animation: none; opacity: 1; stroke-dashoffset: 0; } }
+  .how .art { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+  /* the three steps, drawn like the app itself (light) : its sidebar, its map blocks, its task cards */
+  .mock.app { width: min(260px, 100%); margin-top: -20px; padding: 8px; font-size: 12px; line-height: 16px; }
+  .app .li { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .app svg:not(.li):not(.wire), .app img { width: 14px; height: 14px; flex: none; display: block; }
+  .m-side .sr, .m-side .sa { display: flex; align-items: center; gap: 9px; height: 26px; padding: 0 8px; border-radius: 6px; color: var(--mira-text-2); }
+  .m-side .sr.open { animation: press2 7s var(--out) infinite; }
+  @keyframes press2 { 0%, 8% { background: transparent; color: var(--mira-text-2); } 12%, 22% { background: var(--mira-surface-2); color: var(--mira-text); } 26%, 100% { background: transparent; color: var(--mira-text-2); } }
+  .m-side .sh { margin: 8px 8px 2px; font-size: 11px; font-weight: 500; color: var(--mira-text-3); }
+  .m-side .sp { animation: appear 7s var(--out) infinite; } .m-side .pj { color: var(--mira-text); font-weight: 500; } .m-side .pj em { margin-left: auto; font-style: normal; font-family: Geist, sans-serif; color: var(--mira-text-3); }
+  .m-side .sa { margin-left: 14px; padding-left: 14px; border-left: 1px solid var(--mira-line-2); border-radius: 0; opacity: 0; animation: agent 7s var(--out) infinite; } .m-side .a2 { animation-delay: .35s; } .m-side .a3 { animation-delay: .7s; }
+  @keyframes appear { 0%, 24% { opacity: 0; transform: translateY(6px); } 32%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+  @keyframes agent { 0%, 34% { opacity: 0; transform: translateX(-6px); } 42%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+  .mock.m-map2 { position: relative; width: min(330px, 100%); height: 168px; padding: 0; background-color: var(--mira-bg); background-image: radial-gradient(var(--mira-line-2) 1px, transparent 1px); background-size: 10px 10px; }
+  .m-map2 .wire { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: var(--mira-text-3); stroke-width: 1.2; vector-effect: non-scaling-stroke; } .m-map2 .wire path { vector-effect: non-scaling-stroke; }
+  .m-map2 .wire path { stroke-dasharray: 60; stroke-dashoffset: 60; animation: draw2 7s var(--out) infinite; }
+  @keyframes draw2 { 0%, 30% { stroke-dashoffset: 60; opacity: 1; } 45%, 92% { stroke-dashoffset: 0; opacity: 1; } 100% { opacity: 0; } }
+  .m-map2 .grp { position: absolute; top: 14px; width: 41%; padding: 6px; border: 1px solid var(--mira-line); border-radius: 8px; background: var(--mira-bg); opacity: 0; animation: block2 7s var(--out) infinite; }
+  .m-map2 .g1 { left: 2.5%; } .m-map2 .g2 { right: 2.5%; animation-delay: .5s; }
+  @keyframes block2 { 0%, 4% { opacity: 0; transform: translateY(6px); } 14%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+  .m-map2 .gh { display: flex; align-items: center; gap: 6px; margin: 0 2px 6px; font-size: 10px; font-weight: 600; } .m-map2 .gh i { width: 6px; height: 6px; }
+  .m-map2 .blk { padding: 7px; border: 1px solid var(--mira-line-2); border-radius: 6px; background: var(--mira-surface); }
+  .m-map2 .bk1 { display: flex; align-items: center; gap: 6px; font-size: 9px; color: var(--mira-text-3); } .m-map2 .bk1 .li { width: 11px; height: 11px; }
+  .m-map2 .blk b { display: block; margin-top: 5px; font-size: 11px; font-weight: 600; } .m-map2 .blk span { display: block; margin-top: 2px; font-size: 9px; line-height: 12px; color: var(--mira-text-2); }
+  .m-map2 .blk u { display: inline-block; margin-top: 6px; padding: 0 5px; border: 1px solid rgba(24,160,88,.35); border-radius: 3px; font-size: 9px; line-height: 14px; text-decoration: none; color: var(--ok); opacity: 0; animation: tagin 7s var(--out) infinite; }
+  @keyframes tagin { 0%, 50% { opacity: 0; } 58%, 92% { opacity: 1; } 100% { opacity: 0; } }
+  .mock.m-board2 { position: relative; width: min(300px, 100%); height: 176px; padding: 8px; }
+  .m-board2 .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; height: 100%; } .m-board2 .cols > div { padding: 6px; border-radius: 6px; background: var(--mira-surface); }
+  .m-board2 .st { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 500; }
+  .st.todo { background: #dbe7ff; color: #2f5fd0; } .st.prog { background: #fde7c4; color: #a45f00; } .st.done { background: #d4f3e1; color: #12804a; }
+  .m-board2 .tcard { position: absolute; left: 14px; top: 38px; width: calc((100% - 28px) / 3 - 4px); padding: 6px; border: 1px solid var(--mira-line-2); border-radius: 6px; background: var(--mira-bg); box-shadow: 0 4px 12px rgba(0,0,0,.06); animation: move2 7s var(--out) infinite; }
+  .m-board2 .tcard b { display: block; font-size: 9.5px; line-height: 12px; font-weight: 500; }
+  .m-board2 .tcard .id { display: block; margin-bottom: 2px; font-size: 8px; line-height: 10px; color: var(--mira-text-3); }
+  .m-board2 .tr { display: flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 8.5px; line-height: 12px; color: var(--mira-text-2); white-space: nowrap; } .m-board2 .tr .li { width: 9px; height: 9px; color: var(--mira-text-3); }
+  .m-board2 .tr span { display: inline-flex; align-items: center; gap: 3px; } .m-board2 .tr small { margin-left: auto; font: 8px Geist, sans-serif; color: var(--mira-text-3); }
+  .m-board2 .ub { display: grid !important; place-items: center; width: 15px; height: 15px; border: 1px solid var(--mira-line-2); border-radius: 3px; } .m-board2 .ub .li { width: 9px; height: 9px; }
+  .m-board2 .pill { padding: 0 4px; border: 1px solid var(--mira-line-2); border-radius: 3px; }
+  .m-board2 .hi { padding: 0 4px; border-radius: 3px; background: #fde7c4; color: #a45f00; }
+  /* the card goes from column to column : its left edge follows the columns, whatever the width */
+  @keyframes move2 { 0%, 22% { left: 14px; } 30%, 52% { left: calc(14px + (100% - 16px) / 3 + 2px); } 60%, 100% { left: calc(14px + (100% - 16px) * 2 / 3 + 4px); } }
+  @media (prefers-reduced-motion: reduce) { .mock.app *, .mock.app { animation: none !important; opacity: 1 !important; stroke-dashoffset: 0 !important; } }
+  .how .hint { position: relative; z-index: 1; max-width: calc(100% - 16px); overflow: hidden; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border: 1px solid var(--mira-line-2); border-radius: 2px; background: var(--mira-bg); box-shadow: 0 8px 24px rgba(0,0,0,.06); font: 12px/1 Geist, sans-serif; color: var(--mira-text-2); white-space: nowrap; }
+  .how .hint .type { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .how .hint b { font-weight: 500; color: var(--mira-text); }
+  .how .hint .caret { width: 6px; height: 13px; margin-left: -6px; }
+  .sq { width: 8px; height: 8px; flex: none; background: var(--mira-text-3); } .sq.ok { background: var(--ok); } .sq.claude { background: var(--claude); }
+  .how .num { display: block; margin-bottom: 10px; font: 500 12px/1 Geist, sans-serif; color: var(--mira-text-3); }
+  .how .cell { text-align: left; } .how .cell p { margin-left: 0; }
+  /* the small pieces around each picture : each one says something about it, in its own shape */
+  .fl { position: absolute; z-index: 2; padding: 12px 14px; border: 1px solid var(--mira-line-2); border-radius: 8px; background: var(--mira-bg); box-shadow: 0 8px 24px rgba(0,0,0,.06); font-size: 13px; line-height: 18px; text-align: left; opacity: 0; transform: translateY(8px); transition: opacity .3s var(--out), transform .3s var(--out); }
+  .panel.on .fl { opacity: 1; transform: none; transition-delay: .15s; } .panel.on .fl + .fl { transition-delay: .3s; }
+  .fl b { display: block; font-weight: 500; } .fl small { display: block; font-size: 12px; line-height: 16px; color: var(--mira-text-3); }
+  .fl.toast { display: flex; align-items: center; gap: 10px; }
+  .fi { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 6px; background: var(--mira-surface-2); }
+  .fi svg { width: 16px; height: 16px; fill: none; stroke: var(--mira-text); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .fl.usage { width: 220px; } .ut { display: flex; align-items: baseline; justify-content: space-between; }
+  .ub { height: 6px; margin: 8px 0 6px; border-radius: 3px; background: var(--mira-surface-2); overflow: hidden; } .ub i { display: block; height: 100%; width: calc(var(--f) * 100%); background: var(--ok); }
+  .fl.ask { width: 232px; } .at { display: flex; align-items: center; gap: 8px; } .ask > small { margin: 4px 0 10px 16px; }
+  .ab { display: flex; gap: 6px; margin-left: 16px; } .ab span { height: 24px; padding: 0 10px; line-height: 22px; border: 1px solid var(--mira-line-2); border-radius: 2px; font-size: 12px; } .ab span:first-child { background: var(--mira-text); color: var(--mira-bg); border-color: var(--mira-text); }
+  .pg { display: grid; grid-template-columns: 1.2fr 1fr; grid-template-rows: 22px 22px; gap: 4px; margin-top: 8px; width: 200px; }
+  .pg span { display: grid; place-items: center; border: 1px solid var(--mira-line-2); border-radius: 3px; font-size: 11px; color: var(--mira-text-2); background: var(--mira-surface); } .pg span:first-child { grid-row: span 2; }
+  .fl.task { width: 220px; } .task b { margin: 2px 0 10px; } .tm { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+  .tg { padding: 1px 6px; border-radius: 3px; background: rgba(229,148,15,.14); color: var(--warn); } .who { display: flex; align-items: center; gap: 6px; color: var(--mira-text-2); } .who i, .live i { width: 7px; height: 7px; border-radius: 0; }
+  .fl.flow { display: flex; align-items: center; gap: 6px; padding: 8px 10px; font-size: 12px; } .flow span { padding: 2px 8px; border-radius: 3px; color: var(--mira-text-3); } .flow span.on { background: var(--mira-text); color: var(--mira-bg); } .flow em { font-style: normal; color: var(--mira-text-3); }
+  .fl.code { width: 300px; } .code code { display: block; margin-top: 6px; padding: 6px 8px; border-radius: 4px; background: var(--mira-surface-2); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .code code span { color: var(--claude); }
+  .fl.live { display: grid; gap: 4px; min-width: 120px; } .live div { display: flex; align-items: center; gap: 8px; font-family: Geist, sans-serif; font-size: 12px; }
+  .bg { display: grid; grid-template-columns: repeat(2, 64px); gap: 6px; margin-top: 8px; } .bg span { height: 28px; line-height: 26px; text-align: center; border: 1px solid var(--mira-line-2); border-radius: 4px; font: 12px Geist, sans-serif; color: var(--mira-text-3); } .bg span.on { border-color: var(--claude); color: var(--mira-text); box-shadow: 0 0 0 3px rgba(217,119,87,.15); }
+  .fl.voice { display: flex; align-items: center; gap: 12px; } .wave { display: flex; align-items: center; gap: 3px; height: 24px; } .wave i { width: 3px; height: 30%; border-radius: 2px; background: var(--claude); animation: wave 1s ease-in-out infinite; }
+  .wave i:nth-child(2) { animation-delay: -.8s; } .wave i:nth-child(3) { animation-delay: -.6s; } .wave i:nth-child(4) { animation-delay: -.4s; } .wave i:nth-child(5) { animation-delay: -.2s; } .wave i:nth-child(6) { animation-delay: -.5s; } .wave i:nth-child(7) { animation-delay: -.3s; }
+  @keyframes wave { 50% { height: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .wave i { animation: none; height: 60%; } }
+  .panel .w1 { left: -24px; top: 28px; } .panel .w2 { right: -24px; bottom: 28px; }
+
+  /* in the details : each cell plays one little interface */
+  .minis .art .win { width: 300px; }
+  .minis .wb.pad { padding: 12px; gap: 10px; }
+  .minis .row.flat { padding: 0; height: 24px; }
+  .minis .att { display: flex; gap: 6px; min-height: 22px; }
+  .minis .typing { min-height: 60px; font-size: 13px; line-height: 20px; }
+
+  /* numbers, in a row of cells */
+  .nums .cell { padding: 48px 32px 56px; }
+  .nums .art { height: 112px; margin-bottom: 24px; }
+  .nums .n { font-size: 40px; line-height: 44px; font-weight: 500; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .nums .l { margin-top: 8px; font-size: 14px; line-height: 20px; color: var(--mira-text-2); }
+
+  /* download */
+  .dl .cell { text-align: left; padding: 40px; }
+  .dl .cell h3 { font-size: 20px; line-height: 26px; }
+  .dl .cell p { margin: 6px 0 0; font-size: 15px; }
+  .dl .cell .soon { margin-top: 28px; font-size: 13px; color: var(--mira-text-3); }
+  .dl .run { padding: 56px 40px 64px; border-top: 1px solid var(--mira-line); }
+  .dl .run > p { font-size: 15px; color: var(--mira-text-2); }
+  pre.run { margin-top: 14px; padding: 18px 20px; border: 1px solid var(--mira-line-2); border-radius: 12px; background: var(--mira-surface); font-size: 13.5px; line-height: 1.8; overflow-x: auto; }
+  pre.run .c { color: var(--mira-text-3); }
+
+  /* questions : the title on the left, the list on the right */
+  /* faq : the title stays on the left while the questions go by ; each one numbered, a square + that turns into a cross, the answer sliding open */
+  #faq .wrap { display: grid; grid-template-columns: 5fr 7fr; column-gap: 80px; align-items: start; padding: 144px 120px; }
+  .faq-side { position: sticky; top: calc(var(--head) + 48px); }
+  #faq h2 { font-size: var(--h-lg); }
+  .faq-side .txt { max-width: 380px; margin-top: 20px; }
+  .ask { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; align-items: center; max-width: 380px; margin-top: 36px; padding: 16px 18px; border: 1px solid var(--mira-line-2); border-radius: 2px; transition: border-color .2s var(--out), background .2s var(--out); }
+  .ask b { font-size: 15px; font-weight: 500; } .ask span { grid-row: 2; font-size: 14px; color: var(--mira-text-2); } .ask em { grid-row: 1 / 3; grid-column: 2; font-style: normal; font-size: 18px; transition: transform .2s var(--out); }
+  .ask:hover { border-color: var(--line-hover); background: var(--mira-surface); } .ask:hover em { transform: translateX(4px); }
+  .faq { border-top: 1px solid var(--mira-line); }
+  details { border-bottom: 1px solid var(--mira-line); transition: background .2s var(--out); }
+  details:hover { background: var(--mira-surface); }
+  summary { display: grid; grid-template-columns: 40px 1fr 28px; align-items: center; gap: 12px; padding: 26px 16px 26px 12px; list-style: none; cursor: pointer; }
+  summary::-webkit-details-marker { display: none; }
+  summary small { font-size: 13px; color: var(--mira-text-3); font-variant-numeric: tabular-nums; }
+  summary span { font-size: 19px; line-height: 26px; font-weight: 500; letter-spacing: -0.015em; }
+  summary i { position: relative; width: 28px; height: 28px; border: 1px solid var(--mira-line-2); border-radius: 2px; background: var(--mira-bg); transition: background .2s, border-color .2s; }
+  summary i::before, summary i::after { content: ""; position: absolute; left: 50%; top: 50%; width: 11px; height: 1.5px; background: var(--mira-text); transform: translate(-50%, -50%); }
+  summary i::after { transform: translate(-50%, -50%) rotate(90deg); }
+  summary i::before, summary i::after { transition: transform .3s var(--out), background .2s; }
+  details[open] summary i { background: var(--mira-text); border-color: var(--mira-text); }
+  details[open] summary i::before { background: var(--mira-bg); transform: translate(-50%, -50%) rotate(45deg); } details[open] summary i::after { background: var(--mira-bg); transform: translate(-50%, -50%) rotate(135deg); }
+  details .ans { padding: 0 60px 28px 64px; }
+  details .ans p { max-width: 620px; font-size: 16px; line-height: 26px; color: var(--mira-text-2); }
+  details[open] .ans { animation: ans .45s var(--out); }
+  @keyframes ans { from { opacity: 0; transform: translateY(-6px); } }
+
+  /* the last call, over the birds again */
+  /* the last call : the opening's text and buttons, on the same birds, in the frame */
+  .end { position: relative; }
+  .end .frame { overflow: hidden; }
+  .end .sky { inset: 0; --fade: radial-gradient(ellipse 45% 50% at 50% 50%, rgba(0,0,0,.25) 30%, #000 100%); }
+  .end .col { position: relative; padding-top: 144px; padding-bottom: 144px; text-align: center; }
+  .end h2 { font-size: var(--h-lg); max-width: 620px; margin: 0 auto; }
+  .end .txt { max-width: 520px; margin: 20px auto 0; }
+  .end .alt { margin-top: 20px; font-size: 13px; color: var(--mira-text-3); }
+
+  /* footer : cells split by hairlines, then the name across the whole width, in tiles, as the very last thing */
+  footer { border-top: 1px solid var(--mira-line); overflow: hidden; }
+  .fgrid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr; }
+  .fgrid > div { padding: 56px 40px 64px; border-right: 1px solid var(--mira-line); } .fgrid > div:last-child { border-right: 0; }
+  .fsay .brand svg { width: 28px; height: 24px; }
+  .fsay p { margin-top: 24px; font-size: 28px; line-height: 1.05; font-weight: 500; letter-spacing: -0.03em; } .fsay p span { color: var(--mira-text-3); }
+  .fsay small { display: block; margin-top: 28px; font: 12px/1 Geist, sans-serif; color: var(--mira-text-3); }
+  footer h3 { font-size: 14px; line-height: 21px; font-weight: 600; margin-bottom: 17px; }
+  footer ul { list-style: none; padding: 0; display: grid; }
+  footer li a { display: block; height: 34px; font-size: 14px; color: var(--mira-text-2); transition: color .15s; }
+  footer li a:hover { color: var(--mira-text); }
+  /* the name sits on the same 12 px grid as the opening, faded at the sides ; its height is set by the script, so its top shows whole and its foot runs off the page */
+  .wordbox { position: relative; border-top: 1px solid var(--mira-line); }
+  .wordbox .grid { position: absolute; inset: 0; opacity: .5; background-image: linear-gradient(var(--mira-line) 1px, transparent 1px), linear-gradient(90deg, var(--mira-line) 1px, transparent 1px); background-size: 12px 12px; -webkit-mask-image: radial-gradient(ellipse 60% 90% at 50% 100%, #000 30%, transparent 100%); mask-image: radial-gradient(ellipse 60% 90% at 50% 100%, #000 30%, transparent 100%); }
+  footer canvas.word { position: relative; display: block; width: 100%; height: 30vw; }
+
+  @media (max-width: 1200px) { .arc .left { padding-left: 40px; } #faq .wrap { padding: 112px 48px; column-gap: 48px; } .cells.c4 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 860px) {
+    :root { --gut: 20px; --head: 64px; }
+    header.top .links { display: none; } header.top .bar { grid-template-columns: 1fr auto; padding: 0 20px; }
+    .hero .col { --peek: 140px; }
+    .stage { width: calc(100vw - 24px); }
+     .views button { padding: 0 10px; } .views button span { display: none; }
+    .shead { padding: 88px 20px 40px; }
+    .mi { min-width: 180px; height: 80px; padding: 0 24px; font-size: 19px; } .mi svg, .mi img { width: 24px; height: 24px; } .strip .shead { padding-top: 72px; }
+    .cells.c2, .cells.c3, .cells.c4 { grid-template-columns: 1fr; }
+    .cell { padding: 48px 20px 56px; }
+    .arc .two { grid-template-columns: 1fr; }
+    .arc .left { padding: 0 20px; }
+    .arc .sticky { top: var(--head); z-index: 5; height: auto; margin: 0; padding: 24px 0; background: var(--mira-bg); border-bottom: 1px solid var(--mira-line); }
+    .astep { position: relative; inset: auto; display: none; } .astep.on { display: flex; } .astep h3 { font-size: 30px; } .astep p { font-size: 15px; line-height: 24px; margin-top: 10px; } .checks { display: none; }
+    .arc .right { border-left: 0; padding: 24px 20px 64px; } .rsky { display: none; } .arc .panels { gap: 16px; margin-top: 0; } .panel { height: 320px; } .panel .fl { display: none; }
+    #faq .wrap { grid-template-columns: 1fr; padding: 72px 20px; } .faq { margin-top: 40px; } .faq-side { position: static; } summary { grid-template-columns: 28px 1fr 28px; padding: 20px 4px; } summary span { font-size: 17px; line-height: 24px; } details .ans { padding: 0 8px 22px 44px; }
+    .end .col { padding-top: 88px; padding-bottom: 88px; }
+    .fgrid { grid-template-columns: 1fr 1fr; } .fgrid > div { padding: 40px 20px; border-bottom: 1px solid var(--mira-line); } .fsay { grid-column: 1 / -1; border-right: 0 !important; }
+  }
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mark" viewBox="0 0 164 136" fill="currentColor"><polygon points="0,136 26,136 68,0 42,0"/><polygon points="48,136 74,136 98,58 72,58"/><polygon points="96,136 122,136 164,0 138,0"/></symbol>
+  <symbol id="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 7"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="bar">
+    <a class="brand" href="#"><svg><use href="#mark"/></svg>Mira</a>
+    <nav class="links"><a href="#product">Product</a><a href="features.html">Features</a><a href="#faq">FAQ</a><a href="https://github.com/dump-addict/MIRA-TERMINAL">GitHub</a></nav>
+    <div class="act"><a class="btn primary" href="download.html">Download<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="sky" aria-hidden="true"><div class="grid"></div><canvas id="sky"></canvas></div>
+  <div class="col">
+    <h1 data-words>All in view.<br><span>Your projects, agents and tasks.</span></h1>
+    <p class="txt reveal" style="--d:700ms">Your agents, your projects and your work, in one terminal built for the way you code now.</p>
+    <div class="cta reveal" style="--d:820ms"><a class="btn primary lg" href="download.html" id="dl-cta">Download</a><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL">View on GitHub</a></div>
+  </div>
+  <div class="stage reveal" style="--d:900ms">
+    <div class="screen">
+      <video class="v main on" id="demo" muted playsinline preload="auto" poster="img/demo-poster.jpg" width="2880" height="1800">
+        <source src="img/demo.mp4" type="video/mp4"><source src="img/demo.webm" type="video/webm">
+      </video>
+      <div class="ptr" id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 3l15 7.5-6.4 2.1L10.5 19z" fill="var(--mira-text)" stroke="var(--mira-bg)" stroke-width="1.2" stroke-linejoin="round"/></svg><span>Demo</span></div>
+      <!-- the map scene : played over the video (a recording only hovers) : a block is clicked, its panel grows, "Develop with Claude Code" opens a tab -->
+      <div class="scene" id="scene" aria-hidden="true">
+        <div class="sc-ring"></div>
+        <div class="sc-panel">
+          <div class="sp-h"><svg class="si" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg><span>API service</span><svg class="si" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></div>
+          <b>Orders API</b><p>REST API for products, carts and orders.</p>
+          <div class="sp-c"><span class="ok"><i></i>Available</span><span>1 to do</span><span>3 files</span></div>
+          <code>acme/api</code>
+          <div class="sp-t"><svg class="si" viewBox="0 0 24 24"><path d="M3 6h2M3 12h2M3 18h2M9 6h12M9 12h12M9 18h12"/></svg>Tasks<em>1 open</em></div>
+          <div class="sp-go"><svg viewBox="0 0 24 24"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="var(--claude)"/></svg>Develop with Claude Code</div>
+        </div>
+        <div class="sc-tab"><svg viewBox="0 0 24 24"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="var(--claude)"/></svg>Orders API</div>
+        <div class="sc-term"><div class="st-l"><b>Claude Code</b> · working on <b>Orders API</b> (acme/api)</div><div class="st-l">Read api/server.ts · api/orders.ts</div><div class="st-l">Adding a rate limit to POST /api/orders…</div><div class="st-l"><span class="cur"></span></div></div>
+      </div>
+    </div>
+    <div class="veil" aria-hidden="true"></div>
+  </div>
+  <div class="views reveal" style="--d:760ms" role="tablist" aria-label="Demo"></div>
+</section>
+
+<section class="strip">
+  <div class="frame">
+    <div class="shead"><h2>The agents you already use,<br><span>in one window.</span></h2><p class="txt">Mira finds Claude Code, Codex, Gemini, Cursor, Copilot and Grok on your Mac, and gives each one its own logo and message box.</p></div>
+    <div class="band"><div class="track"><div class="set"><span class="mi"><svg viewBox="0 0 24 24"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="var(--claude)"/></svg>Claude Code</span><span class="mi"><svg viewBox="0 0 24 24" fill="var(--mira-text)" fill-rule="evenodd"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg>Codex</span><span class="mi"><img src="img/agents/gemini.png" alt="">Gemini CLI</span><span class="mi"><img src="img/agents/cursor.png" alt="">Cursor</span><span class="mi"><svg viewBox="0 0 16 16" fill="var(--mira-text)"><path d="M7.998 15.035c-4.562 0-7.873-2.914-7.998-3.749V9.338c.085-.628.677-1.686 1.588-2.065.013-.07.024-.143.036-.218.029-.183.06-.384.126-.612-.201-.508-.254-1.084-.254-1.656 0-.87.128-1.769.693-2.484.579-.733 1.494-1.124 2.724-1.261 1.206-.134 2.262.034 2.944.765.05.053.096.108.139.165.044-.057.094-.112.143-.165.682-.731 1.738-.899 2.944-.765 1.23.137 2.145.528 2.724 1.261.566.715.693 1.614.693 2.484 0 .572-.053 1.148-.254 1.656.066.228.098.429.126.612.012.076.024.148.037.218.924.385 1.522 1.471 1.591 2.095v1.872c0 .766-3.351 3.795-8.002 3.795Zm0-1.485c2.28 0 4.584-1.11 5.002-1.433V7.862l-.023-.116c-.49.21-1.075.291-1.727.291-1.146 0-2.059-.327-2.71-.991A3.222 3.222 0 0 1 8 6.303a3.24 3.24 0 0 1-.544.743c-.65.664-1.563.991-2.71.991-.652 0-1.236-.081-1.727-.291l-.023.116v4.255c.419.323 2.722 1.433 5.002 1.433ZM6.762 2.83c-.193-.206-.637-.413-1.682-.297-1.019.113-1.479.404-1.713.7-.247.312-.369.789-.369 1.554 0 .793.129 1.171.308 1.371.162.181.519.379 1.442.379.853 0 1.339-.235 1.638-.54.315-.322.527-.827.617-1.553.117-.935-.037-1.395-.241-1.614Zm4.155-.297c-1.044-.116-1.488.091-1.681.297-.204.219-.359.679-.242 1.614.091.726.303 1.231.618 1.553.299.305.784.54 1.638.54.922 0 1.28-.198 1.442-.379.179-.2.308-.578.308-1.371 0-.765-.123-1.242-.37-1.554-.233-.296-.693-.587-1.713-.7Z"/><path d="M6.25 9.037a.75.75 0 0 1 .75.75v1.501a.75.75 0 0 1-1.5 0V9.787a.75.75 0 0 1 .75-.75Zm4.25.75v1.501a.75.75 0 0 1-1.5 0V9.787a.75.75 0 0 1 1.5 0Z"/></svg>GitHub Copilot</span><span class="mi"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/></svg>Grok</span></div><div class="set" aria-hidden="true"><span class="mi"><svg viewBox="0 0 24 24"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="var(--claude)"/></svg>Claude Code</span><span class="mi"><svg viewBox="0 0 24 24" fill="var(--mira-text)" fill-rule="evenodd"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg>Codex</span><span class="mi"><img src="img/agents/gemini.png" alt="">Gemini CLI</span><span class="mi"><img src="img/agents/cursor.png" alt="">Cursor</span><span class="mi"><svg viewBox="0 0 16 16" fill="var(--mira-text)"><path d="M7.998 15.035c-4.562 0-7.873-2.914-7.998-3.749V9.338c.085-.628.677-1.686 1.588-2.065.013-.07.024-.143.036-.218.029-.183.06-.384.126-.612-.201-.508-.254-1.084-.254-1.656 0-.87.128-1.769.693-2.484.579-.733 1.494-1.124 2.724-1.261 1.206-.134 2.262.034 2.944.765.05.053.096.108.139.165.044-.057.094-.112.143-.165.682-.731 1.738-.899 2.944-.765 1.23.137 2.145.528 2.724 1.261.566.715.693 1.614.693 2.484 0 .572-.053 1.148-.254 1.656.066.228.098.429.126.612.012.076.024.148.037.218.924.385 1.522 1.471 1.591 2.095v1.872c0 .766-3.351 3.795-8.002 3.795Zm0-1.485c2.28 0 4.584-1.11 5.002-1.433V7.862l-.023-.116c-.49.21-1.075.291-1.727.291-1.146 0-2.059-.327-2.71-.991A3.222 3.222 0 0 1 8 6.303a3.24 3.24 0 0 1-.544.743c-.65.664-1.563.991-2.71.991-.652 0-1.236-.081-1.727-.291l-.023.116v4.255c.419.323 2.722 1.433 5.002 1.433ZM6.762 2.83c-.193-.206-.637-.413-1.682-.297-1.019.113-1.479.404-1.713.7-.247.312-.369.789-.369 1.554 0 .793.129 1.171.308 1.371.162.181.519.379 1.442.379.853 0 1.339-.235 1.638-.54.315-.322.527-.827.617-1.553.117-.935-.037-1.395-.241-1.614Zm4.155-.297c-1.044-.116-1.488.091-1.681.297-.204.219-.359.679-.242 1.614.091.726.303 1.231.618 1.553.299.305.784.54 1.638.54.922 0 1.28-.198 1.442-.379.179-.2.308-.578.308-1.371 0-.765-.123-1.242-.37-1.554-.233-.296-.693-.587-1.713-.7Z"/><path d="M6.25 9.037a.75.75 0 0 1 .75.75v1.501a.75.75 0 0 1-1.5 0V9.787a.75.75 0 0 1 .75-.75Zm4.25.75v1.501a.75.75 0 0 1-1.5 0V9.787a.75.75 0 0 1 1.5 0Z"/></svg>GitHub Copilot</span><span class="mi"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/></svg>Grok</span></div></div></div>
+  </div>
+</section>
+
+
+<section class="arc" id="product">
+  <div class="frame">
+    <div class="two">
+      <div class="left">
+        <div class="sticky">
+          <div class="astep on"><h3>Every account, one click away.</h3><p>Keep your Claude Code and Codex accounts side by side and switch between them in a click. No sign-out, no sign-in, and each one's limits always in view.</p><ul class="checks"><li><svg><use href="#ok"/></svg>Work, personal and client accounts together</li><li><svg><use href="#ok"/></svg>Usage per day, week and month</li><li><svg><use href="#ok"/></svg>Plugins, skills and MCP servers shared</li></ul></div>
+          <div class="astep"><h3>All your agents, running at once.</h3><p>Claude Code, Codex, Gemini, Cursor, Copilot and Grok in tabs, split panes or separate windows. Each one tells you the moment it needs you.</p><ul class="checks"><li><svg><use href="#ok"/></svg>Tabs, split panes and several windows</li><li><svg><use href="#ok"/></svg>The model and mode you choose</li><li><svg><use href="#ok"/></svg>A signal when an agent waits for you</li></ul></div>
+          <div class="astep"><h3>Organize the work. Delegate it.</h3><p>Plan your projects on one board, then hand each task to an agent and follow it until it's done.</p><ul class="checks"><li><svg><use href="#ok"/></svg>Board, list and table</li><li><svg><use href="#ok"/></svg>One agent per task, started from its card</li><li><svg><use href="#ok"/></svg>Saved in your repository, not on someone else's server</li></ul></div>
+          <div class="astep"><h3>See how your project really works.</h3><p>Mira draws your architecture from the code itself: apps, services, data and every flow between them. The diagram stays current as your agents work.</p><ul class="checks"><li><svg><use href="#ok"/></svg>Every link backed by a line of code</li><li><svg><use href="#ok"/></svg>Flows step by step, in 2D or 3D</li><li><svg><use href="#ok"/></svg>Live status of each service</li></ul></div>
+          <div class="astep"><h3>Build one part without touching the rest.</h3><p>Pick a block on the diagram and it gets its own branch, its own terminal and its own agent. Every part of your project moves forward independently.</p><ul class="checks"><li><svg><use href="#ok"/></svg>A branch per block</li><li><svg><use href="#ok"/></svg>Its own terminal and agent</li><li><svg><use href="#ok"/></svg>The rest of the project untouched</li></ul></div>
+          <div class="astep"><h3>The terminal, refined.</h3><p>Everything you love about the terminal, made clearer and easier to use. Write, paste screenshots, drop files or just speak.</p><ul class="checks"><li><svg><use href="#ok"/></svg>Files, screenshots and history</li><li><svg><use href="#ok"/></svg>Dictation that runs on your Mac</li><li><svg><use href="#ok"/></svg>Every command, shortcut and menu still works</li></ul></div>
+        </div>
+      </div>
+      <div class="right" aria-hidden="true">
+        <div class="rsky"><div class="grid"></div><canvas id="sky3"></canvas></div>
+        <div class="panels">
+          <div class="panel on"><div class="screen center"><div class="grid12"></div><div class="win float accts"><div class="wh"><span class="tile">S</span><span>Claude Code<span class="sub">Accounts</span></span><small>Switch</small></div><div class="wb"><div class="row sel"><span class="sd" style="background:var(--ok)"></span>work<em><b>62%</b> left</em></div><div class="meter"><i style="--f:0.62"></i></div><div class="row"><span class="sd" style="background:var(--mira-text-3)"></span>personal<em><b>80%</b> left</em></div><div class="meter"><i style="--f:0.8"></i></div><div class="row"><span class="sd" style="background:var(--mira-text-3)"></span>client<em><b>45%</b> left</em></div><div class="meter"><i style="--f:0.45"></i></div></div></div></div>
+            <div class="fl w1 toast"><span class="fi"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg></span><div><b>Switched to personal</b><small>Same session, no sign-in</small></div></div>
+            <div class="fl w2 usage"><div class="ut"><b>personal</b><small>this week</small></div><div class="ub"><i style="--f:.8"></i></div><small>80% left · resets Monday</small></div></div>
+          <div class="panel"><div class="screen"><video src="img/feat-agents.mp4" muted loop playsinline preload="metadata"></video></div>
+            <div class="fl w1 ask"><div class="at"><span class="sd" style="background:var(--warn)"></span><b>Codex needs you</b></div><small>Apply the edit to login.tsx?</small><div class="ab"><span>Yes</span><span>No</span></div></div>
+            <div class="fl w2 panes"><small>3 agents, one window</small><div class="pg"><span>Claude Code</span><span>Codex</span><span>Gemini</span></div></div></div>
+          <div class="panel"><div class="screen"><video src="img/feat-tasks.mp4" muted loop playsinline preload="metadata"></video></div>
+            <div class="fl w1 task"><small>ACM-12</small><b>Fix the login redirect</b><div class="tm"><span class="tg">High</span><span class="who"><i style="background:var(--claude)"></i>Claude Code</span></div></div>
+            <div class="fl w2 flow"><span>Todo</span><em>→</em><span class="on">In progress</span><em>→</em><span>Done</span></div></div>
+          <div class="panel"><div class="screen"><video src="img/feat-map.mp4" muted loop playsinline preload="metadata"></video></div>
+            <div class="fl w1 code"><small>orders → payments, proven by</small><code><span>server.ts:42</span> stripe.charges.create()</code></div>
+            <div class="fl w2 live"><small>Live</small><div><i style="background:var(--ok)"></i>api</div><div><i style="background:var(--ok)"></i>web</div><div><i style="background:var(--warn)"></i>worker</div></div></div>
+          <div class="panel"><div class="screen"><video src="img/feat-projects.mp4" muted loop playsinline preload="metadata"></video></div>
+            <div class="fl w1 blocks"><small>Picked on the diagram</small><div class="bg"><span>web</span><span class="on">api</span><span>db</span><span>worker</span></div></div>
+            <div class="fl w2 toast"><span class="fi"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 4-6 3-12 7"/></svg></span><div><b>mira/api</b><small>Its own branch, terminal and agent</small></div></div></div>
+          <div class="panel"><div class="screen"><video src="img/feat-box.mp4" muted loop playsinline preload="metadata"></video></div>
+            <div class="fl w1 toast"><span class="fi"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></span><div><b>screenshot.png</b><small>Dropped in the message box</small></div></div>
+            <div class="fl w2 voice"><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><div><b>Listening…</b><small>Dictation runs on your Mac</small></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="frame">
+    <div class="shead"><h2 data-words>Up and running <span>in a minute.</span></h2><p class="txt reveal">Three steps, and your agents are working on the right part of the right project.</p></div>
+    <div class="cells c3">
+      <div class="cell step reveal" style="--d:0ms"><div class="art"><div class="grid12"></div><canvas class="field free"></canvas>
+          <div class="mock app m-side"><div class="sr"><svg class="li" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M12 15h5"/></svg>New terminal</div><div class="sr open"><svg class="li" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v1H8.5a2 2 0 0 0-1.9 1.4L4.5 18"/><path d="M4.5 18 6.6 11.4A2 2 0 0 1 8.5 10H21l-2.2 6.6A2 2 0 0 1 16.9 18z"/></svg>Open folder</div><div class="sr"><svg class="li" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="7" r="2"/><path d="M6 7v10M18 9a6 6 0 0 1-6 6H6"/></svg>Clone repository</div>
+            <div class="sh">Projects</div>
+            <div class="sp"><div class="sr pj"><svg class="li" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="15" cy="13" r="2"/><path d="M15 15v3"/></svg>Acme<em>5</em></div><div class="sa a1"><svg viewBox="0 0 24 24"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="var(--claude)"/></svg>Claude Code</div><div class="sa a2"><svg viewBox="0 0 24 24" fill="var(--mira-text)" fill-rule="evenodd"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg>Codex</div><div class="sa a3"><img src="img/agents/gemini.png" alt="">Gemini CLI</div></div></div>
+          <div class="hint" aria-hidden="true"><span class="sq"></span><span class="type" data-lines="~/code/acme|~/code/northwind|~/code/orbit"></span><span class="caret"></span></div></div>
+        <small class="num">01</small><h3>Open a project.</h3><p>Pick a folder, or clone a repository. Mira finds its agents, its terminals and its tasks.</p></div>
+      <div class="cell step reveal" style="--d:140ms"><div class="art"><div class="grid12"></div><canvas class="field free"></canvas>
+          <div class="mock app m-map2"><svg class="wire" viewBox="0 0 330 168" preserveAspectRatio="none"><path d="M142 66 H188"/><path d="M142 78 H165 V120 H188"/></svg>
+            <div class="grp g1"><div class="gh"><i style="background:#9b8cf5"></i>Clients</div><div class="blk b1"><div class="bk1"><svg class="li" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Web app</div><b>Storefront</b><span>Next.js shop: catalog, cart and checkout.</span><u>Available</u></div></div>
+            <div class="grp g2"><div class="gh"><i style="background:#ef8fc0"></i>Backend</div><div class="blk b2"><div class="bk1"><svg class="li" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>API service</div><b>Orders API</b><span>REST API for products and orders.</span><u>Available</u></div></div></div>
+          <div class="hint" aria-hidden="true"><span class="sq ok"></span><span>Reading <b class="count" data-to="412">0</b> files · <b class="count" data-to="6">0</b> services</span></div></div>
+        <small class="num">02</small><h3>Mira draws the diagram.</h3><p>Your agent reads the code once. Mira draws the apps, services and data, and keeps them current.</p></div>
+      <div class="cell step reveal" style="--d:280ms"><div class="art"><div class="grid12"></div><canvas class="field free"></canvas>
+          <div class="mock app m-board2"><div class="cols"><div><span class="st todo">Todo</span></div><div><span class="st prog">In progress</span></div><div><span class="st done">Done</span></div></div>
+            <div class="tcard"><small class="id">ACM-6</small><b>Rate limit the orders API</b><div class="tr"><span class="pill">Todo</span></div>
+            <div class="tr"><svg class="li" viewBox="0 0 24 24"><circle cx="12" cy="6" r="3"/><circle cx="6" cy="16" r="3"/><circle cx="18" cy="16" r="3"/></svg><span><svg class="li" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>Orders API</span></div><div class="tr"><svg class="li" viewBox="0 0 24 24"><path d="M5 21V4h11l-2 4 2 4H5"/></svg><span class="hi">High</span></div><div class="tr"><svg class="li" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v1H8.5a2 2 0 0 0-1.9 1.4L4.5 18"/><path d="M4.5 18 6.6 11.4A2 2 0 0 1 8.5 10H21l-2.2 6.6A2 2 0 0 1 16.9 18z"/></svg><span>Acme</span></div></div></div>
+          <div class="hint" aria-hidden="true"><span class="sq claude"></span><span class="type" data-lines="Rate limit → Claude Code|Retry receipts → Codex|Dark mode → Gemini"></span><span class="caret"></span></div></div>
+        <small class="num">03</small><h3>Hand the work to your agents.</h3><p>Write the tasks, give each one to an agent, and follow them on the board until they are done.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="frame">
+    <div class="wrap">
+      <div class="faq-side">
+        <h2 data-words>Questions, <span>answered.</span></h2>
+        <p class="txt">What people ask before they install Mira: the price, their agents, their accounts and their code.</p>
+        <a class="ask" href="https://github.com/dump-addict/MIRA-TERMINAL/issues"><b>Still a question?</b><span>Ask it on GitHub, we answer there.</span><em>→</em></a>
+      </div>
+      <div class="faq">
+        <details open><summary><small>01</small><span>Is Mira free?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Yes, and for good. Mira is open source under the MIT license, with no server, no account and nothing to sell. You only pay for the agents you choose to use, with your own subscriptions.</p></div></details>
+        <details><summary><small>02</small><span>Which agents does it work with?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Claude Code, Codex, Gemini CLI, Cursor, GitHub Copilot and Grok are detected and get their own logo and message box. Any other agent that runs in a terminal works in a plain tab. Mira runs the agents already installed on your computer, in their own version, and each one signs in by itself: Mira stores no password.</p></div></details>
+        <details><summary><small>03</small><span>Can I use several accounts of the same agent?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Yes, for Claude Code and Codex. Each account keeps its own sign-in, and you switch from one to the other in a click, with no sign-out and no sign-in again. Its usage for the day, the week and the month stays in view. When one account gets close to its limit, switch to another and keep working.</p></div></details>
+        <details><summary><small>04</small><span>What can the agents do on my machine?</span><i aria-hidden="true"></i></summary><div class="ans"><p>What they can do in any terminal, nothing more. Mira asks before anything is deleted, keeps your secrets out of their reach, and lets you trust each project one by one.</p></div></details>
+        <details><summary><small>05</small><span>Does my code leave my machine?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Not because of Mira. The diagram, its checks and dictation run locally. Your agents talk to their own services, exactly as they do in any terminal.</p></div></details>
+        <details><summary><small>06</small><span>Will my terminal still work the same way?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Yes. The message box sits on top of the agent’s own input: the real terminal runs underneath, so every command, shortcut and menu works exactly as before. One click goes back to the plain terminal.</p></div></details>
+        <details><summary><small>07</small><span>How is the architecture diagram made?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Your agent reads the code once and writes the diagram into the project. Mira draws it, keeps it up to date and runs quick checks on each block, such as an API answering or a key being set.</p></div></details>
+        <details><summary><small>08</small><span>Which systems are supported?</span><i aria-hidden="true"></i></summary><div class="ans"><p>macOS (Apple silicon and Intel), Windows 10 and 11, and Linux as an AppImage. On a Mac you can also install it with Homebrew.</p></div></details>
+        <details><summary><small>09</small><span>Can I contribute?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Yes. Open an issue or a pull request on GitHub. The contributing guide explains how to run Mira locally.</p></div></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="end">
+  <div class="frame">
+    <div class="sky" aria-hidden="true"><div class="grid"></div><canvas id="sky2"></canvas></div>
+    <div class="col" id="get">
+      <h2 data-words>Ready to see it all? <span>Get Mira now.</span></h2>
+      <p class="txt reveal">Free and open source. Your agents, your accounts, your machine.</p>
+      <div class="cta reveal" style="--d:120ms"><a class="btn primary lg" href="download.html">Download for Mac</a><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL">View on GitHub</a></div>
+      <p class="alt reveal" style="--d:200ms">Mac first, Windows and Linux on the way.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="frame">
+    <div class="fgrid">
+      <div class="fsay"><a class="brand" href="#" aria-label="Mira"><svg><use href="#mark"/></svg></a><p>All in view.<br><span>Your projects, agents and tasks.</span></p><small>© 2026 Mira · MIT</small></div>
+      <div><h3>Product</h3><ul><li><a href="#product">Overview</a></li><li><a href="features.html">Features</a></li><li><a href="download.html">Download</a></li></ul></div>
+      <div><h3>Learn</h3><ul><li><a href="#faq">FAQ</a></li><li><a href="https://github.com/dump-addict/MIRA-TERMINAL/issues">Issues</a></li><li><a href="https://github.com/dump-addict/MIRA-TERMINAL/blob/main/.github/CONTRIBUTING.md">Contribute</a></li></ul></div>
+      <!-- TODO: the Discord and X addresses are not known yet -->
+      <div><h3>Community</h3><ul><li><a href="https://github.com/dump-addict/MIRA-TERMINAL">GitHub</a></li><li><a href="#" data-todo="discord">Discord</a></li><li><a href="#" data-todo="x">X</a></li></ul></div>
+      <div><h3>Legal</h3><ul><li><a href="https://github.com/dump-addict/MIRA-TERMINAL/blob/main/LICENSE">License</a></li></ul></div>
+    </div>
+  </div>
+  <!-- the last thing on the page : the name, drawn with the birds' tiles -->
+  <div class="wordbox" aria-hidden="true"><div class="grid"></div><canvas class="word"></canvas></div>
+</footer>
+
+<script type="module" src="motion.js"></script>
+<script>
+  // the main button names the visitor's system; it always leads to the download page, which has every file
+  (() => {
+    const ua = navigator.userAgent, plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || ''
+    const name = /Win/i.test(plat + ua) ? 'Windows' : /Mac/i.test(plat + ua) ? 'Mac' : /Linux|X11/i.test(plat + ua) && !/Android/i.test(ua) ? 'Linux' : ''
+    const b = document.getElementById('dl-cta')
+    if (b && name) b.textContent = 'Download for ' + name
+  })()
+</script>
+
+<script>
+  /* The demo, one page at a time like the app : each tab plays its part of a video, then the next tab starts.
+     A click jumps to a page. Agents and Tasks are parts of demo.mp4 ; a page with its own file shows up
+     only once that file is in img/ (demo-home.mp4 : the home page with no project, demo-add.mp4 : adding a project). */
+  const ICON = {
+    map: '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+    home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    add: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v5M9.5 13.5h5"/>',
+    agents: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 9 3 3-3 3M12 15h5"/>',
+    tasks: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
+  }
+  const VIEWS = [
+    // demo.mp4 cut in three : the agents at work, then the clicks on the map, then the board
+    { id: 'agents', label: 'Agents', parts: [[18.8, 20.9], [0, 7.1]] },
+    { id: 'map', label: 'Diagram', parts: [[7.1, 9.0]], scene: 7.6 }, // the recording only hovers the map : the clicks are played over it (playMap)
+    { id: 'tasks', label: 'Tasks', parts: [[15.7, 18.55]], rate: 0.6 }, // the board is on screen for 3 s only : played slower
+    { id: 'add', label: 'New project', file: 'img/demo-add.mp4' },
+  ]
+  // the pointer of demo.mp4 : where it is at each moment of the video (seconds, then x and y as a share of the screen)
+  const MARKS = [[0.62, 0.6, 0.533], [0.62, 0.1899, 0.5226], [4.67, 0.1899, 0.9384], [7.2, 0.56, 0.47, 0], [8.9, 0.71, 0.36, 0], [10.6, 0.89, 0.35, 0], [12.2, 0.9, 0.6, 0], [13.8, 0.34, 0.27, 0], [15.09, 0.0393, 0.2154], [18.28, 0.0373, 0.3454], [21.09, 0.6, 0.533]]
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches
+  const main = document.getElementById('demo'), ptr = document.getElementById('ptr'), bar = document.querySelector('.views'), screen = document.querySelector('.stage .screen')
+  const ease = (u) => u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2
+  let views = [], cur = -1, part = 0, done = 0
+
+  function placePointer() {
+    const t = main.currentTime
+    let a = MARKS[0], b = MARKS[MARKS.length - 1]
+    for (let i = 0; i < MARKS.length - 1; i++) if (t >= MARKS[i][0] && t < MARKS[i + 1][0]) { a = MARKS[i]; b = MARKS[i + 1] }
+    const start = Math.max(a[0], b[0] - 0.7), u = t <= start ? 0 : Math.min(1, (t - start) / Math.max(.01, b[0] - start)), e = ease(u)
+    if (t >= b[0]) a = b
+    ptr.style.left = ((a[1] + (b[1] - a[1]) * e) * 100) + '%'; ptr.style.top = ((a[2] + (b[2] - a[2]) * e) * 100) + '%'
+    ptr.classList.toggle('tap', MARKS.some((m) => m[3] !== 0 && t >= m[0] && t < m[0] + 0.18))
+  }
+  const length = (v) => v.parts ? v.parts.reduce((s, [a, b]) => s + b - a, 0) + (v.scene || 0) : (v.el.duration || 1)
+
+  /* the map scene : the pointer clicks Orders API, its panel grows from the block, "Develop with Claude Code" opens its tab */
+  const scene = document.getElementById('scene')
+  let playing = false, run = 0
+  const wait = (ms, id) => new Promise((r, no) => setTimeout(() => (id === run ? r() : no()), ms))
+  const point = (x, y) => { ptr.style.left = x + '%'; ptr.style.top = y + '%' }
+  const tap = async (id) => { ptr.classList.add('tap'); await wait(180, id); ptr.classList.remove('tap') }
+  function stopMap() { run++; playing = false; scene.className = 'scene'; screen.classList.remove('playing'); ptr.classList.remove('tap') }
+  async function playMap(v) {
+    const id = ++run; playing = true; main.pause(); screen.classList.add('playing')
+    const t0 = performance.now(), base = length(v) - v.scene
+    const fill = () => { if (id !== run) return; v.btn.style.setProperty('--p', Math.min(1, (base + (performance.now() - t0) / 1000) / length(v)).toFixed(3)); requestAnimationFrame(fill) }
+    requestAnimationFrame(fill)
+    try {
+      point(91.7, 39); await wait(950, id); await tap(id); scene.className = 'scene s1'
+      await wait(350, id); scene.className = 'scene s1 s2'
+      await wait(1500, id); const pn = scene.querySelector('.sc-panel'), go = pn.querySelector('.sp-go'); point((pn.offsetLeft + go.offsetLeft + go.offsetWidth * 0.4) / screen.clientWidth * 100, (pn.offsetTop + go.offsetTop + go.offsetHeight / 2) / screen.clientHeight * 100); await wait(1000, id); await tap(id); scene.className = 'scene s2 s3'
+      await wait(350, id); scene.className = 'scene s4'; point(47, 30)
+      await wait(3100, id); stopMap(); next()
+    } catch { /* another tab was chosen */ }
+  }
+
+  function show(i) {
+    stopMap()
+    cur = i; part = 0; done = 0
+    const v = views[i]
+    views.forEach((w, k) => { w.btn.classList.toggle('on', k === i); w.btn.setAttribute('aria-selected', k === i); w.btn.style.setProperty('--p', 0) })
+    for (const el of screen.querySelectorAll('video')) { el.classList.toggle('on', el === v.el); if (el !== v.el) el.pause() }
+    ptr.style.opacity = v.el === main && !still ? 1 : 0
+    v.el.currentTime = v.parts ? v.parts[0][0] : 0
+    v.el.playbackRate = v.rate || 1
+    if (!still) v.el.play().catch(() => {})
+  }
+  const next = () => show((cur + 1) % views.length)
+
+  function tick() {
+    const v = views[cur]
+    if (v) {
+      if (v.parts) {
+        const [a, b] = v.parts[part], t = main.currentTime
+        if (t >= b - 0.04 || t < a - 0.5) {
+          done += b - a; part++
+          if (part >= v.parts.length) { if (v.scene && !playing) playMap(v); else if (!playing) next() } else main.currentTime = v.parts[part][0]
+        } else v.btn.style.setProperty('--p', ((done + Math.max(0, t - a)) / length(v)).toFixed(3))
+        if (!playing) placePointer()
+      } else v.btn.style.setProperty('--p', (v.el.currentTime / length(v)).toFixed(3))
+    }
+    requestAnimationFrame(tick)
+  }
+
+  async function build() {
+    for (const v of VIEWS) {
+      if (v.file) {
+        const ok = await fetch(v.file, { method: 'HEAD' }).then((r) => r.ok).catch(() => false)
+        if (!ok) continue
+        v.el = document.createElement('video'); v.el.muted = true; v.el.playsInline = true; v.el.preload = 'auto'; v.el.src = v.file
+        v.el.addEventListener('ended', () => { if (views[cur] === v) next() })
+        screen.insertBefore(v.el, ptr)
+      } else v.el = main
+      v.btn = document.createElement('button')
+      v.btn.type = 'button'; v.btn.setAttribute('role', 'tab')
+      v.btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${ICON[v.id]}</svg><span>${v.label}</span><i></i>`
+      v.btn.addEventListener('click', () => show(views.indexOf(v)))
+      bar.append(v.btn); views.push(v)
+    }
+    show(Math.max(0, views.findIndex((v) => v.id === 'agents')))
+    requestAnimationFrame(tick)
+  }
+  if (main && bar) build()
+</script>
+</body>
+</html>

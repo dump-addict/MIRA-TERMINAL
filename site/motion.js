@@ -34,7 +34,7 @@ function split(el) {
 }
 // every title comes out of a blur word by word, every paragraph rises in : marked here so the markup stays plain
 document.querySelectorAll('section h2, .cell h3').forEach((h) => { if (!h.closest('.astep')) h.setAttribute('data-words', ''); });
-document.querySelectorAll('.shead .txt, .cell > p, .cell > .num, #faq details, .end p').forEach((el, i) => { if (!el.classList.contains('reveal')) { el.classList.add('reveal'); el.style.setProperty('--d', (el.matches('.cell > p') ? 120 : 0) + 'ms'); } });
+document.querySelectorAll('.shead .txt, .cell > p, .cell > .num, .end p').forEach((el, i) => { if (!el.classList.contains('reveal')) { el.classList.add('reveal'); el.style.setProperty('--d', (el.matches('.cell > p') ? 120 : 0) + 'ms'); } });
 document.querySelectorAll('[data-words], .read').forEach(split);
 // the steps of the strengths : their words come in each time the step comes to the front
 document.querySelectorAll('.astep h3, .astep p').forEach(split);
@@ -267,11 +267,58 @@ if (pill && !still) setInterval(() => {
 }, 120);
 else if (pill) pill.textContent = 'Done';
 
+/* ---------- faq : the row under the mouse (or the keyboard) opens, and its answer comes out from under the opening's tiles,
+   which clear from left to right, each one at its own moment */
+// a veil of the opening's tiles over an element : it covers it at once, and start() clears it from left to right
+const tileVeil = (el, seed, dur = 700) => {
+  if (still) return { start() {} };
+  el.querySelector(':scope > canvas.veil')?.remove();
+  const cv = document.createElement('canvas'); cv.className = 'veil'; el.append(cv);
+  const ctx = cv.getContext('2d'), C = 12, G = ['S', 'X', '%', 't', '8', '@', '#'], E = ['.', ':', ';', "'"];
+  const hh = (x, y, s) => { const v = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453; return v - Math.floor(v); };
+  const css = getComputedStyle(document.documentElement), ink = css.getPropertyValue('--mira-text').trim() || '#0a0a0a', paper = css.getPropertyValue('--mira-bg').trim() || '#fff';
+  let t0 = 0;
+  const frame = (now) => {
+    if (!cv.isConnected) return;
+    // the full height of the content : an answer that is still opening is shorter than its text
+    const r = el.getBoundingClientRect(), d = devicePixelRatio || 1, W = el.offsetWidth || r.width;
+    // for a text, the height of its lines (not of the box, which may still be opening, nor of the veil itself)
+    let H = el.offsetHeight || r.height;
+    if (el.firstChild && el.firstChild.nodeType === 3) { const rg = document.createRange(); rg.selectNodeContents(el.firstChild); H = Math.ceil(rg.getBoundingClientRect().height); }
+    if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); cv.style.height = H + 'px'; }
+    ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, W, H);
+    ctx.font = `700 ${C - 3}px ui-monospace, Menlo, monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const u = t0 ? (now - t0) / dur : 0, cols = Math.ceil(W / C), rws = Math.ceil(H / C); let left = 0;
+    for (let y = 0; y < rws; y++) for (let x = 0; x < cols; x++) {
+      const when = (x / cols) * 0.7 + hh(x, y, seed) * 0.3; if (u > when + 0.15) continue; left++;
+      const k = u > when ? 1 - (u - when) / 0.15 : 1, g = hh(x, y, 3 + seed);
+      ctx.globalAlpha = k; ctx.fillStyle = paper; ctx.fillRect(x * C, y * C, C, C);
+      if (g < 0.4) continue;
+      ctx.globalAlpha = k * (0.12 + 0.3 * g); ctx.fillStyle = ink; ctx.fillRect(x * C + 1, y * C + 1, C - 1, C - 1);
+      ctx.globalAlpha = k * 0.5; ctx.fillText(g > 0.8 ? G[Math.floor(g * 97) % G.length] : E[Math.floor(g * 31) % E.length], x * C + C / 2, y * C + C / 2 + 0.5);
+    }
+    if (!t0) return;
+    if (left || now - t0 < 120) requestAnimationFrame(frame); else cv.remove();
+  };
+  frame(0);
+  return { start() { if (t0) return; t0 = performance.now(); requestAnimationFrame(frame); } };
+};
+const tileReveal = (el, seed) => tileVeil(el, seed).start();
+// the pictures of the page come out from under the tiles the first time they are seen
+document.querySelectorAll('.hero .stage .screen, .arc .panel .screen, .how .mock').forEach((el, i) => {
+  const v = tileVeil(el, i + 7, el.matches('.how .mock') ? 900 : 1300);
+  new IntersectionObserver(([e], o) => { if (!e.isIntersecting) return; o.disconnect(); setTimeout(() => v.start(), el.closest('.hero') ? 700 : 80); }, { threshold: 0.2 }).observe(el);
+});
+
+const rows = [...document.querySelectorAll('.eq')];
+const openRow = (r) => { if (r.classList.contains('on')) return; rows.forEach((x) => x.classList.toggle('on', x === r)); tileReveal(r.querySelector('p'), rows.indexOf(r)); };
+rows.forEach((r) => { r.addEventListener('mouseenter', () => openRow(r)); r.addEventListener('focus', () => openRow(r)); r.addEventListener('click', () => openRow(r)); });
+
 /* ---------- the footer's name : "Mira" across the whole width, made of tiles like the birds, light and frayed at the edges ; the tiles part under the mouse */
 const word = document.querySelector('footer canvas.word');
 if (word) {
   const ctx = word.getContext('2d'), GLYPH = ['S', 'X', '%', 't', '8', '@', '#'], EDGE = ['.', ':', ';', "'", '`'];
-  let cells = [], W = 0, H = 0, cell = 10, mx = -1e3, my = -1e3, on = false, ink = '#0a0a0a', paper = '#ffffff';
+  let cells = [], W = 0, H = 0, cell = 10, mx = -1e3, my = -1e3, on = false, ink = '#0a0a0a', paper = '#ffffff', cols = 1, born = 0;
   const h = (x, y, s) => { const n = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453; return n - Math.floor(n); };
   const build = () => {
     const r = word.getBoundingClientRect(), d = devicePixelRatio || 1; W = r.width; H = r.height; if (!W) return;
@@ -291,29 +338,38 @@ if (word) {
     for (let y = 0; y < off.height; y++) for (let x = 0; x < off.width; x++) {
       let a = 0; for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) a += px[((y * S + j) * big.width + x * S + i) * 4 + 3];
       a /= S * S * 255; if (a > 0.08) cells.push({ x, y, v: a });
+      cols = Math.max(cols, x + 1);
     }
   };
   word.addEventListener('mousemove', (e) => { const r = word.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; });
   word.addEventListener('mouseleave', () => { mx = my = -1e3; });
   const draw = (now) => {
     ctx.clearRect(0, 0, W, H); ctx.font = `700 ${cell - 3}px ui-monospace, "SF Mono", Menlo, monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const tick = Math.floor(now / 666);
+    const tick = Math.floor(now / 666), t = born ? (now - born) / 1000 : 0;
+    if (!still && !born) return;
     for (const c of cells) {
-      let X = c.x * cell, Y = c.y * cell; const dx = X - mx, dy = Y - my, d = Math.hypot(dx, dy);
+      // the tiles come in like a flock : scattered small birds that fly to their place, from left to right, then land as tiles
+      let e = 1;
+      if (!still) { const delay = (c.x / cols) * 1.1 + h(c.x, c.y, 7) * 0.6; e = Math.min(1, Math.max(0, (t - delay) / 1.3)); if (e <= 0) continue; }
+      const k = 1 - Math.pow(1 - e, 3), ox = (h(c.x, c.y, 8) - 0.8) * 320, oy = -60 - h(c.x, c.y, 9) * 200;
+      let X = c.x * cell + (1 - k) * ox, Y = c.y * cell + (1 - k) * oy + Math.sin(e * Math.PI) * 14; const dx = X - mx, dy = Y - my, d = Math.hypot(dx, dy);
+      if (e < 0.7) { const flap = Math.sin(now / 90 + c.x + c.y); ctx.globalAlpha = 0.25 + 0.35 * h(c.x, c.y, 5); ctx.fillStyle = ink; ctx.fillText(flap > 0.35 ? 'v' : flap < -0.35 ? '^' : '-', X + cell / 2, Y + cell / 2); continue; }
+      const land = (e - 0.7) / 0.3;
       if (d < 110 && d > 0) { const k = (1 - d / 110) * 22; X += (dx / d) * k; Y += (dy / d) * k; }
       const flick = h(c.x, c.y, 1) > 0.94 ? tick : 0, grain = h(c.x, c.y, 11 + flick), pick = h(c.x, c.y, 23 + flick);
-      if (c.v < 0.55) { ctx.globalAlpha = 0.22 + c.v * 0.5; ctx.fillStyle = ink; ctx.fillText(grain > 0.8 ? 'o' : EDGE[Math.floor(pick * EDGE.length)], X + cell / 2, Y + cell / 2 + 0.5); continue; }
+      if (c.v < 0.55) { ctx.globalAlpha = (0.22 + c.v * 0.5) * land; ctx.fillStyle = ink; ctx.fillText(grain > 0.8 ? 'o' : EDGE[Math.floor(pick * EDGE.length)], X + cell / 2, Y + cell / 2 + 0.5); continue; }
       // shades like the far birds : light tiles, a few darker ones
       const shade = pick > 0.9 ? 0.55 : pick < 0.06 ? 0.12 : 0.18 + 0.3 * grain;
-      ctx.globalAlpha = shade; ctx.fillStyle = ink; ctx.fillRect(X + 1, Y + 1, cell - 1, cell - 1);
-      ctx.globalAlpha = shade > 0.4 ? 0.8 : 0.35; ctx.fillStyle = shade > 0.4 ? paper : ink;
+      ctx.globalAlpha = shade * land; ctx.fillStyle = ink; ctx.fillRect(X + 1, Y + 1, cell - 1, cell - 1);
+      ctx.globalAlpha = (shade > 0.4 ? 0.8 : 0.35) * land; ctx.fillStyle = shade > 0.4 ? paper : ink;
       ctx.fillText(GLYPH[Math.floor(pick * 997) % GLYPH.length], X + cell / 2, Y + cell / 2 + 0.5);
     }
     ctx.globalAlpha = 1;
   };
   let last = 0;
-  const loop = (now) => { requestAnimationFrame(loop); if (!on || now - last < 33) return; last = now; draw(now); };
-  new IntersectionObserver(([e]) => (on = e.isIntersecting)).observe(word);
+  // while the flock comes in the drawing runs at full speed, then at 30 frames a second
+  const loop = (now) => { requestAnimationFrame(loop); const flying = born && now - born < 3200; if (!on || (!flying && now - last < 33)) return; last = now; draw(now); };
+  new IntersectionObserver(([e]) => { on = e.isIntersecting; if (on && !born && e.intersectionRatio > 0.25) born = performance.now(); }, { threshold: [0, 0.3] }).observe(word);
   new ResizeObserver(() => { build(); draw(0); }).observe(word);
   document.fonts.ready.then(() => { build(); draw(0); if (!still) requestAnimationFrame(loop); });
 }

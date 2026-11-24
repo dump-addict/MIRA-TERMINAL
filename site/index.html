@@ -352,31 +352,23 @@
   pre.run .c { color: var(--mira-text-3); }
 
   /* questions : the title on the left, the list on the right */
-  /* faq : the title stays on the left while the questions go by ; each one numbered, a square + that turns into a cross, the answer sliding open */
-  #faq .wrap { display: grid; grid-template-columns: 5fr 7fr; column-gap: 80px; align-items: start; padding: 144px 120px; }
-  .faq-side { position: sticky; top: calc(var(--head) + 48px); }
-  #faq h2 { font-size: var(--h-lg); }
-  .faq-side .txt { max-width: 380px; margin-top: 20px; }
-  .ask { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; align-items: center; max-width: 380px; margin-top: 36px; padding: 16px 18px; border: 1px solid var(--mira-line-2); border-radius: 2px; transition: border-color .2s var(--out), background .2s var(--out); }
-  .ask b { font-size: 15px; font-weight: 500; } .ask span { grid-row: 2; font-size: 14px; color: var(--mira-text-2); } .ask em { grid-row: 1 / 3; grid-column: 2; font-style: normal; font-size: 18px; transition: transform .2s var(--out); }
-  .ask:hover { border-color: var(--line-hover); background: var(--mira-surface); } .ask:hover em { transform: translateX(4px); }
-  .faq { border-top: 1px solid var(--mira-line); }
-  details { border-bottom: 1px solid var(--mira-line); transition: background .2s var(--out); }
-  details:hover { background: var(--mira-surface); }
-  summary { display: grid; grid-template-columns: 40px 1fr 28px; align-items: center; gap: 12px; padding: 26px 16px 26px 12px; list-style: none; cursor: pointer; }
-  summary::-webkit-details-marker { display: none; }
-  summary small { font-size: 13px; color: var(--mira-text-3); font-variant-numeric: tabular-nums; }
-  summary span { font-size: 19px; line-height: 26px; font-weight: 500; letter-spacing: -0.015em; }
-  summary i { position: relative; width: 28px; height: 28px; border: 1px solid var(--mira-line-2); border-radius: 2px; background: var(--mira-bg); transition: background .2s, border-color .2s; }
-  summary i::before, summary i::after { content: ""; position: absolute; left: 50%; top: 50%; width: 11px; height: 1.5px; background: var(--mira-text); transform: translate(-50%, -50%); }
-  summary i::after { transform: translate(-50%, -50%) rotate(90deg); }
-  summary i::before, summary i::after { transition: transform .3s var(--out), background .2s; }
-  details[open] summary i { background: var(--mira-text); border-color: var(--mira-text); }
-  details[open] summary i::before { background: var(--mira-bg); transform: translate(-50%, -50%) rotate(45deg); } details[open] summary i::after { background: var(--mira-bg); transform: translate(-50%, -50%) rotate(135deg); }
-  details .ans { padding: 0 60px 28px 64px; }
-  details .ans p { max-width: 620px; font-size: 16px; line-height: 26px; color: var(--mira-text-2); }
-  details[open] .ans { animation: ans .45s var(--out); }
-  @keyframes ans { from { opacity: 0; transform: translateY(-6px); } }
+  /* faq : big grey questions ; the one under the mouse turns black and its answer slides in beside it.
+     The answer comes out from under the opening's tiles, which clear from left to right (motion.js, tileReveal) */
+  #faq .wrap { padding: 144px 120px; }
+  #faq h2 { font-size: var(--h-lg); margin-bottom: 48px; }
+  .eqs { border-bottom: 1px solid var(--mira-line); }
+  .eq { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; padding: 30px 0; border-top: 1px solid var(--mira-line); cursor: default; outline: 0; }
+  .eq h3 { display: flex; gap: 18px; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.1; font-weight: 500; letter-spacing: -0.03em; color: var(--mira-text-3); transition: color .3s var(--out); }
+  .eq h3 small { padding-top: .45em; font-size: 13px; line-height: 1; font-weight: 400; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  /* a closed row is as tall as its question : the answer only takes room once it opens */
+  .eq p { max-height: 0; overflow: hidden; font-size: 16px; line-height: 26px; color: var(--mira-text-2); opacity: 0; transform: translateX(-12px); transition: opacity .35s var(--out), transform .35s var(--out), max-height .45s var(--out); }
+  .eq.on h3 { color: var(--mira-text); } .eq.on p { max-height: 240px; opacity: 1; transform: none; }
+  .eq p { position: relative; } .eq p canvas.veil { height: auto; bottom: auto; }
+  /* the tiles that hide a picture or an answer until it is seen (motion.js, tileVeil) */
+  canvas.veil { position: absolute; inset: 0; z-index: 8; width: 100%; height: 100%; pointer-events: none; }
+  .ask { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 40px; flex-wrap: wrap; }
+  .ask p { font-size: 16px; color: var(--mira-text-2); }
+  .ask .btn svg { width: 14px; height: 14px; transition: transform .2s var(--out); } .ask .btn:hover svg { transform: translateX(3px); }
 
   /* the last call, over the birds again */
   /* the last call : the opening's text and buttons, on the same birds, in the frame */
@@ -404,7 +396,7 @@
   .wordbox .grid { position: absolute; inset: 0; opacity: .5; background-image: linear-gradient(var(--mira-line) 1px, transparent 1px), linear-gradient(90deg, var(--mira-line) 1px, transparent 1px); background-size: 12px 12px; -webkit-mask-image: radial-gradient(ellipse 60% 90% at 50% 100%, #000 30%, transparent 100%); mask-image: radial-gradient(ellipse 60% 90% at 50% 100%, #000 30%, transparent 100%); }
   footer canvas.word { position: relative; display: block; width: 100%; height: 30vw; }
 
-  @media (max-width: 1200px) { .arc .left { padding-left: 40px; } #faq .wrap { padding: 112px 48px; column-gap: 48px; } .cells.c4 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 1200px) { .arc .left { padding-left: 40px; } #faq .wrap { padding: 112px 48px; } .cells.c4 { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 860px) {
     :root { --gut: 20px; --head: 64px; }
     header.top .links { display: none; } header.top .bar { grid-template-columns: 1fr auto; padding: 0 20px; }
@@ -420,7 +412,7 @@
     .arc .sticky { top: var(--head); z-index: 5; height: auto; margin: 0; padding: 24px 0; background: var(--mira-bg); border-bottom: 1px solid var(--mira-line); }
     .astep { position: relative; inset: auto; display: none; } .astep.on { display: flex; } .astep h3 { font-size: 30px; } .astep p { font-size: 15px; line-height: 24px; margin-top: 10px; } .checks { display: none; }
     .arc .right { border-left: 0; padding: 24px 20px 64px; } .rsky { display: none; } .arc .panels { gap: 16px; margin-top: 0; } .panel { height: 320px; } .panel .fl { display: none; }
-    #faq .wrap { grid-template-columns: 1fr; padding: 72px 20px; } .faq { margin-top: 40px; } .faq-side { position: static; } summary { grid-template-columns: 28px 1fr 28px; padding: 20px 4px; } summary span { font-size: 17px; line-height: 24px; } details .ans { padding: 0 8px 22px 44px; }
+    #faq .wrap { padding: 72px 20px; } .eq { grid-template-columns: 1fr; gap: 10px; padding: 22px 0; } .eq h3 { color: var(--mira-text); } .eq p { max-height: none; opacity: 1; transform: none; }
     .end .col { padding-top: 88px; padding-bottom: 88px; }
     .fgrid { grid-template-columns: 1fr 1fr; } .fgrid > div { padding: 40px 20px; border-bottom: 1px solid var(--mira-line); } .fsay { grid-column: 1 / -1; border-right: 0 !important; }
   }
@@ -446,7 +438,7 @@
   <div class="col">
     <h1 data-words>All in view.<br><span>Your projects, agents and tasks.</span></h1>
     <p class="txt reveal" style="--d:700ms">Your agents, your projects and your work, in one terminal built for the way you code now.</p>
-    <div class="cta reveal" style="--d:820ms"><a class="btn primary lg" href="download.html" id="dl-cta">Download</a><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL">View on GitHub</a></div>
+    <div class="cta reveal" style="--d:820ms"><a class="btn primary lg dl-cta" href="download.html">Download</a><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL">View on GitHub</a></div>
   </div>
   <div class="stage reveal" style="--d:900ms">
     <div class="screen">
@@ -476,7 +468,7 @@
 
 <section class="strip">
   <div class="frame">
-    <div class="shead"><h2>The agents you already use,<br><span>in one window.</span></h2><p class="txt">Mira finds Claude Code, Codex, Gemini, Cursor, Copilot and Grok on your Mac, and gives each one its own logo and message box.</p></div>
+    <div class="shead"><h2>The agents you already use,<br><span>in one window.</span></h2><p class="txt">Mira finds Claude Code, Codex, Gemini, Cursor, Copilot and Grok on your computer, and gives each one its own logo and message box.</p></div>
     <div class="band"><div class="track"><div class="set"><span class="mi"><svg viewBox="0 0 24 24"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="var(--claude)"/></svg>Claude Code</span><span class="mi"><svg viewBox="0 0 24 24" fill="var(--mira-text)" fill-rule="evenodd"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg>Codex</span><span class="mi"><img src="img/agents/gemini.png" alt="">Gemini CLI</span><span class="mi"><img src="img/agents/cursor.png" alt="">Cursor</span><span class="mi"><svg viewBox="0 0 16 16" fill="var(--mira-text)"><path d="M7.998 15.035c-4.562 0-7.873-2.914-7.998-3.749V9.338c.085-.628.677-1.686 1.588-2.065.013-.07.024-.143.036-.218.029-.183.06-.384.126-.612-.201-.508-.254-1.084-.254-1.656 0-.87.128-1.769.693-2.484.579-.733 1.494-1.124 2.724-1.261 1.206-.134 2.262.034 2.944.765.05.053.096.108.139.165.044-.057.094-.112.143-.165.682-.731 1.738-.899 2.944-.765 1.23.137 2.145.528 2.724 1.261.566.715.693 1.614.693 2.484 0 .572-.053 1.148-.254 1.656.066.228.098.429.126.612.012.076.024.148.037.218.924.385 1.522 1.471 1.591 2.095v1.872c0 .766-3.351 3.795-8.002 3.795Zm0-1.485c2.28 0 4.584-1.11 5.002-1.433V7.862l-.023-.116c-.49.21-1.075.291-1.727.291-1.146 0-2.059-.327-2.71-.991A3.222 3.222 0 0 1 8 6.303a3.24 3.24 0 0 1-.544.743c-.65.664-1.563.991-2.71.991-.652 0-1.236-.081-1.727-.291l-.023.116v4.255c.419.323 2.722 1.433 5.002 1.433ZM6.762 2.83c-.193-.206-.637-.413-1.682-.297-1.019.113-1.479.404-1.713.7-.247.312-.369.789-.369 1.554 0 .793.129 1.171.308 1.371.162.181.519.379 1.442.379.853 0 1.339-.235 1.638-.54.315-.322.527-.827.617-1.553.117-.935-.037-1.395-.241-1.614Zm4.155-.297c-1.044-.116-1.488.091-1.681.297-.204.219-.359.679-.242 1.614.091.726.303 1.231.618 1.553.299.305.784.54 1.638.54.922 0 1.28-.198 1.442-.379.179-.2.308-.578.308-1.371 0-.765-.123-1.242-.37-1.554-.233-.296-.693-.587-1.713-.7Z"/><path d="M6.25 9.037a.75.75 0 0 1 .75.75v1.501a.75.75 0 0 1-1.5 0V9.787a.75.75 0 0 1 .75-.75Zm4.25.75v1.501a.75.75 0 0 1-1.5 0V9.787a.75.75 0 0 1 1.5 0Z"/></svg>GitHub Copilot</span><span class="mi"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/></svg>Grok</span></div><div class="set" aria-hidden="true"><span class="mi"><svg viewBox="0 0 24 24"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="var(--claude)"/></svg>Claude Code</span><span class="mi"><svg viewBox="0 0 24 24" fill="var(--mira-text)" fill-rule="evenodd"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg>Codex</span><span class="mi"><img src="img/agents/gemini.png" alt="">Gemini CLI</span><span class="mi"><img src="img/agents/cursor.png" alt="">Cursor</span><span class="mi"><svg viewBox="0 0 16 16" fill="var(--mira-text)"><path d="M7.998 15.035c-4.562 0-7.873-2.914-7.998-3.749V9.338c.085-.628.677-1.686 1.588-2.065.013-.07.024-.143.036-.218.029-.183.06-.384.126-.612-.201-.508-.254-1.084-.254-1.656 0-.87.128-1.769.693-2.484.579-.733 1.494-1.124 2.724-1.261 1.206-.134 2.262.034 2.944.765.05.053.096.108.139.165.044-.057.094-.112.143-.165.682-.731 1.738-.899 2.944-.765 1.23.137 2.145.528 2.724 1.261.566.715.693 1.614.693 2.484 0 .572-.053 1.148-.254 1.656.066.228.098.429.126.612.012.076.024.148.037.218.924.385 1.522 1.471 1.591 2.095v1.872c0 .766-3.351 3.795-8.002 3.795Zm0-1.485c2.28 0 4.584-1.11 5.002-1.433V7.862l-.023-.116c-.49.21-1.075.291-1.727.291-1.146 0-2.059-.327-2.71-.991A3.222 3.222 0 0 1 8 6.303a3.24 3.24 0 0 1-.544.743c-.65.664-1.563.991-2.71.991-.652 0-1.236-.081-1.727-.291l-.023.116v4.255c.419.323 2.722 1.433 5.002 1.433ZM6.762 2.83c-.193-.206-.637-.413-1.682-.297-1.019.113-1.479.404-1.713.7-.247.312-.369.789-.369 1.554 0 .793.129 1.171.308 1.371.162.181.519.379 1.442.379.853 0 1.339-.235 1.638-.54.315-.322.527-.827.617-1.553.117-.935-.037-1.395-.241-1.614Zm4.155-.297c-1.044-.116-1.488.091-1.681.297-.204.219-.359.679-.242 1.614.091.726.303 1.231.618 1.553.299.305.784.54 1.638.54.922 0 1.28-.198 1.442-.379.179-.2.308-.578.308-1.371 0-.765-.123-1.242-.37-1.554-.233-.296-.693-.587-1.713-.7Z"/><path d="M6.25 9.037a.75.75 0 0 1 .75.75v1.501a.75.75 0 0 1-1.5 0V9.787a.75.75 0 0 1 .75-.75Zm4.25.75v1.501a.75.75 0 0 1-1.5 0V9.787a.75.75 0 0 1 1.5 0Z"/></svg>GitHub Copilot</span><span class="mi"><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/></svg>Grok</span></div></div></div>
   </div>
 </section>
@@ -492,7 +484,7 @@
           <div class="astep"><h3>Organize the work. Delegate it.</h3><p>Plan your projects on one board, then hand each task to an agent and follow it until it's done.</p><ul class="checks"><li><svg><use href="#ok"/></svg>Board, list and table</li><li><svg><use href="#ok"/></svg>One agent per task, started from its card</li><li><svg><use href="#ok"/></svg>Saved in your repository, not on someone else's server</li></ul></div>
           <div class="astep"><h3>See how your project really works.</h3><p>Mira draws your architecture from the code itself: apps, services, data and every flow between them. The diagram stays current as your agents work.</p><ul class="checks"><li><svg><use href="#ok"/></svg>Every link backed by a line of code</li><li><svg><use href="#ok"/></svg>Flows step by step, in 2D or 3D</li><li><svg><use href="#ok"/></svg>Live status of each service</li></ul></div>
           <div class="astep"><h3>Build one part without touching the rest.</h3><p>Pick a block on the diagram and it gets its own branch, its own terminal and its own agent. Every part of your project moves forward independently.</p><ul class="checks"><li><svg><use href="#ok"/></svg>A branch per block</li><li><svg><use href="#ok"/></svg>Its own terminal and agent</li><li><svg><use href="#ok"/></svg>The rest of the project untouched</li></ul></div>
-          <div class="astep"><h3>The terminal, refined.</h3><p>Everything you love about the terminal, made clearer and easier to use. Write, paste screenshots, drop files or just speak.</p><ul class="checks"><li><svg><use href="#ok"/></svg>Files, screenshots and history</li><li><svg><use href="#ok"/></svg>Dictation that runs on your Mac</li><li><svg><use href="#ok"/></svg>Every command, shortcut and menu still works</li></ul></div>
+          <div class="astep"><h3>The terminal, refined.</h3><p>Everything you love about the terminal, made clearer and easier to use. Write, paste screenshots, drop files or just speak.</p><ul class="checks"><li><svg><use href="#ok"/></svg>Files, screenshots and history</li><li><svg><use href="#ok"/></svg>Dictation that runs on your machine</li><li><svg><use href="#ok"/></svg>Every command, shortcut and menu still works</li></ul></div>
         </div>
       </div>
       <div class="right" aria-hidden="true">
@@ -515,7 +507,7 @@
             <div class="fl w2 toast"><span class="fi"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 4-6 3-12 7"/></svg></span><div><b>mira/api</b><small>Its own branch, terminal and agent</small></div></div></div>
           <div class="panel"><div class="screen"><video src="img/feat-box.mp4" muted loop playsinline preload="metadata"></video></div>
             <div class="fl w1 toast"><span class="fi"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></span><div><b>screenshot.png</b><small>Dropped in the message box</small></div></div>
-            <div class="fl w2 voice"><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><div><b>Listening…</b><small>Dictation runs on your Mac</small></div></div></div>
+            <div class="fl w2 voice"><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><div><b>Listening…</b><small>Dictation runs on your machine</small></div></div></div>
         </div>
       </div>
     </div>
@@ -551,22 +543,16 @@
 <section id="faq">
   <div class="frame">
     <div class="wrap">
-      <div class="faq-side">
-        <h2 data-words>Questions, <span>answered.</span></h2>
-        <p class="txt">What people ask before they install Mira: the price, their agents, their accounts and their code.</p>
-        <a class="ask" href="https://github.com/dump-addict/MIRA-TERMINAL/issues"><b>Still a question?</b><span>Ask it on GitHub, we answer there.</span><em>→</em></a>
+      <h2 data-words>Questions, <span>answered.</span></h2>
+      <div class="eqs">
+      <div class="eq on" tabindex="0"><h3><small>01</small>Is Mira free?</h3><p>Yes, and for good. Mira is open source under the MIT license, with no server, no account and nothing to sell. You only pay for the agents you choose to use, with your own subscriptions.</p></div>
+      <div class="eq" tabindex="0"><h3><small>02</small>Which agents does it work with?</h3><p>Claude Code, Codex, Gemini CLI, Cursor, GitHub Copilot and Grok are detected and get their own logo and message box. Any other agent that runs in a terminal works in a plain tab. Mira runs the agents already installed on your computer, in their own version, and each one signs in by itself: Mira stores no password.</p></div>
+      <div class="eq" tabindex="0"><h3><small>03</small>Can I use several accounts of the same agent?</h3><p>Yes, for Claude Code and Codex. Each account keeps its own sign-in, and you switch from one to the other in a click, with no sign-out and no sign-in again. Its usage for the day, the week and the month stays in view. When one account gets close to its limit, switch to another and keep working.</p></div>
+      <div class="eq" tabindex="0"><h3><small>04</small>Does my code leave my machine?</h3><p>Not because of Mira. The diagram, its checks and dictation run locally. Your agents talk to their own services, exactly as they do in any terminal.</p></div>
+      <div class="eq" tabindex="0"><h3><small>05</small>Will my terminal still work the same way?</h3><p>Yes. The message box sits on top of the agent’s own input: the real terminal runs underneath, so every command, shortcut and menu works exactly as before. One click goes back to the plain terminal.</p></div>
+      <div class="eq" tabindex="0"><h3><small>06</small>Which systems are supported?</h3><p>macOS (Apple silicon and Intel), Windows 10 and 11, and Linux as an AppImage. On a Mac you can also install it with Homebrew.</p></div>
       </div>
-      <div class="faq">
-        <details open><summary><small>01</small><span>Is Mira free?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Yes, and for good. Mira is open source under the MIT license, with no server, no account and nothing to sell. You only pay for the agents you choose to use, with your own subscriptions.</p></div></details>
-        <details><summary><small>02</small><span>Which agents does it work with?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Claude Code, Codex, Gemini CLI, Cursor, GitHub Copilot and Grok are detected and get their own logo and message box. Any other agent that runs in a terminal works in a plain tab. Mira runs the agents already installed on your computer, in their own version, and each one signs in by itself: Mira stores no password.</p></div></details>
-        <details><summary><small>03</small><span>Can I use several accounts of the same agent?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Yes, for Claude Code and Codex. Each account keeps its own sign-in, and you switch from one to the other in a click, with no sign-out and no sign-in again. Its usage for the day, the week and the month stays in view. When one account gets close to its limit, switch to another and keep working.</p></div></details>
-        <details><summary><small>04</small><span>What can the agents do on my machine?</span><i aria-hidden="true"></i></summary><div class="ans"><p>What they can do in any terminal, nothing more. Mira asks before anything is deleted, keeps your secrets out of their reach, and lets you trust each project one by one.</p></div></details>
-        <details><summary><small>05</small><span>Does my code leave my machine?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Not because of Mira. The diagram, its checks and dictation run locally. Your agents talk to their own services, exactly as they do in any terminal.</p></div></details>
-        <details><summary><small>06</small><span>Will my terminal still work the same way?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Yes. The message box sits on top of the agent’s own input: the real terminal runs underneath, so every command, shortcut and menu works exactly as before. One click goes back to the plain terminal.</p></div></details>
-        <details><summary><small>07</small><span>How is the architecture diagram made?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Your agent reads the code once and writes the diagram into the project. Mira draws it, keeps it up to date and runs quick checks on each block, such as an API answering or a key being set.</p></div></details>
-        <details><summary><small>08</small><span>Which systems are supported?</span><i aria-hidden="true"></i></summary><div class="ans"><p>macOS (Apple silicon and Intel), Windows 10 and 11, and Linux as an AppImage. On a Mac you can also install it with Homebrew.</p></div></details>
-        <details><summary><small>09</small><span>Can I contribute?</span><i aria-hidden="true"></i></summary><div class="ans"><p>Yes. Open an issue or a pull request on GitHub. The contributing guide explains how to run Mira locally.</p></div></details>
-      </div>
+      <div class="ask"><p>Still a question? We answer on GitHub.</p><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL/issues">Ask a question<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
     </div>
   </div>
 </section>
@@ -577,8 +563,7 @@
     <div class="col" id="get">
       <h2 data-words>Ready to see it all? <span>Get Mira now.</span></h2>
       <p class="txt reveal">Free and open source. Your agents, your accounts, your machine.</p>
-      <div class="cta reveal" style="--d:120ms"><a class="btn primary lg" href="download.html">Download for Mac</a><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL">View on GitHub</a></div>
-      <p class="alt reveal" style="--d:200ms">Mac first, Windows and Linux on the way.</p>
+      <div class="cta reveal" style="--d:120ms"><a class="btn primary lg dl-cta" href="download.html">Download</a><a class="btn lg" href="https://github.com/dump-addict/MIRA-TERMINAL">View on GitHub</a></div>
     </div>
   </div>
 </section>
@@ -604,8 +589,7 @@
   (() => {
     const ua = navigator.userAgent, plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || ''
     const name = /Win/i.test(plat + ua) ? 'Windows' : /Mac/i.test(plat + ua) ? 'Mac' : /Linux|X11/i.test(plat + ua) && !/Android/i.test(ua) ? 'Linux' : ''
-    const b = document.getElementById('dl-cta')
-    if (b && name) b.textContent = 'Download for ' + name
+    if (name) document.querySelectorAll('.dl-cta').forEach((b) => (b.textContent = 'Download for ' + name))
   })()
 </script>
 

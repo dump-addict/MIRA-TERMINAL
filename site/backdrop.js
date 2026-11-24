@@ -51,8 +51,14 @@ export function mountBackdrop(cv, { view } = {}) {
         fields = LAYERS.map(() => new Float32Array(cols * rows));
     };
     // the mouse, eased : each depth follows it by its own amount
-    const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
-    const move = (e) => { const r = cv.getBoundingClientRect(); mouse.tx = (e.clientX - r.left) / Math.max(1, r.width) - 0.5; mouse.ty = (e.clientY - r.top) / Math.max(1, r.height) - 0.5; };
+    const mouse = { x: 0, y: 0, tx: 0, ty: 0, px: 0, py: 0, in: false };
+    const move = (e) => { const r = cv.getBoundingClientRect(); mouse.tx = (e.clientX - r.left) / Math.max(1, r.width) - 0.5; mouse.ty = (e.clientY - r.top) / Math.max(1, r.height) - 0.5;
+        // where the pointer is on the canvas, in its own pixels (site : the birds flee it and a halo follows it)
+        mouse.px = (e.clientX - r.left) * (w / Math.max(1, r.width)); mouse.py = (e.clientY - r.top) * (h / Math.max(1, r.height)); mouse.in = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; };
+    // the pointer in grid cells, through the camera when there is one
+    const pointer = () => { const cam = view && view(); let x = mouse.px, y = mouse.py;
+        if (cam && cam.z !== 1) { x = cam.x * w + (x - cam.x * w) / cam.z; y = cam.y * h + (y - cam.y * h) / cam.z; }
+        return { gx: x / CELL + 5, gy: y / CELL + 5 }; };
     let gulls = [];
     const placeGulls = () => {
         // spread over the screen from the start (golden ratio steps), never two in the same place
@@ -64,6 +70,9 @@ export function mountBackdrop(cv, { view } = {}) {
         // each keeps roughly its heading : only a slight, slow drift to one side then the other, never a circle
         const dive = 0;
         let turn = (Math.sin(t * 0.05 + g.phase) * 0.6 + Math.sin(t * 0.023 + g.phase * 2.3) * 0.4) * 0.05;
+        // a gull turns away from the pointer
+        if (mouse.in) { const p = pointer(), px = g.x - p.gx, py = g.y - p.gy, pd = Math.hypot(px, py), r = 24;
+            if (pd < r && pd > 0.01) { let a2 = Math.atan2(py, px) - g.h; a2 = Math.atan2(Math.sin(a2), Math.cos(a2)); turn += a2 * (1 - pd / r) * 0.16; } }
         // they never fly into each other : strongly at the same depth, gently across depths, so they never pile up
         for (const o of gulls)
             if (o !== g) {
@@ -125,6 +134,9 @@ export function mountBackdrop(cv, { view } = {}) {
                 continue;
             }
             let ax = (tx - b.x) * 1.2, ay = (ty - b.y) * 1.2;
+            // away from the pointer, like from a gull
+            if (mouse.in) { const p = pointer(), dx = b.x - p.gx, dy = b.y - p.gy, d2 = dx * dx + dy * dy, r = 10;
+                if (d2 < r * r && d2 > 0.01) { const d = Math.sqrt(d2), push = (1 - d / r) * 90; ax += (dx / d) * push; ay += (dy / d) * push; } }
             // away from every gull close by, the closer the stronger
             for (const g of gulls) {
                 const dx = b.x - g.x, dy = b.y - g.y, d2 = dx * dx + dy * dy, r = 16 * LAYERS[g.layer].scale + 6;
@@ -255,6 +267,17 @@ export function mountBackdrop(cv, { view } = {}) {
                     glyph(FULL[Math.floor(pick * 997) % FULL.length], x, y);
                 }
         });
+        // a soft halo of light characters on the grid around the pointer
+        if (mouse.in) {
+            const p = pointer(), ox = Math.round((-mouse.x * LAYERS[0].shift) / CELL) * CELL - 5 * CELL, oy = Math.round((-mouse.y * LAYERS[0].shift) / CELL) * CELL - 5 * CELL, R = 5;
+            ctx.fillStyle = ink;
+            for (let y = Math.floor(p.gy - R); y <= p.gy + R; y++) for (let x = Math.floor(p.gx - R); x <= p.gx + R; x++) {
+                const d = Math.hypot(x + 0.5 - p.gx, y + 0.5 - p.gy) / R; if (d > 1) continue;
+                const g = hash(x, y, 31 + Math.floor(t * 4)); if (g < 0.45) continue;
+                ctx.globalAlpha = (1 - d) * 0.45 * g;
+                ctx.fillText(g > 0.9 ? 'o' : EDGE[Math.floor(g * 97) % EDGE.length], ox + x * CELL + CELL / 2, oy + y * CELL + CELL / 2 + 0.5);
+            }
+        }
         ctx.globalAlpha = 1;
         ctx.restore();
     };

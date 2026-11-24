@@ -132,10 +132,12 @@ Mira finds these on your Mac and gives each one its logo, its message box and it
 | Windows 10/11, x64 | [`Mira-Terminal-windows-x64.exe`](https://github.com/dump-addict/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-windows-x64.exe) |
 | Linux, x64 | [`Mira-Terminal-linux-x64.AppImage`](https://github.com/dump-addict/MIRA-TERMINAL/releases/latest/download/Mira-Terminal-linux-x64.AppImage) |
 
-On a Mac you can also use Homebrew:
+On a Mac you can also use Homebrew. Mira is not in Homebrew's main catalogue yet, so you add its tap and trust it once; after that, `brew upgrade` keeps Mira up to date:
 
 ```bash
-brew install --cask dump-addict/tap/mira-terminal
+brew tap dump-addict/tap
+brew trust --tap dump-addict/tap
+brew install --cask mira-terminal
 ```
 
 Every release and its notes are on [GitHub Releases](https://github.com/dump-addict/MIRA-TERMINAL/releases).

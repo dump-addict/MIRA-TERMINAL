@@ -42,11 +42,14 @@ jobs:
       - run: pnpm typecheck
 
       - name: Build and publish to a draft release
-        # without the signing secrets the build is unsigned : empty variables would be read as a certificate path
+        # without the signing secrets the build is signed ad hoc ("-") : an app left unsigned has a broken seal, and macOS
+        # calls it "damaged" with no way to open it ; ad hoc, it is only "not verified" and opens from Privacy & Security.
+        # Empty variables would be read as a certificate path.
         run: |
           for v in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do [ -n "${!v}" ] || unset "$v"; done
-          [ -n "$CSC_LINK" ] || export CSC_IDENTITY_AUTO_DISCOVERY=false
-          pnpm exec electron-vite build && pnpm exec electron-builder --mac --${{ matrix.arch }} --publish always
+          ADHOC=""
+          if [ -z "$CSC_LINK" ]; then export CSC_IDENTITY_AUTO_DISCOVERY=false; ADHOC="-c.mac.identity=-"; fi
+          pnpm exec electron-vite build && pnpm exec electron-builder --mac --${{ matrix.arch }} $ADHOC --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.CSC_LINK }}

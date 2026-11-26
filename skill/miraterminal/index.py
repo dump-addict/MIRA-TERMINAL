@@ -62,6 +62,22 @@ VENDORED = re.compile(r"(^|/)(public|static|assets|wwwroot|dist|lib|libs)/.*\.(j
 TEST = re.compile(r"(^|/)(tests?|__tests__|spec|specs|e2e|cypress|playwright|mocks?|__mocks__|testdata|test-utils|\.storybook)/|\.(test|spec|stories|e2e)\.[a-z]+$|(^|/)(test_[\w-]+\.py|[\w-]+_test\.(go|py|rs|rb)|[\w-]+Tests?\.(java|kt|cs|swift))$", re.I)
 
 
+# what a bundler leaves in its output (webpack, esbuild, Rollup and Rolldown, Parcel, Vite, a source map, a "do not edit" banner)
+BUILT = re.compile(r"__webpack_require__|/\*{6}/|^//# sourceMappingURL=|^\s*// [\w./@+-]*node_modules/|rolldown/runtime|parcelRequire|__vite__|"
+                   r"@generated|DO NOT EDIT", re.M)
+
+
+def built(f: str) -> bool:
+    """written by a build, not by a person: minified (lines of thousands of characters on average) or marked by a bundler"""
+    try:
+        with open(ROOT / f, "rb") as h:
+            head = h.read(1_000_000).decode("utf-8", "ignore")
+    except OSError:
+        return True
+    lines = head.count("\n") + 1
+    return len(head) / lines > 1000 or bool(BUILT.search(head))
+
+
 def is_data(f: str, size: int) -> bool:
     """content rather than code: it is counted and can be pointed at, never read as architecture.
        A JSON, YAML or text file is code only when it is a manifest or small enough to be a config; build output, logs and
@@ -74,11 +90,12 @@ def is_data(f: str, size: int) -> bool:
             return True
     if DATA_DIRS.search(f) and lg in ("config", "doc", "other", "html", "css"):
         return True
-    # one file of code this large is a bundle or a build output, not something a person wrote; a served library likewise
-    if size > 400_000 or (VENDORED.search(f) and size > 60_000):
+    # a served library copied into the project; a large file that a build wrote (a bundle, minified code). A large file
+    # a person wrote (a single-page app in one HTML file) is code and is read: its size alone says nothing
+    if (VENDORED.search(f) and size > 60_000) or (size > 400_000 and built(f)):
         return True
     # a settings or text file is code only when it is a manifest or small; a file of a type nobody knows, only when small.
-    # A source file in a known language is always code, whatever its size (the 400 kB rule above still catches bundles).
+    # A source file in a known language is always code, whatever its size (the build check above still catches bundles).
     if lg in ("config", "other") or f.lower().endswith((".json", ".jsonc", ".yaml", ".yml", ".toml", ".txt", ".xml")):
         named = os.path.basename(f).lower() in ("dockerfile", "makefile", "procfile", "rakefile", "gemfile", "justfile", "caddyfile", "vagrantfile", "jenkinsfile")
         return not MANIFEST.search(f) and not named and size > 12_000

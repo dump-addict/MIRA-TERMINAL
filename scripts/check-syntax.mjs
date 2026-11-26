@@ -1,9 +1,10 @@
 // Syntax checks for the parts TypeScript does not cover: the map's Python and the plain JavaScript of the viewer and the site
 import { execFileSync } from 'node:child_process'
-import { readdirSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
-const list = (dir, ext) => readdirSync(dir).filter((f) => f.endsWith(ext)).map((f) => join(dir, f))
+// a folder that is not there is skipped : the public repository has no site
+const list = (dir, ext) => (existsSync(dir) ? readdirSync(dir) : []).filter((f) => f.endsWith(ext)).map((f) => join(dir, f))
 const js = [...list('skill/miraterminal/viewer', '.js'), ...list('site', '.js')]
 const py = list('skill/miraterminal', '.py')
 

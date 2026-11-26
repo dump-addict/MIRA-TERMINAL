@@ -921,7 +921,7 @@ function TabsPreview() {
         <SideProjects icons={{}} projects={[SAMPLE]} tabs={tabs} current="preview" active={4} onScreen={new Set([4])} page={false}
           collapsed={new Set()} onToggle={none} onOpen={none} onTab={none} onClose={none}
           icon={(t) => (t.agent ? <AgentIcon id={t.agent} /> : <SquareTerminal size={14} />)} tip={(t) => t.title}
-          openCount={() => 0} onTasks={none} onMove={none}
+          openCount={() => 0} onTasks={none} onMove={none} onRemove={none}
           peek={(t) => (t.status === 'needs' ? { text: 'Should the yearly plan show a discount?', questions: 1 } : t.status === 'done' ? { text: 'The tests pass, 24 of 24.', questions: 0 } : t.status === 'working' ? { text: 'Reading the login routes.', questions: 0 } : null)} />
       </div>
       {/* the narrow sidebar : the project's most pressing tab shows on its icon */}

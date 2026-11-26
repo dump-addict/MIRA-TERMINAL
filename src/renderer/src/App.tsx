@@ -646,6 +646,14 @@ export function App() {
               collapsed={collapsed} onToggle={(id) => setCollapsed((c) => { const n = new Set(c); if (n.has(id)) n.delete(id); else n.add(id); return n })}
               onOpen={open} onTab={goTab} onClose={(k) => void closeTab(k)} icon={(t) => tabIcon(t as TermTab)} tip={(t) => tabTip(t as TermTab)}
               openCount={openCount} onTasks={(id) => showTodo({ project: id })} peek={(t) => peekScreen(ptys.current.get(t.key))}
+              onRemove={(p) => {
+                // its agents and terminals keep running until closed : never stopped behind the user's back
+                if (tabs.some((t) => t.projectId === p.id)) { say(`Close the tabs of ${p.name} first`); return }
+                void window.mira.projects.remove(p.id)
+                setProjects((l) => l.filter((x) => x.id !== p.id))
+                if (current?.id === p.id) goHome()
+                say(`${p.name} removed from the list`)
+              }}
               onMove={(id, to, before) => setProjects((l) => {
                 const moving = l.find((x) => x.id === id); if (!moving || id === to) return l
                 const rest = l.filter((x) => x.id !== id), at = rest.findIndex((x) => x.id === to) + (before ? 0 : 1)

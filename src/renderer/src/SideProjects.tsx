@@ -18,12 +18,13 @@ const clock = (ms: number) => { const s = Math.max(0, Math.floor(ms / 1000)); re
 /* the worst state of a project's tabs, for its icon in the narrow sidebar */
 export const projectState = (tabs: SideTab[]) => { const l = tabs.map(stateOf); return l.includes('needs') ? 'needs' : l.includes('working') ? 'working' : l.includes('unread') ? 'unread' : null }
 
-export function SideProjects({ icons, projects, tabs, current, active, onScreen, page, collapsed, onToggle, onOpen, onTab, onClose, icon, tip, openCount, onTasks, peek, onMove }: {
+export function SideProjects({ icons, projects, tabs, current, active, onScreen, page, collapsed, onToggle, onOpen, onTab, onClose, icon, tip, openCount, onTasks, peek, onMove, onRemove }: {
   icons: Record<string, string>; projects: ProjectInfo[]; tabs: SideTab[]; current?: string; active: number; onScreen: Set<number>; page: boolean
   collapsed: Set<string>; onToggle: (id: string) => void; onOpen: (p: ProjectInfo) => void; onTab: (p: ProjectInfo, key: number) => void; onClose: (key: number) => void
   icon: (t: SideTab) => React.ReactNode; tip: (t: SideTab) => string; openCount: (id: string) => number; onTasks: (id: string) => void
   peek: (t: SideTab) => Peek | null
   onMove: (id: string, to: string, before: boolean) => void
+  onRemove: (p: ProjectInfo) => void
 }) {
   // the card shown beside an agent's tab after a short hover : what it last said, or what it asks you
   const st = useSettings()
@@ -72,7 +73,10 @@ export function SideProjects({ icons, projects, tabs, current, active, onScreen,
               </button> : null}
               <span className="flex-1" />
               {n > 0 && <span role="button" title="Open tasks" onClick={(e) => { e.stopPropagation(); onTasks(p.id) }}
-                className="flex shrink-0 items-center gap-1 text-meta text-text tnum"><ListTodo size={11} />{n}</span>}
+                className="flex shrink-0 items-center gap-1 text-meta text-text tnum group-hover/p:hidden"><ListTodo size={11} />{n}</span>}
+              {/* out of the list (the folder stays on disk) : shown on hover, in place of the tasks count */}
+              <button onClick={(e) => { e.stopPropagation(); onRemove(p) }} title="Remove from the list (the folder stays on disk)"
+                className="hidden h-4 w-4 shrink-0 place-items-center rounded-xs text-text-3 hover:bg-surface-3 hover:text-text group-hover/p:grid"><X size={12} /></button>
             </div>
             {!shut && own.length > 0 && (
               <div className="relative ml-[15px]">

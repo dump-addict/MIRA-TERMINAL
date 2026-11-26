@@ -24,6 +24,7 @@ FULL: dict = {}
 idx: dict = {}
 SRC: list = []
 TESTS: list = []   # test files: placed in the diagram and linked through their imports, not read line by line
+READ: set = set()  # the source files the readers are given; a large project leaves some out (see choose_read)
 A = None            # arguments
 T0 = time.time()
 STATS = {"calls": 0, "cost": 0.0, "out": 0, "in": 0, "fresh": 0, "cache_w": 0, "cache_r": 0, "errors": []}
@@ -134,6 +135,42 @@ def ask_json(prompt: str, model=None, effort: str | None = "", session: str | No
 BOUND = re.compile(r"^\s*$|^\s*</?script|^\s*</?style|^\s*(async\s+)?function\s|^\s*(def|class)\s|^\s*// -{3,}|^\s*/\* ")
 
 
+def links_of(f):
+    return len(idx[f].get("imports", [])) + len(idx[f].get("imported_by", []))
+
+
+def choose_read(budget):
+    """the source files the readers are given. Above the budget, a project is not refused: the files that say least about
+    the architecture are left out, and each is placed in the diagram next to the files of its folder.
+    First the many look-alike files of one folder (pages of a site, translations, migrations): a few of them are read.
+    Then markup, styles, docs and config before code, the least connected and the largest first, one read file per folder kept."""
+    read = set(SRC)
+    load = sum(tok(f) for f in read)
+    if load <= budget:
+        return read
+    alike = defaultdict(list)
+    for f in SRC:
+        alike[(os.path.dirname(f), os.path.splitext(f)[1])].append(f)
+    for fs in sorted((v for v in alike.values() if len(v) > 3), key=lambda v: -sum(map(tok, v))):
+        if load <= budget:
+            break
+        for f in sorted(fs, key=lambda x: (-links_of(x), tok(x)))[3:]:
+            read.discard(f); load -= tok(f)
+    LIGHT = {"html": 0, "css": 0, "doc": 0, "config": 1, "other": 1}
+    order = sorted(read, key=lambda f: (LIGHT.get(idx[f].get("lang"), 2), links_of(f), -tok(f)))
+    for keep_folder in (True, False):
+        for f in order:
+            if load <= budget:
+                return read
+            if f not in read:
+                continue
+            d = os.path.dirname(f)
+            if keep_folder and not any(g != f and os.path.dirname(g) == d for g in read):
+                continue
+            read.discard(f); load -= tok(f)
+    return read
+
+
 def read_lines(path):
     try:
         return (ROOT / path).read_text(errors="ignore").splitlines()
@@ -162,7 +199,7 @@ def utok(u):
 
 def partition(cap):
     # only the files that are read: tests, data and generated files are in the index but not in the parts
-    read = set(SRC)
+    read = READ
     comms = [[f for f in c if f in read] for c in IX.communities(FULL)]
     comms = sorted((c for c in comms if c), key=lambda c: -sum(map(tok, c)))
     pieces = []
@@ -236,6 +273,7 @@ def project_map():
         if i["routes"]: b.append(f"serves {len(i['routes'])} routes (" + ", ".join(sorted({r['path'] for r in i['routes']})[:6]) + (" ..." if len(i['routes']) > 6 else "") + ")")
         if i["entries"]: b.append("entry: " + ", ".join(sorted({e['kind'] for e in i['entries']})))
         if i.get("imported_by"): b.append(f"used by {len(i['imported_by'])} file(s)")
+        if f not in READ: b.append("not read, too large a project: it belongs with its folder")
         out.append(f + (" — " + "; ".join(b) if b else ""))
     other = defaultdict(Counter)
     for f, i in idx.items():
@@ -643,7 +681,15 @@ def run():
     for f in SRC:
         if f in ranges or IX_NOISE.search(f):
             continue
-        near = Counter(node_at(g) for g in ranges if os.path.dirname(g) == os.path.dirname(f) and g in idx)
+        # the nearest folder that holds a placed file: its own, else the one above (a file that was not read lands here)
+        near, folder = Counter(), os.path.dirname(f)
+        while True:
+            near = Counter(n for n in (node_at(g) for g in ranges if os.path.dirname(g) == folder and g in idx) if n)
+            if near or not folder:
+                break
+            folder = os.path.dirname(folder)
+            if not folder:
+                break   # the files at the root say nothing about a folder
         users = Counter(node_at(x["path"]) for x in idx[f].get("imported_by", []))
         pick = next((c.most_common(1)[0][0] for c in (users, near) if c and c.most_common(1)[0][0]), None)
         if pick:
@@ -861,7 +907,7 @@ IX_NOISE = re.compile(r"(^|/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\
 
 
 def main():
-    global ROOT, FULL, idx, SRC, TESTS, A
+    global ROOT, FULL, idx, SRC, TESTS, READ, A
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".")
     ap.add_argument("--agent", default="claude", choices=["claude", "codex", "gemini", "cursor", "copilot", "grok"], help="the agent that reads (the user's default agent)")
@@ -873,7 +919,7 @@ def main():
     ap.add_argument("--cap", type=int, default=60000, help="size of a part, in tokens")
     ap.add_argument("--mode", default="three", choices=["three", "one", "cached"],
                     help="three: three readers per part, each sent the part (fastest); one: one reader per part answers blocks and links (least reading); cached: the part is sent once, its three questions read it from the cache")
-    ap.add_argument("--max-tokens", type=int, default=1_200_000, help="above this much code, the project is not read in full (it would cost too much)")
+    ap.add_argument("--max-tokens", type=int, default=1_200_000, help="above this much code, the project is not read in full (it would cost too much): the files that say least are placed by their folder")
     ap.add_argument("--links-cap", type=int, default=20000, help="size of a part for the readers that look for the links")
     ap.add_argument("--workers", type=int, default=48)
     ap.add_argument("--no-notes", action="store_true"); ap.add_argument("--no-flows", action="store_true")
@@ -895,8 +941,9 @@ def main():
     if not SRC:
         emit(1, "No source file to read", error=True); return 1
     total = sum(tok(f) for f in SRC)
-    if total > A.max_tokens:
-        emit(1, f"Project too large to read in full ({total // 1000}k tokens of code, limit {A.max_tokens // 1000}k)", error=True, tokens=total); return 2
+    READ = choose_read(A.max_tokens)
+    if len(READ) < len(SRC):
+        emit(1, f"Large project: {len(READ)} of {len(SRC)} files read, the others placed with their folder", tokens=total, read=len(READ))
     return run()
 
 

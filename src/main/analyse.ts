@@ -229,7 +229,17 @@ export async function startAnalysis(root: string, auto = false): Promise<Analysi
     p.stdout!.on('data', (b: Buffer) => { buf += b.toString(); const lines = buf.split('\n'); buf = lines.pop() ?? ''; onLines(lines) })
     p.stderr!.on('data', (b: Buffer) => { err = (err + b.toString()).slice(-2000) })
     p.on('error', (e) => { if (p === proc) finish('error', e.message) })
-    p.on('exit', (code) => { if (p === proc) finish(entry.stopped ? 'stopped' : code === 0 ? 'done' : 'error', code === 0 ? '' : said || err.split('\n').filter(Boolean).pop()?.slice(0, 200) || `The agent stopped (${code})`) })
+    // the end is read once its last lines are in (its last step, its error) : 'close' comes after them, 'exit' can come before.
+    // A child that keeps the output open would hold 'close' back : two seconds after 'exit' is enough
+    let ended = false
+    const end = (code: number | null): void => {
+      if (ended || p !== proc) return
+      ended = true
+      if (buf.trim()) { onLines([buf]); buf = '' }
+      finish(entry.stopped ? 'stopped' : code === 0 ? 'done' : 'error', code === 0 ? '' : said || err.split('\n').filter(Boolean).pop()?.slice(0, 200) || `The agent stopped (${code})`)
+    }
+    p.on('exit', (code) => { setTimeout(() => end(code), 2000) })
+    p.on('close', (code) => end(code))
     p.stdin!.on('error', () => { /* the agent closed its input */ })
     p.stdin!.end(fast ? '' : prompt(root))
   }

@@ -141,16 +141,19 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
         const L = (r: number) => b.getLine(b.viewportY + r)
         const line = (r: number) => L(r)?.translateToString(true) ?? ''
         const rule = (r: number) => r >= 0 && /^\s*[─━]{8,}\s*$/.test(line(r))
+        // a menu of the agent ("❯ 2. No" among "  1. Yes" and "  3. …") is left alone ; a message that starts with "1." is typed text
+        const option = (r: number) => r >= 0 && /^\s+\d+\.\s/.test(line(r))
+        const menu = (r: number, mark: string) => new RegExp(`^${mark}\\s*\\d+\\.\\s`).test(line(r).trimStart()) && (option(r - 1) || option(r + 1))
         let start = -1, first = -1, last = -1, end = -1
         for (let r = rows - 1; r >= 1 && start < 0; r--) {
           const t = line(r).trimStart()
-          // Claude : "❯ …" right under a rule, closed by the next rule (a numbered "❯ 1." is a menu, left alone)
-          if (c.agent !== 'codex' && t.startsWith('❯') && !/^❯\s*\d+\./.test(t) && rule(r - 1)) {
+          // Claude : "❯ …" right under a rule, closed by the next rule
+          if (c.agent !== 'codex' && t.startsWith('❯') && !menu(r, '❯') && rule(r - 1)) {
             let k = r + 1; while (k < rows && !rule(k)) k++
             if (k < rows) { start = r - 1; first = r; last = k - 1; end = k }
           }
           // Codex : "› …" in its shaded box, its footer below
-          if (c.agent === 'codex' && t.startsWith('›') && !/^›\s*\d+\./.test(t)) {
+          if (c.agent === 'codex' && t.startsWith('›') && !menu(r, '›')) {
             let k = r + 1; while (k < rows && line(k).trim() && !FOOT.test(line(k))) k++
             // its box starts a row above ; a rule may sit a few rows higher, covered too
             start = r - 1; for (let u = r - 2; u >= Math.max(0, r - 4); u--) if (rule(u)) { start = u; break }

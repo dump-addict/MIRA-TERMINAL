@@ -96,14 +96,17 @@ export function Composer({ agent, view, status, focused, showFooter, paste, keys
     const burst = () => { const n = Math.min(6, left); left -= n; keys(step.repeat(n)); if (left > 0) setTimeout(burst, 14) }
     if (left) burst()
   }
+  // the whole text selected, to copy it : ⌘A, or a double-click
+  const selectAll = () => { const r = document.createRange(); r.selectNodeContents(boxRef.current!); const s = window.getSelection(); s?.removeAllRanges(); s?.addRange(r); boxRef.current!.focus({ preventScroll: true }) }
   const up = (e: React.MouseEvent) => {
+    if (e.detail === 2 && real) { selectAll(); return }
     const sel = window.getSelection()
     if (sel && !sel.isCollapsed && boxRef.current?.contains(sel.anchorNode)) { boxRef.current.focus({ preventScroll: true }); return }
     place(e.clientX, e.clientY); focusTerm()
   }
   const onKey = (e: React.KeyboardEvent) => {
     if ((isMac ? e.metaKey : e.ctrlKey) && (e.key === 'c' || e.key === 'C')) return   // the browser copies the selection
-    if ((isMac ? e.metaKey : e.ctrlKey) && (e.key === 'a' || e.key === 'A')) { e.preventDefault(); const r = document.createRange(); r.selectNodeContents(boxRef.current!); const s = window.getSelection(); s?.removeAllRanges(); s?.addRange(r); return }
+    if ((isMac ? e.metaKey : e.ctrlKey) && (e.key === 'a' || e.key === 'A')) { e.preventDefault(); selectAll(); return }
     const seq = SEQ[e.key] ?? (e.key.length === 1 && !e.metaKey && !e.ctrlKey ? e.key : null)
     window.getSelection()?.removeAllRanges(); focusTerm()
     if (seq) { e.preventDefault(); keys(seq) }

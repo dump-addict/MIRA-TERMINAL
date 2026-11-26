@@ -59,7 +59,8 @@ function status(root: string): Analysis {
   if (r) return r.a
   const placeholder = isPlaceholder(root)
   const m = mark(root), l = last.get(root)
-  if (l && l.state !== 'running') return { ...l, placeholder }
+  // a failure is only shown while there is no diagram : one drawn since (by a later run, or by hand) wins over it
+  if (l && l.state !== 'running' && (placeholder || l.state !== 'error')) return { ...l, placeholder }
   return { state: placeholder && m?.state === 'error' ? 'error' : 'idle', placeholder, agent: '', step: '', phase: 0, startedAt: 0, error: placeholder ? m?.error ?? '' : '' }
 }
 

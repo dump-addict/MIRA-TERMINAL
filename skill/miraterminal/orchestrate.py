@@ -901,4 +901,12 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as e:  # noqa: BLE001
+        # the whole trace for the log, and where it broke in the message the user sees
+        import traceback
+        traceback.print_exc()
+        tb = traceback.extract_tb(e.__traceback__)[-1]
+        emit(5, f"{type(e).__name__}: {e} (orchestrate.py line {tb.lineno})", error=True)
+        sys.exit(1)

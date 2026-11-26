@@ -130,7 +130,7 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
     })
     // the bell : agents ring it when they finish or need you
     // after each redraw, read the agent's input box on screen : where it is, what is typed in it, where its caret is
-    let raf = 0
+    let raf = 0, missed = 0, retry = 0
     const FOOT = /shift\+tab|for shortcuts|\? for|auto mode|accept edits|plan mode|bypass permissions|\/effort|transcript saving|context left|esc to|ctrl\+|for agents|f2 to view|⚠|·\s+~|tokens|update available/i
     const findInput = () => {
       cancelAnimationFrame(raf)
@@ -157,7 +157,22 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
             first = r; last = k - 1; end = Math.min(k, rows - 1)
           }
         }
-        if (start < 0) { setCover(null); setView(null); setAbove(null); return }
+        // the agent's turn on screen : Claude and Codex show "esc to interrupt" while they work
+        if (b.viewportY === b.baseY) {
+          let working = false
+          for (let r = 0; r < rows && !working; r++) if (/esc to interrupt/i.test(line(r))) working = true
+          idleOnScreen.current = start >= 0 && !working
+          if (idleOnScreen.current && !idleTimer.current) idleTimer.current = setTimeout(() => { idleTimer.current = 0; if (idleOnScreen.current) onIdleRef.current?.() }, 3000)
+        }
+        // the agent redraws its box in several steps (a paste, an image) : a box missing for an instant stays shown,
+        // it is only taken away when still missing a moment later (else the input jumps and comes back)
+        clearTimeout(retry)
+        if (start < 0) {
+          if (!missed) missed = Date.now()
+          if (Date.now() - missed < 400) { retry = window.setTimeout(findInput, 450); return }
+          setCover(null); setView(null); setAbove(null); return
+        }
+        missed = 0
         if (start <= 1 && b.viewportY === b.baseY) {
           const out: string[] = []
           for (let i = b.viewportY + start - 1; i >= 0 && out.length < rows; i--) {
@@ -237,7 +252,7 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
     term.onTitleChange((t) => t && !run && onTitle?.(t))
     const ro = new ResizeObserver(() => { if (el.offsetWidth) fit.fit() })
     ro.observe(el)
-    return () => { alive = false; unkeep(); ro.disconnect(); offData(); offExit(); if (id) window.mira.term.kill(id); term.dispose() }
+    return () => { alive = false; cancelAnimationFrame(raf); clearTimeout(retry); if (idleTimer.current) clearTimeout(idleTimer.current); unkeep(); ro.disconnect(); offData(); offExit(); if (id) window.mira.term.kill(id); term.dispose() }
     // a terminal lives as long as its tab
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

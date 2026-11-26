@@ -1022,11 +1022,11 @@ function BlockPanel({ b, open, root, path, agent, onTasks, onDevelop, onClose }:
       </div>
       <div className="mt-1.5 text-title font-semibold tracking-title text-text">{b.label}</div>
       {b.summary && <p className="mt-1 text-body text-text-2">{b.summary}</p>}
-      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-meta">
-        {b.statusLabel && <span className={`flex h-5 items-center gap-1.5 rounded-xs border border-line-strong px-1.5 ${tone}`}><i className="h-1.5 w-1.5 rounded-full bg-current" />{b.statusLabel}</span>}
+      {/* the block's health only when its checks gave a result ; "unknown" says nothing */}
+      {((b.statusLabel && b.status !== 'unknown') || !!b.todos) && <div className="mt-3 flex flex-wrap items-center gap-1.5 text-meta">
+        {b.statusLabel && b.status !== 'unknown' && <span className={`flex h-5 items-center gap-1.5 rounded-xs border border-line-strong px-1.5 ${tone}`}><i className="h-1.5 w-1.5 rounded-full bg-current" />{b.statusLabel}</span>}
         {!!b.todos && <span className="flex h-5 items-center rounded-xs border border-line-strong px-1.5 text-text-2">{b.todos} to do</span>}
-        {!!b.files?.length && <span className="flex h-5 items-center rounded-xs border border-line-strong px-1.5 text-text-2">{b.files.length} file{b.files.length === 1 ? '' : 's'}</span>}
-      </div>
+      </div>}
       <div className="mt-3 truncate font-mono text-meta text-text-3">{b.dir ? `${root}/${b.dir}` : root}</div>
       <button onClick={onTasks} className="mt-3 flex h-8 w-full items-center gap-2 rounded-sm border border-line px-2.5 text-body text-text-2 hover:bg-surface-1 hover:text-text">
         <ListTodo size={ICON} />Tasks<span className="ml-auto text-meta text-text-3 tnum">{count ? `${count} open` : 'None yet'}</span>

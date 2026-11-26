@@ -113,8 +113,9 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
     term.onData((d) => {
       if (settingsNow()?.hideMouse) setTyping(true)
       if (!id) return
-      // a pasted block of several lines waits for the user's OK (it would run each line as a command)
-      if (settingsNow()?.confirmPaste !== false && d.length > 1 && /[\r\n]./.test(d.replace(/[\r\n]+$/, '') + '') && pasting.current) {
+      // a pasted block of several lines waits for the user's OK (it would run each line as a command).
+      // Not when the program asked for bracketed paste (every agent, zsh, fish) : it gets the block as one paste, nothing runs
+      if (settingsNow()?.confirmPaste !== false && !d.startsWith('\x1b[200~') && d.length > 1 && /[\r\n]./.test(d.replace(/[\r\n]+$/, '') + '') && pasting.current) {
         pasting.current = false; setAsk(d); return
       }
       pasting.current = false

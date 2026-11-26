@@ -13,7 +13,7 @@ You are working on Mira Terminal, an Electron app that runs coding agents side b
 
 - English only, everywhere.
 - Use the tokens from [`DESIGN.md`](DESIGN.md) and `skill/miraterminal/viewer/tokens.css`. Never hard-code a colour or a size.
-- No network calls, telemetry, accounts or stored secrets.
+- No telemetry, no Mira account, no secret stored by Mira. Mira only reaches what the user already uses: their agent's own service (usage meters, read with the agent's sign-in), GitHub (updates, the voice model) and the network test they run in Settings. Never add another network call.
 - Keep behaviour the same for every supported agent (Claude Code, Codex, Gemini CLI, Cursor CLI, Copilot CLI, Grok CLI) unless the change is explicitly about one of them.
 - Do not edit `skill/miraterminal/viewer/vendor/`: it is third-party code.
 - Run `pnpm check` before you say you are done. If you changed the UI, say whether you tried it in the app.

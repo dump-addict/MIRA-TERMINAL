@@ -17,6 +17,7 @@ import { KindIcon } from './kinds'
 import { type Part } from './tasks'
 import { TodoPage, isOpen, type TodoFilter } from './TodoPage'
 import { ReviewsPage } from './ReviewsPage'
+import { Backdrop } from './Backdrop'
 import { SideProjects, stClass, projectState } from './SideProjects'
 import type { Idea, Pull, Reviews, Task } from '../../preload'
 import { useSettings } from './settings'
@@ -746,13 +747,14 @@ export function App() {
           })()}
           {/* a project with nothing open : start something */}
           {current && empty && !showWelcome && (
-            <div className="absolute inset-x-0 top-10 bottom-0 grid place-items-center">
-              <div className="flex w-80 flex-col gap-1.5">
-                <div className="mb-3 text-title font-semibold text-text">{current.name}</div>
+            <div className="absolute inset-x-0 top-10 bottom-0 grid place-items-center overflow-hidden">
+              <Backdrop />
+              <div className="relative flex w-80 flex-col gap-1.5 rounded-lg border border-line bg-[color-mix(in_srgb,var(--mira-bg)_72%,transparent)] p-3 backdrop-blur-md">
+                <div className="mb-2 px-2.5 text-title font-semibold text-text">{current.name}</div>
                 <Row onClick={() => addTerm()} icon={<SquareTerminal size={16} />} hint={kbd('⌘T')}>New terminal</Row>
                 <Row onClick={() => void listAgents().then((l) => { const x = l.find((y) => y.id === (st?.defaultAgent ?? 'claude')); if (x?.installed) void addAgent(x) })} icon={<AgentIcon id={st?.defaultAgent ?? 'claude'} size={16} />} hint={kbd('⌘⌥T')}>New agent</Row>
                 <Row onClick={() => setPalette(true)} icon={<Search size={16} />} hint={kbd('⌘P')}>Open a file</Row>
-                {st?.rightPanel !== 'map' && <Row onClick={() => showMap()} icon={<MapIcon size={16} />} hint={kbd('⌘⇧M')}>Show the map</Row>}
+                {st?.rightPanel !== 'map' && <Row onClick={() => showMap()} icon={<MapIcon size={16} />} hint={kbd('⌘⇧M')}>Show the diagram</Row>}
               </div>
             </div>
           )}

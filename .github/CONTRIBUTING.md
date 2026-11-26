@@ -13,7 +13,9 @@ pnpm install
 pnpm dev
 ```
 
-To work on the map alone, link the skill into a test project with `sh install.sh /path/to/project --link` and run `/miraterminal` in Claude Code.
+With an older pnpm (10 or 11), every command fails with `Failed to switch pnpm to v12…` or `ENOEXEC`: it cannot run the pnpm 12 this repository asks for. Upgrade it (`brew upgrade pnpm` or `npm install -g pnpm@12`), then delete the half-installed copy it left in `~/Library/pnpm/.tools/pnpm/` on macOS (`~/.local/share/pnpm/.tools/pnpm/` on Linux, `%LOCALAPPDATA%\pnpm\.tools\pnpm\` on Windows).
+
+To work on the map alone, draw it for a test project with `python3 skill/miraterminal/orchestrate.py --root /path/to/project --agent <your agent>` and open it with `python3 skill/miraterminal/server.py --root /path/to/project`. With Claude Code you can also link the skill (`sh install.sh /path/to/project --link`) and run `/miraterminal`.
 
 ## Before you start
 

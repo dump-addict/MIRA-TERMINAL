@@ -9,6 +9,14 @@ import { MessageSquare } from 'lucide-react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
+import { WebglAddon } from '@xterm/addon-webgl'
+
+// xterm's WebGL drawing names its font " 400 24px Menlo" (an empty italic first) ; Chromium refuses a font that starts with a space
+// and draws in 10px sans-serif instead : tiny, spaced out letters. The font is passed on without the space.
+for (const P of [CanvasRenderingContext2D.prototype, OffscreenCanvasRenderingContext2D.prototype]) {
+  const d = Object.getOwnPropertyDescriptor(P, 'font')
+  if (d?.set) Object.defineProperty(P, 'font', { ...d, set(v: unknown) { d.set!.call(this, typeof v === 'string' ? v.trim() : v) } })
+}
 import { isMac } from './platform'
 
 // the keys of Mira's shortcuts with Ctrl+Shift on Windows and Linux (see platform.ts)
@@ -91,6 +99,8 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
     term.loadAddon(fit)
     term.loadAddon(new WebLinksAddon((_e, uri) => window.open(uri)))
     term.open(el)
+    // drawn by the graphics card ; if it is lost or refused, the plain drawing comes back by itself
+    try { const gl = new WebglAddon(); gl.onContextLoss(() => gl.dispose()); term.loadAddon(gl) } catch { /* no WebGL : plain drawing */ }
     // Windows and Linux : Ctrl+Shift+C copies, Ctrl+Shift+V pastes (Ctrl+C stays the shell's interrupt) ; macOS uses ⌘
     if (!isMac) term.attachCustomKeyEventHandler((ev) => {
       if (!ev.ctrlKey || !ev.shiftKey || ev.altKey || ev.metaKey) return true

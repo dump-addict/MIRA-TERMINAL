@@ -685,7 +685,8 @@ export function App() {
               <RailButton title={`Reviews${prTotal ? ` (${prTotal})` : ''}`} active={page === 'reviews'} onClick={() => setPage('reviews')}><GitPullRequest size={16} /></RailButton>
             </div>
             <div className="my-3 h-px w-8 bg-line" />
-            <div className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto">
+            {/* never sideways : the ring turning around a working project's logo would show a scrollbar at each turn */}
+            <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-1 overflow-x-hidden overflow-y-auto">
               {projects.map((p) => (
                 <RailButton key={p.id} title={p.name} active={current?.id === p.id} onClick={() => open(p)}>
                   {/* the project's most pressing tab : waits for you, works, finished */}

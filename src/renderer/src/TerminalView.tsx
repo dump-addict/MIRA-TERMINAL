@@ -20,15 +20,20 @@ const fontOf = (f?: string) => {
   return f ? `"${f}", ${base}` : base
 }
 
-type Props = { composer?: { agent: string; placeholder: string }; onPty?: (id: string) => void; cwd?: string; run?: string; agent?: string; label?: string; active: boolean; focus?: boolean; onTitle?: (t: string) => void; onExit?: () => void }
+type Props = { composer?: { agent: string; placeholder: string }; onPty?: (id: string) => void; cwd?: string; run?: string; once?: boolean; agent?: string; label?: string; active: boolean; focus?: boolean; onTitle?: (t: string) => void; onExit?: (code: number) => void; onIdle?: () => void }
 
-export function TerminalView({ composer, onPty, cwd, run, agent, label, active, focus = active, onTitle, onExit }: Props) {
+export function TerminalView({ composer, onPty, cwd, run, once, agent, label, active, focus = active, onTitle, onExit, onIdle }: Props) {
   const host = useRef<HTMLDivElement>(null)
   const api = useRef<{ term: Terminal; fit: FitAddon; id?: string } | null>(null)
   const pasting = useRef(false)
   const [ring, setRing] = useState(false)
   const labelRef = useRef(label)
   labelRef.current = label
+  // the agent's input box is back and nothing says it works : its turn is over, even without its "done" (an interrupted turn sends none)
+  const onIdleRef = useRef(onIdle)
+  onIdleRef.current = onIdle
+  const idleOnScreen = useRef(false)
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | 0>(0)
   const [ask, setAsk] = useState<string | null>(null)
   // with a message box (a front on the agent's own input) : the plain terminal can come back at any time
   const [raw, setRaw] = useState(false)
@@ -98,8 +103,8 @@ export function TerminalView({ composer, onPty, cwd, run, agent, label, active, 
     let alive = true
     let unkeep = () => {}
     const offData = window.mira.term.onData((tid, data) => { if (tid === id) term.write(data) })
-    const offExit = window.mira.term.onExit((tid) => { if (tid === id) onExit?.() })
-    window.mira.term.create({ cwd, run, agent, cols: term.cols, rows: term.rows }).then((r) => {
+    const offExit = window.mira.term.onExit((tid, code) => { if (tid === id) onExit?.(code) })
+    window.mira.term.create({ cwd, run, once: !!once, agent, cols: term.cols, rows: term.rows }).then((r) => {
       if (!alive) { window.mira.term.kill(r.id); return }
       id = r.id; api.current!.id = r.id; onPty?.(r.id)
       unkeep = keepScreen(r.id, term)

@@ -1,5 +1,5 @@
 /* Terminals: one pty per tab, driven from the UI over IPC */
-import { ipcMain, webContents } from 'electron'
+import { app, BrowserWindow, ipcMain, webContents } from 'electron'
 import { homedir } from 'node:os'
 import { existsSync } from 'node:fs'
 import * as pty from 'node-pty'
@@ -34,7 +34,7 @@ function proxyEnv(): Record<string, string> {
 export const openTerminals = (): number => terms.size
 
 export function registerTerminals(): void {
-  ipcMain.handle('term:create', (e, opts: { cwd?: string; cols: number; rows: number; command?: string; args?: string[]; run?: string; agent?: string }) => {
+  ipcMain.handle('term:create', (e, opts: { cwd?: string; cols: number; rows: number; command?: string; args?: string[]; run?: string; agent?: string; once?: boolean }) => {
     const id = `t${++seq}`
     const cwd = opts.cwd && existsSync(opts.cwd) ? opts.cwd : homedir()
     // run: a command started in the login shell; the shell stays open when it exits
@@ -43,7 +43,9 @@ export function registerTerminals(): void {
     const posix = isWin ? gitBash() || sh : sh
     const file = opts.command || (opts.run ? posix : sh)
     const login = !isWin || /bash/i.test(file) ? ['-l'] : []
-    const args = opts.command ? opts.args || [] : opts.run ? ['-l', '-c', `${opts.run}; exec ${isWin ? 'bash' : sh} -l`] : login
+    // once : a step to finish (a sign-in, an install) ; it ends with the command when it works, the shell stays to read the error when it fails
+    const after = `exec ${isWin ? 'bash' : sh} -l`
+    const args = opts.command ? opts.args || [] : opts.run ? ['-l', '-c', opts.once ? `${opts.run} || ${after}` : `${opts.run}; ${after}`] : login
     const proc = pty.spawn(file, args, {
       name: 'xterm-256color',
       cols: Math.max(2, opts.cols | 0),
@@ -56,7 +58,10 @@ export function registerTerminals(): void {
     proc.onData((data) => webContents.fromId(owner)?.send('term:data', id, data))
     proc.onExit(({ exitCode }) => {
       terms.delete(id)
-      webContents.fromId(owner)?.send('term:exit', id, exitCode)
+      const wc = webContents.fromId(owner)
+      wc?.send('term:exit', id, exitCode)
+      // the sign-in was confirmed in the browser : Mira comes back to the front
+      if (opts.once && exitCode === 0 && wc) { const w = BrowserWindow.fromWebContents(wc); if (w) { if (w.isMinimized()) w.restore(); w.show(); w.focus() } if (process.platform === 'darwin') app.focus({ steal: true }) }
     })
     return { id, cwd, shell: file }
   })

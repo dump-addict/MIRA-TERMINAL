@@ -346,7 +346,7 @@ export function SettingsPage({ onClose, version, initial = 'general', project = 
                 const modes: [string, string][] = [['inherit', 'Same as all'], ['default', 'Ask first'], ['edits', 'Accept edits'], ...(a.id === 'claude' ? [['plan', 'Plan only'] as [string, string]] : []), ['yolo', 'Skip all prompts']]
                 return (
                   <Card key={a.id} id={`agent-${a.id}`} flash={flash} title={<span className="flex items-center gap-2"><AgentIcon id={a.id} size={16} />{a.label}<span className="font-mono text-meta text-text-3">{a.path?.replace(/^\/Users\/[^/]+/, '~')}</span></span>}>
-                    {(a.id === 'claude' || a.id === 'codex') && <AgentAccounts agent={a.id} onRun={(cmd, t) => { onRun?.(cmd, t); onClose() }} />}
+                    {(a.id === 'claude' || a.id === 'codex') && <AgentAccounts agent={a.id} onRun={(cmd, t) => { onRun?.(cmd, t, `Signed in to ${a.label}`); onClose() }} />}
                     <Line id="agent-mode" flash={flash} label="Permission mode" hint={c.mode === 'yolo' ? 'Runs commands and edits files without asking. Only in trusted projects.' : c.mode === 'inherit' ? 'Follows the permissions set for all agents.' : 'What this agent may do without asking you.'}>
                       <Choice value={c.mode} options={modes.filter(([v]) => v !== 'yolo' || !s.lockYolo)} danger="yolo" set={(v) => set({ agents: { [a.id]: { mode: v as Settings['agents'][string]['mode'] } } })} />
                     </Line>
@@ -366,7 +366,7 @@ export function SettingsPage({ onClose, version, initial = 'general', project = 
                 <Card title="Not installed" hint="Install opens a terminal with the official install command. Once it is done, the agent shows up here and in the new tab menu by itself.">
                   {agents.filter((a) => !a.installed).map((a) => (
                     <Line key={a.id} label={<span className="flex items-center gap-2"><AgentIcon id={a.id} size={16} />{a.label}</span>} hint={INSTALL[a.id]}>
-                      {INSTALL[a.id] && <SecondaryButton onClick={() => onRun?.(INSTALL[a.id], `Install ${a.label}`)}>Install</SecondaryButton>}
+                      {INSTALL[a.id] && <SecondaryButton onClick={() => { onRun?.(INSTALL[a.id], `Install ${a.label}`, `${a.label} installed`); onClose() }}>Install</SecondaryButton>}
                     </Line>
                   ))}
                 </Card>

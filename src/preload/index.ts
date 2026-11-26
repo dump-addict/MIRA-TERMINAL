@@ -199,7 +199,7 @@ const mira = {
     }
   },
   term: {
-    create: (opts: { cwd?: string; cols: number; rows: number; command?: string; args?: string[]; run?: string; agent?: string }) =>
+    create: (opts: { cwd?: string; cols: number; rows: number; command?: string; args?: string[]; run?: string; agent?: string; once?: boolean }) =>
       ipcRenderer.invoke('term:create', opts) as Promise<{ id: string; cwd: string; shell: string }>,
     write: (id: string, data: string) => ipcRenderer.send('term:write', id, data),
     resize: (id: string, cols: number, rows: number) => ipcRenderer.send('term:resize', id, cols, rows),

@@ -27,7 +27,7 @@ import { isMac, kbd, shortcut } from './platform'
 
 type Block = { id: string; label: string; color?: string; dir: string; kind?: string }
 type Picked = Block & { kindLabel?: string; summary?: string; status?: string; statusLabel?: string; todos?: number; files?: string[] }
-type TermTab = { key: number; title: string; since?: number; live?: string; session?: string; task?: string; cwd?: string; run?: string; projectId?: string; block?: Block; agent?: string; note?: string; yolo?: boolean; file?: string; dirty?: boolean; status?: 'working' | 'needs' | 'done'; seen?: boolean }
+type TermTab = { key: number; title: string; since?: number; live?: string; session?: string; task?: string; cwd?: string; run?: string; done?: string; projectId?: string; block?: Block; agent?: string; note?: string; yolo?: boolean; file?: string; dirty?: boolean; status?: 'working' | 'needs' | 'done'; seen?: boolean }
 // where a dragged tab will land : a side of a pane, a side of the whole screen, or into a pane's tabs
 // what is kept between launches : tabs, panes, the open project
 type Saved = { current?: string; tabs: TermTab[]; layouts: Record<string, L.Layout> }
@@ -508,7 +508,7 @@ export function App() {
   // the session is saved a second after any change, once the last one has been restored
   useEffect(() => {
     if (!restored.current) return
-    const t = setTimeout(() => void window.mira.session.save({ current: current?.id, tabs: tabs.map(({ run: _r, ...t }) => t), layouts } satisfies Saved), 1000)
+    const t = setTimeout(() => void window.mira.session.save({ current: current?.id, tabs: tabs.filter((t) => !t.done).map(({ run: _r, ...t }) => t), layouts } satisfies Saved), 1000)
     return () => clearTimeout(t)
   }, [tabs, layouts, current?.id])
   // recently used tabs, for ⌃Tab
@@ -752,7 +752,7 @@ export function App() {
               <div key={t.key} className="absolute overflow-hidden" onMouseDownCapture={() => p && setLay((l) => ({ ...l, focus: p.id }))}
                 style={r ? { ...css(r, stripH(r)), opacity: panes.length > 1 && p?.id !== lay.focus ? 'calc(1 - var(--mira-inactive-dim, 0))' : undefined } : { inset: 0, visibility: 'hidden', pointerEvents: 'none' }}>
                 {t.file ? <EditorView file={t.file} active={!!r} onDirty={(d) => setTabs((x) => x.map((y) => (y.key === t.key && !!y.dirty !== d ? { ...y, dirty: d } : y)))} /> : t.note ? <NoteView file={t.note} active={!!r} /> : t.block ? <BlockPane tab={t} project={current} active={!!r} focus={!!r && p?.id === lay.focus} onPty={(id) => ptys.current.set(t.key, id)} onExit={() => doClose(t.key)} />
-                  : <TerminalView composer={t.agent || t.live ? { agent: (t.agent || t.live)!, placeholder: `Message ${AGENT_NAME[(t.agent || t.live)!] ?? 'the agent'}` } : undefined} cwd={t.cwd} run={t.run} agent={t.agent} label={`${t.title}${current ? `  ${current.name}` : ''}`} active={!!r} focus={!!r && p?.id === lay.focus} onTitle={(s) => !t.agent && rename(t.key, s)} onPty={(id) => ptys.current.set(t.key, id)} onExit={() => doClose(t.key)} />}
+                  : <TerminalView composer={t.agent || t.live ? { agent: (t.agent || t.live)!, placeholder: `Message ${AGENT_NAME[(t.agent || t.live)!] ?? 'the agent'}` } : undefined} cwd={t.cwd} run={t.run} once={!!t.done} agent={t.agent} label={`${t.title}${current ? `  ${current.name}` : ''}`} active={!!r} focus={!!r && p?.id === lay.focus} onTitle={(s) => !t.agent && rename(t.key, s)} onPty={(id) => ptys.current.set(t.key, id)} onExit={(code) => { doClose(t.key); if (t.done && code === 0) say(t.done) }} />}
               </div>
             )
           })}
@@ -855,10 +855,10 @@ export function App() {
           </div>
         </div>
       )}
-      {settingsOpen && <SettingsPage onClose={() => { setSettingsOpen(false); setSettingsSection('general') }} version={version} initial={settingsSection} project={current} onRun={(command, title) => addTerm({ title, run: command })} />}
+      {settingsOpen && <SettingsPage onClose={() => { setSettingsOpen(false); setSettingsSection('general') }} version={version} initial={settingsSection} project={current} onRun={(command, title, done) => { setPage(null); setForceHome(false); addTerm({ title, run: command, done }) }} />}
       {palette && (
         <Palette onClose={() => setPalette(false)} projects={projects} current={current}
-          tabs={[...(current ? [{ key: MAP_KEY, title: 'Map', icon: <MapIcon size={ICON} /> }] : []), ...visibleTabs.map((t) => ({ key: t.key, title: t.title, icon: tabIcon(t) }))]}
+          tabs={[...(current ? [{ key: MAP_KEY, title: 'Diagram', icon: <MapIcon size={ICON} /> }] : []), ...visibleTabs.map((t) => ({ key: t.key, title: t.title, icon: tabIcon(t) }))]}
           onProject={open} onFile={openFile} onTab={(k) => (k === MAP_KEY ? showMap() : select(k))} onAgent={(a) => addAgent(a)}
           onBlock={(id) => { showMap(); setTimeout(() => postToMap({ type: 'mira:pick', id }), 60) }}
           actions={[

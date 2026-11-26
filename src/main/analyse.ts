@@ -162,7 +162,8 @@ export async function startAnalysis(root: string, auto = false): Promise<Analysi
   const entry: { proc: ChildProcess; a: Analysis; stopped?: boolean; kill?: () => void } = { proc, a, kill: () => kill(proc) }
   running.set(root, entry)
   send(root, a)
-  let buf = '', err = '', done = false, writing = false, written = 0
+  // the last error the fast way reported itself (a MIRA line with error), clearer than its exit code
+  let buf = '', err = '', said = '', done = false, writing = false, written = 0
   // every line the agent prints, with its time since the start : kept to measure where the time goes
   const log = createWriteStream(join(root, '.miraterminal', 'analysis.log'))
   log.on('error', () => { /* read-only project */ })
@@ -172,7 +173,7 @@ export async function startAnalysis(root: string, auto = false): Promise<Analysi
     if (done) return
     // the fast way left no diagram : the same request goes to one agent, which reads the project by itself
     if (fast && trusted && state !== 'stopped' && error !== 'Took too long' && !mapOk()) {
-      fast = false; buf = ''; err = ''
+      fast = false; buf = ''; err = ''; said = ''
       log.write(`${((Date.now() - a.startedAt) / 1000).toFixed(1)}\tfast way failed (${error || state}), one agent takes over\n`)
       a.step = 'Reading with one agent'; a.phase = 1; send(root, { ...a })
       proc = launch(); entry.proc = proc; wire(proc)
@@ -198,7 +199,7 @@ export async function startAnalysis(root: string, auto = false): Promise<Analysi
       // the fast way reports its own progress : a stage and what it is doing
       if (l.startsWith('MIRA ')) {
         log.write(`${stamp}\t${l}\n`)
-        try { const m = JSON.parse(l.slice(5)); if (m.step) { a.step = String(m.step).slice(0, 80); a.phase = Math.max(1, Math.min(PHASES, Number(m.phase) || a.phase)); send(root, { ...a }) } } catch { /* a cut line */ }
+        try { const m = JSON.parse(l.slice(5)); if (m.error && m.step) said = String(m.step).slice(0, 200); if (m.step) { a.step = String(m.step).slice(0, 80); a.phase = Math.max(1, Math.min(PHASES, Number(m.phase) || a.phase)); send(root, { ...a }) } } catch { /* a cut line */ }
         continue
       }
       // the answer as it is being written : what the agent starts (a thought, a tool call), and how much of the diagram is written so far
@@ -228,7 +229,7 @@ export async function startAnalysis(root: string, auto = false): Promise<Analysi
     p.stdout!.on('data', (b: Buffer) => { buf += b.toString(); const lines = buf.split('\n'); buf = lines.pop() ?? ''; onLines(lines) })
     p.stderr!.on('data', (b: Buffer) => { err = (err + b.toString()).slice(-2000) })
     p.on('error', (e) => { if (p === proc) finish('error', e.message) })
-    p.on('exit', (code) => { if (p === proc) finish(entry.stopped ? 'stopped' : code === 0 ? 'done' : 'error', code === 0 ? '' : err.split('\n').filter(Boolean).pop()?.slice(0, 200) || `The agent stopped (${code})`) })
+    p.on('exit', (code) => { if (p === proc) finish(entry.stopped ? 'stopped' : code === 0 ? 'done' : 'error', code === 0 ? '' : said || err.split('\n').filter(Boolean).pop()?.slice(0, 200) || `The agent stopped (${code})`) })
     p.stdin!.on('error', () => { /* the agent closed its input */ })
     p.stdin!.end(fast ? '' : prompt(root))
   }

@@ -1,7 +1,7 @@
 {
   "name": "mira-terminal",
   "productName": "Mira Terminal",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "The map of your project, and one coding agent per branch",
   "license": "MIT",

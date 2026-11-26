@@ -104,6 +104,9 @@ export function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  // in development the app runs inside Electron's own bundle, whose Dock icon is Electron's : show Mira's instead
+  // (the packaged app takes its icon from its bundle)
+  if (!app.isPackaged && process.platform === 'darwin') app.dock?.setIcon(join(app.getAppPath(), 'resources/icon.png'))
   // no camera, microphone, location, notifications prompt or other device access for any page
   // the only exception : the microphone, for dictation, asked by Mira's own page (never by the map or a web page)
   // (in development, the page's own address, whatever port it got)

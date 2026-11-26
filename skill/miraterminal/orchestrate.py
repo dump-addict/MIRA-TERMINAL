@@ -417,14 +417,14 @@ Every reader block number appears exactly once in "top". Every unassigned file i
         + "\n\n## Legacy files\n" + ", ".join(legacy) + "\n\n## Unassigned files (repo config, docs)\n" + ", ".join(unassigned) + "\n"
 
 
-def outside_prompt(pblocks, ext, paths):
+def outside_prompt(pblocks, ext, paths, uses):
     return '''Readers of a software project named the outside systems and the runtime paths its code talks to, each in their own words. Sort them for the architecture diagram. Answer as briefly as the format allows.
 
 - One node for each real system: merge the names that mean the same system, keep different roles apart (a wallet that pays and a wallet that is only displayed are two; a node and an explorer are two).
 - Kinds: external, chain, feed, swap, token, wallet, auth, cdn, cloud, alert, oracle, contract, database, ai, payment, email, notify, storage, search, cms, maps, video, chat, logs, dns, repo, package, automation, calendar, flags, sheet, bridge, indexer, vector, warehouse, events, mcp, gpu, speech, crm, shop, kyc, org, governance, connector, federation, telephony, shipping, erp, p2p; "other" when none fits.
 - Third-party libraries and tools (a framework, a compiler, a browser API such as local storage, the language runtime) are not systems: list them in "drop".
 - Runtime and data paths (a log, a ledger, a cache, an env file): give each the number of the code block that owns that data, or make it a node of kind database or key when several blocks share it, or null when irrelevant.
-- English, sentence case, labels of 1 to 3 words, one short sentence per summary. "s" marks a secondary system (small card).
+- English, sentence case, labels of 1 to 3 words, one short sentence per summary that says what this project does with the system (from what the code does with it, listed next to each name), not what the system is in general. "s" marks a secondary system (small card).
 
 Answer with this JSON only, compact, no prose:
 {"ext":[["kebab-id","Label","kind","one sentence summary","s or null",["ext:name","other name or path of the same thing"]]],
@@ -433,8 +433,8 @@ Answer with this JSON only, compact, no prose:
 
 Every name and every path appears exactly once.
 
-## Outside names used by the readers (count)
-''' + "\n".join(f"{k} ({v})" for k, v in ext.most_common()) \
+## Outside names used by the readers (count: what the code does with it, as the readers saw it)
+''' + "\n".join(f"{k} ({v}" + (": " + "; ".join(x for x, _ in uses[k].most_common(4)) if uses.get(k) else "") + ")" for k, v in ext.most_common()) \
         + "\n\n## Paths outside the code used as targets (count)\n" + "\n".join(f"{k} ({v})" for k, v in paths.most_common()) \
         + "\n\n## Code blocks (number | label | kind | files)\n" + "\n".join(f"{i} | {b['label']} | {b['kind']} | {', '.join(map(str, b['ranges'][:4]))}" for i, b in enumerate(pblocks)) + "\n"
 
@@ -637,7 +637,12 @@ def run():
     ext = Counter(x for l in links for x in (l["t"], l["s"]) if x and x.startswith("ext:"))
     paths = Counter(l["t"] for l in links if not l["t"].startswith("ext:") and l["t"] not in idx)
     emit(4, f"{len(links)} links read, sorting the outside systems", links=len(links))
-    o = ask_json(outside_prompt(pblocks, ext, paths), A.lead_model) if (ext or paths) else {}
+    # what moves on each outside name: the summary of a system says what the code does with it, not what its name suggests
+    uses = defaultdict(Counter)
+    for l in links:
+        for x in (l["t"], l["s"]):
+            if x and x.startswith("ext:") and l["label"]: uses[x][l["label"][:40]] += 1
+    o = ask_json(outside_prompt(pblocks, ext, paths, uses), A.lead_model) if (ext or paths) else {}
     t_out = time.time() - T0
     d = f_lead.result()
     t_lead = time.time() - T0

@@ -307,7 +307,7 @@ export function TodoPage({ projects, tasks, ideas, reviews, filter, onFilter, ta
                               {!filter.project && <span className="flex min-w-0 items-center gap-1.5 text-meta text-text">{p.git ? <FolderGit2 size={12} className="shrink-0 text-text-2" /> : <FolderOpen size={12} className="shrink-0 text-text-2" />}<span className="truncate">{p.name}</span></span>}
                               <span onClick={(e) => e.stopPropagation()} className="flex min-w-0"><Pick cell title="Agent that takes this task" value={t.agent} options={agentOpts} onChange={(v) => void window.mira.tasks.save(p.path, { id: t.id, agent: v })}>
                                 {tab || t.agent ? <><AgentIcon id={whoOf(t)} /><span className="truncate text-text-2">{nameOf(whoOf(t))}</span></> : none}</Pick></span>
-                              <span onClick={(e) => e.stopPropagation()} className="flex min-w-0"><Pick cell title="Part of the map" value={t.part} onChange={(v) => void window.mira.tasks.save(p.path, { id: t.id, part: v })}
+                              <span onClick={(e) => e.stopPropagation()} className="flex min-w-0"><Pick cell title="Part of the diagram" value={t.part} onChange={(v) => void window.mira.tasks.save(p.path, { id: t.id, part: v })}
                                 options={[{ v: '', label: 'No part' }, ...(parts[p.id] ?? []).map((x) => ({ v: x.id, label: x.label, icon: <KindIcon kind={x.kind} /> }))]}>
                                 {part ? <><KindIcon kind={part.kind} size={12} /><span className="truncate text-text-2">{part.label}</span></> : none}</Pick></span>
                               <span onClick={(e) => e.stopPropagation()} className="flex min-w-0"><Pick cell title="Priority" value={t.priority} onChange={(v) => void window.mira.tasks.save(p.path, { id: t.id, priority: v as Task['priority'] })}
@@ -434,7 +434,7 @@ export function TodoPage({ projects, tasks, ideas, reviews, filter, onFilter, ta
               <div className="flex h-11 items-center gap-1.5 px-3">
                 <Pick title="Where it goes" value={target} options={targets} onChange={(v) => { setTarget(v); set({ part: '' }) }}>{tgt?.icon}<span className="max-w-44 truncate text-text">{tgt?.label}</span></Pick>
                 {!idea && pparts.length > 0 && <><ChevronRight size={12} className="text-text-3" />
-                  <Pick title="Part of the map" value={c.part} options={[{ v: '', label: 'No part' }, ...pparts.map((x) => ({ v: x.id, label: x.label, icon: <KindIcon kind={x.kind} /> }))]} onChange={(v) => set({ part: v })}>
+                  <Pick title="Part of the diagram" value={c.part} options={[{ v: '', label: 'No part' }, ...pparts.map((x) => ({ v: x.id, label: x.label, icon: <KindIcon kind={x.kind} /> }))]} onChange={(v) => set({ part: v })}>
                     {part ? <><KindIcon kind={part.kind} size={12} /><span className="max-w-44 truncate text-text">{part.label}</span></> : 'No part'}</Pick></>}
                 <IconButton onClick={() => setCreating(null)} title="Close (Esc)" className="ml-auto"><X size={ICON} /></IconButton>
               </div>

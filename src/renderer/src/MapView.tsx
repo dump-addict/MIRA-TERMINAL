@@ -57,7 +57,7 @@ export function MapView({ project, visible, onGitInit, onTrust }: Props) {
   useEffect(() => {
     let alive = true
     setUrl(undefined); setError(undefined)
-    void window.mira.map.open(project.path).then((r) => { if (!alive) return; if (r.url) setUrl(r.url); else setError(r.error || 'Map unavailable') })
+    void window.mira.map.open(project.path).then((r) => { if (!alive) return; if (r.url) setUrl(r.url); else setError(r.error || 'Diagram unavailable') })
     return () => { alive = false }
   }, [project.path])
 
@@ -90,16 +90,16 @@ export function MapView({ project, visible, onGitInit, onTrust }: Props) {
         <div className="flex h-10 shrink-0 items-center gap-3 border-b border-line bg-bg px-4">
           <span className="shrink-0 whitespace-nowrap text-body font-medium text-text">{done ? 'Diagram ready' : failed ? 'Diagram failed' : folders ? 'Folders only' : !project.trusted ? 'Checks are off' : 'Not a git repository'}</span>
           <span className={`min-w-0 flex-1 truncate text-meta ${failed && !done ? 'text-bad' : 'text-text-3'}`} title={failed ? an?.error : undefined}>
-            {done ? `Drawn in ${done}` : failed ? an?.error : folders ? 'Your agent can draw the real diagram' : !project.trusted ? 'Its map can run commands and network calls' : ''}
+            {done ? `Drawn in ${done}` : failed ? an?.error : folders ? 'Your agent can draw the real diagram' : !project.trusted ? 'Its diagram can run commands and network calls' : ''}
           </span>
           {!done && (failed || folders) && <PrimaryButton size="sm" className="shrink-0" onClick={() => void window.mira.analysis.start(project.path)}>{failed ? 'Try again' : 'Generate diagram'}</PrimaryButton>}
-          {!project.trusted && <SecondaryButton size="sm" className="shrink-0" title="Run this repository's map checks (shell commands, network calls) and let your agent draw its diagram. Only for code you trust." onClick={onTrust}>Trust project</SecondaryButton>}
+          {!project.trusted && <SecondaryButton size="sm" className="shrink-0" title="Run this repository's diagram checks (shell commands, network calls) and let your agent draw its diagram. Only for code you trust." onClick={onTrust}>Trust project</SecondaryButton>}
           {!project.git && <SecondaryButton size="sm" className="shrink-0" onClick={onGitInit}>Initialize git</SecondaryButton>}
         </div>
       )}
       <div className="relative min-h-0 flex-1">
-        {url && <iframe ref={ref} src={url} onLoad={() => postToMap({ type: 'mira:theme', vars: themeVars() })} title="Project map" className="absolute inset-0 h-full w-full border-0 bg-bg" />}
-        {!url && !error && <div className="absolute inset-0 grid place-items-center text-body text-text-3">Loading map</div>}
+        {url && <iframe ref={ref} src={url} onLoad={() => postToMap({ type: 'mira:theme', vars: themeVars() })} title="Architecture diagram" className="absolute inset-0 h-full w-full border-0 bg-bg" />}
+        {!url && !error && <div className="absolute inset-0 grid place-items-center text-body text-text-3">Loading diagram</div>}
         {error && <div className="absolute inset-0 grid place-items-center text-body text-text-2">{error}</div>}
       </div>
     </div>

@@ -19,7 +19,7 @@ const SECTIONS: Section[] = [
   { id: 'customize', label: 'Customize', icon: <Puzzle size={16} /> },
   { id: 'terminal', label: 'Terminal', icon: <SquareTerminal size={16} /> },
   { id: 'editor', label: 'Editor', icon: <Code2 size={16} /> },
-  { id: 'map', label: 'Map', icon: <MapIcon size={16} /> },
+  { id: 'map', label: 'Diagram', icon: <MapIcon size={16} /> },
   { id: 'voice', label: 'Voice', icon: <Mic size={16} /> },
   { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
   { id: 'privacy', label: 'Privacy and security', icon: <Shield size={16} /> },
@@ -98,9 +98,9 @@ const INDEX: { id: string; section: string; label: string; words?: string }[] = 
   { id: 'editorLineNumbers', section: 'editor', label: 'Line numbers', words: 'gutter' },
   { id: 'editorMinimap', section: 'editor', label: 'Minimap', words: 'overview' },
   { id: 'editorWhitespace', section: 'editor', label: 'Show spaces and tabs', words: 'whitespace' },
-  { id: 'mapEnabled', section: 'map', label: 'Project map' },
-  { id: 'mapAuto', section: 'map', label: 'Draw the map by itself', words: 'automatic analysis diagram agent open project' },
-  { id: 'rightPanel', section: 'map', label: 'Right panel', words: 'map files explorer side panel right' },
+  { id: 'mapEnabled', section: 'map', label: 'Architecture diagram' },
+  { id: 'mapAuto', section: 'map', label: 'Draw the diagram by itself', words: 'automatic analysis diagram agent open project' },
+  { id: 'rightPanel', section: 'map', label: 'Right panel', words: 'map diagram files explorer side panel right' },
   { id: 'mapFollow', section: 'map', label: 'Follow the work', words: 'camera activity files' },
   { id: 'notifyEnabled', section: 'notifications', label: 'Notifications', words: 'alerts' },
   { id: 'notifyNeeds', section: 'notifications', label: 'An agent needs you', words: 'permission question waiting' },
@@ -140,11 +140,11 @@ const INDEX: { id: string; section: string; label: string; words?: string }[] = 
 ]
 
 const SHORTCUTS: [string, string][] = [
-  ['Next tab', kbd('⌃Tab')], ['Search', kbd('⌘K')], ['Open a file', kbd('⌘P')], ['Map panel', kbd('⌘⇧M')], ['Files panel', kbd('⌘⇧E')], ['Save', kbd('⌘S')], ['Settings', kbd('⌘,')], ['New terminal', kbd('⌘T')], ['New default agent', kbd('⌘⌥T')], ['New agent 1 to 5', kbd('⌘⇧1 to ⌘⇧5')], ['Show map', kbd('⌘1')], ['Close tab', kbd('⌘W')],
+  ['Next tab', kbd('⌃Tab')], ['Search', kbd('⌘K')], ['Open a file', kbd('⌘P')], ['Diagram panel', kbd('⌘⇧M')], ['Files panel', kbd('⌘⇧E')], ['Save', kbd('⌘S')], ['Settings', kbd('⌘,')], ['New terminal', kbd('⌘T')], ['New default agent', kbd('⌘⌥T')], ['New agent 1 to 5', kbd('⌘⇧1 to ⌘⇧5')], ['Show diagram', kbd('⌘1')], ['Close tab', kbd('⌘W')],
   ['Sidebar', kbd('⌘B')], ['Back', kbd('⌘[')], ['Forward', kbd('⌘]')], ['Drag a tab', 'split a pane right or down']
 ]
 
-export function SettingsPage({ onClose, version, initial = 'general', project = null, onRun }: { onClose: () => void; version?: string; initial?: string; project?: ProjectInfo | null; onRun?: (command: string, title: string) => void }) {
+export function SettingsPage({ onClose, version, initial = 'general', project = null, onRun }: { onClose: () => void; version?: string; initial?: string; project?: ProjectInfo | null; onRun?: (command: string, title: string, done?: string) => void }) {
   const s = useSettings()
   const [q, setQ] = useState('')
   const [section, setSection] = useState(initial)
@@ -408,10 +408,10 @@ export function SettingsPage({ onClose, version, initial = 'general', project = 
 
           {section === 'map' && (
             <Card>
-              {L('mapEnabled', 'Project map', 'Each project opens on its map.', <Toggle on={s.mapEnabled} set={(v) => set({ mapEnabled: v })} />)}
-              {s.mapEnabled && L('mapAuto', 'Draw the map by itself', 'When a project opens for the first time, your agent reads its code and draws its map. Off, the map waits for your click.', <Toggle on={s.mapAuto} set={(v) => set({ mapAuto: v })} />)}
-              {L('rightPanel', 'Right panel', kbd('The map or the files of the open project, beside your tabs. ⌘⇧M for the map, ⌘⇧E for the files.'), <Choice value={s.rightPanel} options={[['off', 'Closed'], ['map', 'Map'], ['files', 'Files']]} set={(v) => set({ rightPanel: v as Settings['rightPanel'] })} />)}
-              {L('mapFollow', 'Follow the work', 'When files change, their block lights up and the map moves to it.', <Toggle on={s.mapFollow} set={(v) => set({ mapFollow: v })} />)}
+              {L('mapEnabled', 'Architecture diagram', 'Each project opens on its diagram.', <Toggle on={s.mapEnabled} set={(v) => set({ mapEnabled: v })} />)}
+              {s.mapEnabled && L('mapAuto', 'Draw the diagram by itself', 'When a project opens for the first time, your agent reads its code and draws its diagram. Off, the map waits for your click.', <Toggle on={s.mapAuto} set={(v) => set({ mapAuto: v })} />)}
+              {L('rightPanel', 'Right panel', kbd('The diagram or the files of the open project, beside your tabs. ⌘⇧M for the diagram, ⌘⇧E for the files.'), <Choice value={s.rightPanel} options={[['off', 'Closed'], ['map', 'Diagram'], ['files', 'Files']]} set={(v) => set({ rightPanel: v as Settings['rightPanel'] })} />)}
+              {L('mapFollow', 'Follow the work', 'When files change, their block lights up and the diagram moves to it.', <Toggle on={s.mapFollow} set={(v) => set({ mapFollow: v })} />)}
             </Card>
           )}
 
@@ -463,7 +463,7 @@ export function SettingsPage({ onClose, version, initial = 'general', project = 
               <Card title="Trusted projects" id="trusted" flash={flash}>
                 {!projects.length && <Line label="No projects yet"><span /></Line>}
                 <p className="pb-2 text-meta text-text-3">Trusting a project lets the code in its repository run on this computer through Mira. Trust is kept for that folder, also after a git pull: turn it off before pulling code you have not read.</p>
-                {projects.map((p) => <Line key={p.id} label={p.name} hint={p.trusted ? 'Runs its map checks (shell commands, network calls) and lets your agent draw its diagram.' : 'Its map checks and automatic diagram are off.'}><Toggle on={!!p.trusted} set={(v) => trust(p, v)} /></Line>)}
+                {projects.map((p) => <Line key={p.id} label={p.name} hint={p.trusted ? 'Runs its diagram checks (shell commands, network calls) and lets your agent draw its diagram.' : 'Its diagram checks and automatic drawing are off.'}><Toggle on={!!p.trusted} set={(v) => trust(p, v)} /></Line>)}
               </Card>
               <Card title="What leaves this computer" id="network" flash={flash}>
                 <ul className="flex flex-col gap-1.5 py-1 text-body text-text-2">
@@ -473,7 +473,7 @@ export function SettingsPage({ onClose, version, initial = 'general', project = 
                   <li>Voice: only the model download, once, from GitHub. Your voice is turned into text on this computer.</li>
                   <li>Network check, when you run it: a simple request to GitHub, Anthropic, Claude, OpenAI, npm and PyPI.</li>
                   <li>Your agents talk to their own services, as they do in any terminal.</li>
-                  <li>A project's map checks (commands, network calls) run only once you trust that project.</li>
+                  <li>A project's diagram checks (commands, network calls) run only once you trust that project.</li>
                 </ul>
               </Card>
               <Card title="Diagnostics" id="diagnostics" flash={flash}>

@@ -598,7 +598,7 @@ export function App() {
     const here = (before: boolean) => { if (drag != null && drag !== key) setLay((l) => L.moveTab(l, drag, pane.id, key, before)); setDrag(null); setDrop(null) }
     if (key === MAP_KEY) return current ? <Tab key="map" onDropHere={here} active={on} dim={!focused} onSelect={() => select(MAP_KEY)}
       onClose={panes.length > 1 || pane.tabs.length > 1 ? () => closeTab(MAP_KEY) : undefined}
-      onDrag={(d) => setDrag(d ? MAP_KEY : null)} icon={<MapIcon size={ICON} />} title="Map" /> : null
+      onDrag={(d) => setDrag(d ? MAP_KEY : null)} icon={<MapIcon size={ICON} />} title="Diagram" /> : null
     const t = visibleTabs.find((x) => x.key === key)
     if (!t) return null
     return <Tab key={t.key} onDropHere={here} active={on} dim={!focused} onSelect={() => select(t.key)} onClose={() => closeTab(t.key)} onDrag={(d) => setDrag(d ? t.key : null)}
@@ -786,7 +786,7 @@ export function App() {
           <aside className="relative flex shrink-0 flex-col border-l border-line bg-bg" style={{ width: st?.rightWidth ?? 420 }}>
             <div className={`drag flex h-10 shrink-0 items-center gap-1 border-b border-line pl-2 ${isMac ? 'pr-2' : 'pr-[146px]'}`}>
               <div className="nodrag flex rounded-sm border border-line-strong p-0.5">
-                {([['map', 'Map', <MapIcon key="m" size={13} />], ['files', 'Files', <FileCode2 key="f" size={13} />]] as const).map(([id, label, icon]) => (
+                {([['map', 'Diagram', <MapIcon key="m" size={13} />], ['files', 'Files', <FileCode2 key="f" size={13} />]] as const).map(([id, label, icon]) => (
                   <button key={id} onClick={() => void window.mira.settings.set({ rightPanel: id })}
                     className={`flex h-6 items-center gap-1.5 rounded-xs px-2.5 text-meta ${panel === id ? 'bg-surface-3 text-text' : 'text-text-2 hover:text-text'}`}>{icon}{label}</button>
                 ))}
@@ -869,7 +869,7 @@ export function App() {
             { id: 'x-window', group: 'Actions', label: 'New window', hint: kbd('⌘⇧N'), icon: actionIcons.terminal, run: () => void window.mira.newWindow() },
             { id: 'x-term', group: 'Actions', label: 'New terminal', hint: kbd('⌘T'), icon: actionIcons.terminal, run: () => addTerm() },
             { id: 'x-note', group: 'Actions', label: 'New markdown note', icon: <FileText size={ICON} />, run: () => void addNote() },
-            ...(current ? [{ id: 'x-map', group: 'Actions', label: 'Show map', hint: kbd('⌘1'), icon: actionIcons.map, run: () => showMap() }] : []),
+            ...(current ? [{ id: 'x-map', group: 'Actions', label: 'Show diagram', hint: kbd('⌘1'), icon: actionIcons.map, run: () => showMap() }] : []),
             { id: 'x-open', group: 'Actions', label: 'Open folder', icon: actionIcons.folder, run: () => void addFolder() },
             { id: 'x-clone', group: 'Actions', label: 'Clone repository', icon: actionIcons.clone, run: cloneRepo },
             ...(current ? [{ id: 'x-openin', group: 'Actions', label: `Open ${current.name} in ${st?.openIn ?? 'Finder'}`, icon: <FolderOpen size={ICON} />, run: () => void window.mira.openIn(current.path).then((r) => r && say(r)) }] : []),

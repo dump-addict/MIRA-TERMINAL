@@ -106,7 +106,7 @@ export function TaskRow({ t, project, part, open, parts, agent, agentName, tab, 
         <span className="w-14 shrink-0 font-mono text-meta text-text-3">{t.id}</span>
         <span onClick={(e) => e.stopPropagation()} className="-mx-1"><Pick bare title="Status" value={t.status} options={statusOpts} onChange={(v) => void onSave({ id: t.id, status: v })}><StatusGlyph s={t.status} /></Pick></span>
         <span className={`min-w-0 flex-1 truncate ${closed ? 'text-text-3' : 'text-text'}`}>{t.title}</span>
-        {part && <span title="Part of the map" className="hidden h-6 shrink-0 items-center gap-1.5 rounded-full border border-line-strong px-2 text-meta text-text-2 sm:flex"><KindIcon kind={part.kind} size={12} /><span className="max-w-40 truncate">{part.label}</span></span>}
+        {part && <span title="Part of the diagram" className="hidden h-6 shrink-0 items-center gap-1.5 rounded-full border border-line-strong px-2 text-meta text-text-2 sm:flex"><KindIcon kind={part.kind} size={12} /><span className="max-w-40 truncate">{part.label}</span></span>}
         {tab && <span title={`${agentName} has a tab on it`} className="flex shrink-0 items-center gap-1 text-text-2"><AgentIcon id={agent} />{tab.status && <StatusIcon status={tab.status} seen={tab.seen} />}</span>}
       </div>
       {open && (
@@ -120,7 +120,7 @@ export function TaskRow({ t, project, part, open, parts, agent, agentName, tab, 
           <div className="flex flex-wrap items-center gap-1.5">
             <Pick title="Status" value={t.status} options={statusOpts} onChange={(v) => void onSave({ id: t.id, status: v })}><StatusGlyph s={t.status} />{STATUS.find((x) => x.id === t.status)?.label}</Pick>
             <Pick title="Priority" value={t.priority} options={PRIORITY.map((l, i) => ({ v: i, label: l, icon: <PriorityGlyph p={i} /> }))} onChange={(v) => void onSave({ id: t.id, priority: v as Task['priority'] })}><PriorityGlyph p={t.priority} />{PRIORITY[t.priority]}</Pick>
-            {parts.length > 0 && <Pick title="Part of the map" value={t.part} options={[{ v: '', label: 'No part' }, ...parts.map((p) => ({ v: p.id, label: p.label, icon: <KindIcon kind={p.kind} /> }))]} onChange={(v) => void onSave({ id: t.id, part: v })}>
+            {parts.length > 0 && <Pick title="Part of the diagram" value={t.part} options={[{ v: '', label: 'No part' }, ...parts.map((p) => ({ v: p.id, label: p.label, icon: <KindIcon kind={p.kind} /> }))]} onChange={(v) => void onSave({ id: t.id, part: v })}>
               {part ? <><KindIcon kind={part.kind} size={12} />{part.label}</> : 'No part'}
             </Pick>}
           </div>
@@ -213,7 +213,7 @@ export function TaskPage({ t, project, part, parts, agent, agentName, agents, ta
                 <Pick cell title="Priority" value={t.priority} options={PRIORITY.map((l, i) => ({ v: i, label: l, icon: <PriorityGlyph p={i} /> }))} onChange={(x) => void onSave({ id: t.id, priority: x as Task['priority'] })}
                   style={t.priority > 0 ? { ...priorityStyle(t.priority), fontWeight: 500, width: 'auto' } : plain}>{t.priority > 0 ? PRIORITY[t.priority] : empty}</Pick>)}
               {prop(<Boxes size={ICON} />, 'Part', parts.length > 0
-                ? <Pick cell title="Part of the map" value={t.part} options={[{ v: '', label: 'No part' }, ...parts.map((x) => ({ v: x.id, label: x.label, icon: <KindIcon kind={x.kind} /> }))]} onChange={(x) => void onSave({ id: t.id, part: x })}
+                ? <Pick cell title="Part of the diagram" value={t.part} options={[{ v: '', label: 'No part' }, ...parts.map((x) => ({ v: x.id, label: x.label, icon: <KindIcon kind={x.kind} /> }))]} onChange={(x) => void onSave({ id: t.id, part: x })}
                     style={plain}>{part ? <><KindIcon kind={part.kind} size={12} /><span className="truncate text-text">{part.label}</span></> : empty}</Pick>
                 : empty)}
               {prop(<GitBranch size={ICON} />, 'Branch', <button onClick={() => copy(branchOf(t), 'Branch name copied')} title="Copy the branch name" className="-ml-2 flex h-6 min-w-0 items-center rounded-xs px-2 font-mono text-meta text-text hover:ring-1 hover:ring-line-strong"><span className="truncate">{branchOf(t)}</span></button>)}

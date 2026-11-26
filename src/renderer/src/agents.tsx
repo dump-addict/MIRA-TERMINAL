@@ -52,7 +52,7 @@ export function NewMenu({ onClose, onTerminal, onAgent, onNote, onMap, onAddAgen
   const kinds: Item[] = [
     { id: 'terminal', label: 'Terminal', icon: <SquareTerminal size={16} />, hint: kbd('⌘T'), run: onTerminal },
     { id: 'markdown', label: 'Markdown', icon: <FilePlus size={16} />, run: onNote },
-    ...(onMap ? [{ id: 'map', label: 'Map', icon: <MapIcon size={16} />, hint: kbd('⌘1'), run: onMap }] : [])
+    ...(onMap ? [{ id: 'map', label: 'Diagram', icon: <MapIcon size={16} />, hint: kbd('⌘1'), run: onMap }] : [])
   ]
   const st = useSettings()
   // the default agent first

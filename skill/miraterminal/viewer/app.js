@@ -669,7 +669,7 @@ function openPanel(key, refresh) {
 
   const kids = isLink ? [] : (S.kids[el.id] || []);
   if (kids.length) {
-    h += `<div class="sec"><h4>Contains<button data-exp="${esc(el.id)}">${isExpanded(el.id) ? "Collapse" : "Expand"}</button></h4>` + kids.map((c) => {
+    h += `<div class="sec"><h4>Contains<span>${S.mode === "2d" ? `<button data-open="${esc(el.id)}">Open</button>` : ""}<button data-exp="${esc(el.id)}">${isExpanded(el.id) ? "Collapse" : "Expand"}</button></span></h4>` + kids.map((c) => {
       const n = S.byId[c]; const s = nodeStatus(c);
       return `<div class="row link" data-go="node:${esc(c)}"><div class="main"><div class="l1"><span>${esc(n.label)}</span>${stWord(s)}</div><div class="l2">${esc(n.summary || "")}</div></div></div>`;
     }).join("") + `</div>`;
@@ -709,6 +709,7 @@ function openPanel(key, refresh) {
 
   body.querySelectorAll("[data-go]").forEach((b) => b.onclick = () => select(b.dataset.go, true));
   body.querySelectorAll("[data-exp]").forEach((b) => b.onclick = () => toggleExpand(b.dataset.exp));
+  body.querySelectorAll("[data-open]").forEach((b) => b.onclick = () => openRoom(b.dataset.open));
   body.querySelectorAll("[data-run]").forEach((b) => b.onclick = async () => { b.textContent = "…"; await runChecks(true, key, b.dataset.run === "manual"); });
   body.querySelectorAll("[data-preset]").forEach((b) => b.onclick = () => { $("#q").value = presets[+b.dataset.preset][1]; $("#q").focus(); });
   body.querySelectorAll("[data-file]").forEach((f) => f.onclick = async () => {

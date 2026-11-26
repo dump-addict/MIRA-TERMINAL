@@ -145,12 +145,15 @@ function rectOf(id) {
 function cardHTML(n) {
   // a neighbour at the edge of a block's page folds nothing: a double-click goes into it
   const st = C.nodeStatus(n.id), kids = C.isPill(n.id) ? 0 : (S.kids[n.id] || []).length;
-  const exp = kids ? `<span class="chip exp" data-exp="${C.esc(n.id)}" title="Show its parts here. Double-click the block to go into it">${C.isExpanded(n.id) ? "Collapse" : `+${kids}`}</span>` : "";
+  // a block with parts says so on its face: its parts shown here (+ / -), or Open to go into it (as a double-click does)
+  const open = C.isExpanded(n.id), id = C.esc(n.id);
+  const exp = kids ? `<span class="chip exp" data-exp="${id}" title="${open ? "Hide its parts" : "Show its parts here"}">${C.icon(open ? "minus" : "plus", 12)}${C.small(n) ? kids : open ? "Hide parts" : `${kids} part${kids > 1 ? "s" : ""}`}</span>` : "";
+  const go = kids ? `<span class="chip exp" data-open="${id}" title="Go into this block: its parts fill the page (double-click it does the same)">${C.icon("maximize", 12)}Open</span>` : "";
   if (C.small(n)) {
     return `<div class="ch"><span class="ico">${C.icon(C.kindIcon(n.kind), 13)}</span><span class="kl">${C.esc(n.label)}</span>${exp}${C.stWord(st)}</div>`;
   }
   const m = C.metricOf(n), todos = C.openTodos(n);
-  return `<div class="ch"><span class="ico">${C.icon(C.kindIcon(n.kind), 14)}</span><span class="kl">${C.esc(n.tag || KIND_TXT[n.kind] || (n.tech || [])[0] || KIND_TXT.other)}</span></div>
+  return `<div class="ch"><span class="ico">${C.icon(C.kindIcon(n.kind), 14)}</span><span class="kl">${C.esc(n.tag || KIND_TXT[n.kind] || (n.tech || [])[0] || KIND_TXT.other)}</span>${go}</div>
     <div class="ct">${C.esc(n.label)}</div>
     ${m ? `<div class="cm"><b>${C.esc(m.value)}</b><span>${C.esc(m.label)}</span></div>` : `<div class="cs">${C.esc(n.summary || "")}</div>`}
     <div class="cf">${st !== "unknown" ? `<span class="chip ${st}">${C.STATUS_TXT[st]}</span>` : ""}${todos ? `<span class="chip">${todos} to do</span>` : ""}${exp}</div>`;
@@ -210,9 +213,13 @@ function bindCard(d, id) {
     drag = null;
   };
   d.addEventListener("pointerup", up); d.addEventListener("pointercancel", up);
-  d.addEventListener("click", (e) => { const ex = e.target.closest("[data-exp]"); if (ex) { e.stopPropagation(); C.toggleExpand(ex.dataset.exp); } });
-  // double-click: go into the block (its parts fill the page, its neighbours at the edges)
-  d.addEventListener("dblclick", (e) => { if (e.target.closest("[data-exp]")) return; e.stopPropagation(); C.openRoom(id); });
+  d.addEventListener("click", (e) => {
+    const ex = e.target.closest("[data-exp]"), go = e.target.closest("[data-open]");
+    if (ex) { e.stopPropagation(); C.toggleExpand(ex.dataset.exp); }
+    if (go) { e.stopPropagation(); C.openRoom(go.dataset.open); }
+  });
+  // double-click, or its Open button: go into the block (its parts fill the page, its neighbours at the edges)
+  d.addEventListener("dblclick", (e) => { if (e.target.closest("[data-exp], [data-open]")) return; e.stopPropagation(); C.openRoom(id); });
   d.addEventListener("pointerenter", (e) => { if (!drag) C.hover(`node:${id}`, e); });
   d.addEventListener("pointermove", (e) => C.moveTip(e));
   d.addEventListener("pointerleave", () => { if (!drag) C.hover(null); });

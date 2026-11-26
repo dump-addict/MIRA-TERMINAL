@@ -148,7 +148,7 @@ function cardHTML(n) {
   // a block with parts says so on its face: its parts shown here (+ / -), or Open to go into it (as a double-click does)
   const open = C.isExpanded(n.id), id = C.esc(n.id);
   const exp = kids ? `<span class="chip exp" data-exp="${id}" title="${open ? "Hide its parts" : "Show its parts here"}">${C.icon(open ? "minus" : "plus", 12)}${C.small(n) ? kids : open ? "Hide parts" : `${kids} part${kids > 1 ? "s" : ""}`}</span>` : "";
-  const go = kids ? `<span class="chip exp" data-open="${id}" title="Go into this block: its parts fill the page (double-click it does the same)">${C.icon("maximize", 12)}Open</span>` : "";
+  const go = kids ? `<span class="chip exp go" data-open="${id}" title="Go into this block: its parts fill the page (double-click it does the same)" aria-label="Open">${C.icon("maximize", 12)}</span>` : "";
   if (C.small(n)) {
     return `<div class="ch"><span class="ico">${C.icon(C.kindIcon(n.kind), 13)}</span><span class="kl">${C.esc(n.label)}</span>${exp}${C.stWord(st)}</div>`;
   }

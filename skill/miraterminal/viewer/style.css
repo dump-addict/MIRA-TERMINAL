@@ -137,6 +137,9 @@ body.noside #stage { left: 0; }
 .chip.ok { color: var(--ok); } .chip.warn { color: var(--warn); } .chip.fail { color: var(--fail); }
 .chip.exp { cursor: pointer; color: var(--text); transition: background-color var(--fast); }
 .chip.exp:hover { background: var(--card3); }
+/* Open: only its icon, quiet until the pointer is on it */
+.chip.go { width: 20px; padding: 0; justify-content: center; color: var(--text2); background: transparent; border-color: transparent; }
+.chip.go:hover { color: var(--text); border-color: var(--line2); }
 .card.s { width: 232px; padding: 8px 10px; border-radius: var(--mira-radius); }
 .card.s .ch { color: var(--text); font-size: var(--mira-body-size); font-weight: 500; }
 .card.s .ch .ico { width: 22px; height: 22px; }

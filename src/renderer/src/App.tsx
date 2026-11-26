@@ -1,6 +1,6 @@
 /* Mira Terminal shell : projects on the left, panes of tabs (terminals, agents, notes, the map), status bar */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { WifiOff, ChevronLeft, ChevronRight, ChevronsRight, ShieldOff, ListTodo, GitPullRequest, FolderOpen, GitBranch, Map as MapIcon, PanelLeft, Plus, FileText, FileCode2, Search, Settings as Gear, Coffee, Puzzle, Mic, SquareTerminal, Sparkles, X } from 'lucide-react'
+import { WifiOff, ChevronLeft, ChevronRight, ChevronsRight, ShieldOff, ListTodo, GitPullRequest, FolderOpen, GitBranch, Map as MapIcon, PanelLeft, Plus, FileText, FileCode2, Search, Settings as Gear, Coffee, Puzzle, Mic, SquareTerminal, Sparkles, Maximize2, X } from 'lucide-react'
 import { TerminalView } from './TerminalView'
 import { NoteView } from './NoteView'
 import { EditorView } from './EditorView'
@@ -27,7 +27,7 @@ import type { ProjectInfo } from '../../preload'
 import { isMac, kbd, shortcut } from './platform'
 
 type Block = { id: string; label: string; color?: string; dir: string; kind?: string }
-type Picked = Block & { kindLabel?: string; summary?: string; status?: string; statusLabel?: string; todos?: number; files?: string[] }
+type Picked = Block & { kindLabel?: string; summary?: string; status?: string; statusLabel?: string; todos?: number; files?: string[]; parts?: number }
 type TermTab = { key: number; title: string; since?: number; live?: string; session?: string; task?: string; cwd?: string; run?: string; done?: string; projectId?: string; block?: Block; agent?: string; note?: string; yolo?: boolean; file?: string; dirty?: boolean; status?: 'working' | 'needs' | 'done'; seen?: boolean }
 // where a dragged tab will land : a side of a pane, a side of the whole screen, or into a pane's tabs
 // what is kept between launches : tabs, panes, the open project
@@ -355,7 +355,7 @@ export function App() {
       const d = e.data || {}
       if (d.type === 'mira:block' && d.id) {
         setPicked({ id: String(d.id), label: String(d.label || d.id), color: d.color, kind: String(d.kind || ''), dir: String(d.dir || '').replace(/^\/+|\/+$/g, ''),
-          kindLabel: d.kindLabel, summary: d.summary, status: d.status, statusLabel: d.statusLabel, todos: Number(d.todos) || 0, files: Array.isArray(d.files) ? d.files : [] })
+          kindLabel: d.kindLabel, summary: d.summary, status: d.status, statusLabel: d.statusLabel, todos: Number(d.todos) || 0, files: Array.isArray(d.files) ? d.files : [], parts: Number(d.parts) || 0 })
       }
       if (d.type === 'mira:blank') setPicked(null)
       // the map's parts : tabs opened before (restored) get their kind, so their icon
@@ -547,7 +547,7 @@ export function App() {
     <>
       {visible && picked && (
         <BlockPanel b={picked} open={tabs.find((t) => t.projectId === current.id && t.block?.id === picked.id)}
-          root={current.name} path={current.path} onTasks={() => showTodo({ project: current.id, part: picked.id })} agent={st?.defaultAgent ?? 'claude'} onDevelop={(withAgent) => void developBlock(picked, withAgent)} onClose={() => setPicked(null)} />
+          root={current.name} path={current.path} onTasks={() => showTodo({ project: current.id, part: picked.id })} agent={st?.defaultAgent ?? 'claude'} onDevelop={(withAgent) => void developBlock(picked, withAgent)} onOpen={() => { postToMap({ type: 'mira:open', id: picked.id }); setPicked(null) }} onClose={() => setPicked(null)} />
       )}
       <MapView key={`${current.id}${current.trusted ? '-t' : ''}`} project={current} visible={visible}
         onTrust={async () => { await window.mira.projects.trust(current.path, true); await window.mira.map.restart(current.path); const q = { ...current, trusted: true }; setCurrent(q); setProjects((l) => l.map((x) => (x.id === q.id ? q : x))); say('Project trusted') }}
@@ -1009,7 +1009,7 @@ function BlockPane({ tab, project, active, focus, onPty, onExit }: { tab: TermTa
 }
 
 /* small panel shown when a block is clicked on the map : what it is, and the choice to develop it in its own terminal */
-function BlockPanel({ b, open, root, path, agent, onTasks, onDevelop, onClose }: { b: Picked; open?: TermTab; root: string; path: string; agent: string; onTasks: () => void; onDevelop: (withAgent: boolean) => void; onClose: () => void }) {
+function BlockPanel({ b, open, root, path, agent, onTasks, onDevelop, onOpen, onClose }: { b: Picked; open?: TermTab; root: string; path: string; agent: string; onTasks: () => void; onDevelop: (withAgent: boolean) => void; onOpen: () => void; onClose: () => void }) {
   const [count, setCount] = useState<number | null>(null)
   useEffect(() => { void window.mira.tasks.list(path).then((r) => setCount(r ? r.tasks.filter((t) => t.part === b.id && t.status !== 'done' && t.status !== 'canceled').length : null)) }, [path, b.id])
   const tone = b.status === 'fail' || b.status === 'broken' ? 'text-bad' : b.status === 'warn' ? 'text-warn' : b.status === 'ok' || b.status === 'live' ? 'text-ok' : 'text-text-3'
@@ -1028,6 +1028,10 @@ function BlockPanel({ b, open, root, path, agent, onTasks, onDevelop, onClose }:
         {!!b.todos && <span className="flex h-5 items-center rounded-xs border border-line-strong px-1.5 text-text-2">{b.todos} to do</span>}
       </div>}
       <div className="mt-3 truncate font-mono text-meta text-text-3">{b.dir ? `${root}/${b.dir}` : root}</div>
+      {/* a block with parts : go into it, its parts fill the map (as a double-click or the Open button on its card) */}
+      {!!b.parts && <button onClick={onOpen} className="mt-3 flex h-8 w-full items-center gap-2 rounded-sm border border-line px-2.5 text-body text-text-2 hover:bg-surface-1 hover:text-text">
+        <Maximize2 size={ICON} />Open<span className="ml-auto text-meta text-text-3 tnum">{b.parts} part{b.parts === 1 ? '' : 's'}</span>
+      </button>}
       <button onClick={onTasks} className="mt-3 flex h-8 w-full items-center gap-2 rounded-sm border border-line px-2.5 text-body text-text-2 hover:bg-surface-1 hover:text-text">
         <ListTodo size={ICON} />Tasks<span className="ml-auto text-meta text-text-3 tnum">{count ? `${count} open` : 'None yet'}</span>
       </button>

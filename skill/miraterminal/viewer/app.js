@@ -590,6 +590,8 @@ if (EMBED) window.addEventListener("message", (e) => {
     paint();
   }
   if (d.type === "mira:pick" && d.id && S.byId[d.id]) { const n = shown(S.byId[d.id]); if (n) select("node:" + n.id, true); }
+  // its Open button in Mira's panel: go into the block, as a double-click or the Open button on its card does
+  if (d.type === "mira:open" && d.id && (S.kids[d.id] || []).length) openRoom(d.id);
   if (d.type === "mira:focus" && d.id) { const n = shown(S.byId[d.id]); if (n) Diagram.busy(n.id, true); }
   // its tab chosen in Mira: the block is selected and the camera goes to it, without opening its panel
   if (d.type === "mira:show" && d.id && S.byId[d.id]) { const n = shown(S.byId[d.id]); if (n) select("node:" + n.id, true, true); }
@@ -601,7 +603,7 @@ function postBlock(id) {
   const status = nodeStatus(n.id);
   window.parent.postMessage({
     type: "mira:block", id: n.id, label: n.label || n.id, kind: n.kind || "", kindLabel: Diagram.KIND_TXT[n.kind] || n.tag || "",
-    color: S.gcolor[n.group] || "", dir, files, summary: n.summary || "", status, statusLabel: STATUS_TXT[status] || STATUS_TXT.unknown, todos: openTodos(n),
+    color: S.gcolor[n.group] || "", dir, files, summary: n.summary || "", status, statusLabel: STATUS_TXT[status] || STATUS_TXT.unknown, todos: openTodos(n), parts: (S.kids[n.id] || []).length,
   }, "*");
 }
 // click on the background (without dragging): the app closes its panel

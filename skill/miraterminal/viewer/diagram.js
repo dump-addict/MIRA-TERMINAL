@@ -35,7 +35,7 @@ export function init(ctx) {
     if (e.button !== 0 || e.target.closest(".card") || e.target.classList.contains("edge-hit")) return;
     const zh = e.target.closest(".zh");
     if (zh) {
-      const ids = [...cards.keys()].filter((id) => S.byId[id].group === zh.dataset.g);
+      const ids = [...cards.keys()].filter((id) => C.groupOf(id) === zh.dataset.g);
       sec = startMove(ids, ids[0], e); stage.setPointerCapture(e.pointerId); zh.parentElement.classList.add("grab"); return;
     }
     if (e.shiftKey) {
@@ -138,14 +138,15 @@ function dragEnd(m) {
 
 function rectOf(id) {
   const n = S.byId[id], p = C.pos(id);
-  const w = n.size === "s" ? C.CARD.sw : C.CARD.w, h = C.cardH(n);
+  const w = C.small(n) ? C.CARD.sw : C.CARD.w, h = C.cardH(n);
   return { x: p.x, y: p.y, w, h, cx: p.x + w / 2, cy: p.y + h / 2 };
 }
 
 function cardHTML(n) {
-  const st = C.nodeStatus(n.id), kids = (S.kids[n.id] || []).length;
-  const exp = kids ? `<span class="chip exp" data-exp="${C.esc(n.id)}">${C.isExpanded(n.id) ? "Collapse" : `+${kids}`}</span>` : "";
-  if (n.size === "s") {
+  // a neighbour at the edge of a block's page folds nothing: a double-click goes into it
+  const st = C.nodeStatus(n.id), kids = C.isPill(n.id) ? 0 : (S.kids[n.id] || []).length;
+  const exp = kids ? `<span class="chip exp" data-exp="${C.esc(n.id)}" title="Show its parts here. Double-click the block to go into it">${C.isExpanded(n.id) ? "Collapse" : `+${kids}`}</span>` : "";
+  if (C.small(n)) {
     return `<div class="ch"><span class="ico">${C.icon(C.kindIcon(n.kind), 13)}</span><span class="kl">${C.esc(n.label)}</span>${exp}${C.stWord(st)}</div>`;
   }
   const m = C.metricOf(n), todos = C.openTodos(n);
@@ -164,7 +165,7 @@ export function render(fit) {
   v.nodes.forEach(({ n }) => {
     let d = cards.get(n.id);
     if (!d) { d = document.createElement("div"); d.dataset.id = n.id; bindCard(d, n.id); C.$("#cards").appendChild(d); cards.set(n.id, d); }
-    d.className = `card ${n.size === "s" ? "s" : ""}${picked.has(n.id) ? " picked" : ""}`;
+    d.className = `card ${C.small(n) ? "s" : ""}${picked.has(n.id) ? " picked" : ""}`;
     d.style.height = C.cardH(n) + "px";
     d.innerHTML = cardHTML(n);
   });
@@ -210,6 +211,8 @@ function bindCard(d, id) {
   };
   d.addEventListener("pointerup", up); d.addEventListener("pointercancel", up);
   d.addEventListener("click", (e) => { const ex = e.target.closest("[data-exp]"); if (ex) { e.stopPropagation(); C.toggleExpand(ex.dataset.exp); } });
+  // double-click: go into the block (its parts fill the page, its neighbours at the edges)
+  d.addEventListener("dblclick", (e) => { if (e.target.closest("[data-exp]")) return; e.stopPropagation(); C.openRoom(id); });
   d.addEventListener("pointerenter", (e) => { if (!drag) C.hover(`node:${id}`, e); });
   d.addEventListener("pointermove", (e) => C.moveTip(e));
   d.addEventListener("pointerleave", () => { if (!drag) C.hover(null); });
@@ -350,7 +353,8 @@ function computeRoutes(zoneRects) {
     const w = h.offsetWidth + 8, x = z.x0 + 14 + w / 2, y = z.z0 + 18;
     boxes[`__zh${k}`] = { x, z: y, hw: w / 2, hd: 9 };
   });
-  const links = [...edges.values()].map((o) => ({ key: o.e.key, s: o.e.source, t: o.e.target })).filter((l) => boxes[l.s] && boxes[l.t]);
+  // cables to the neighbours at the edges of a block's page stay simple curves: they only show on hover
+  const links = [...edges.values()].filter((o) => !o.e.away).map((o) => ({ key: o.e.key, s: o.e.source, t: o.e.target })).filter((l) => boxes[l.s] && boxes[l.t]);
   // 8 px grid, at least 16 px between two parallel cables, 14 px between a cable and a block
   routes = routeAll(boxes, links, { pitch: 8, pad: 14, bend: 8, nearBend: 14, margin: 160, near: 16, spread: 2, repel: 7, same: 400, cross: 3, portGap: 2, zones: zoneRects });
 }
@@ -360,8 +364,8 @@ function place(fast) {
   // group zones around their cards
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const zones = [], zoneRects = [];
-  S.groups.forEach((g) => {
-    const gid = [...cards.keys()].filter((id) => S.byId[id].group === g.id), rs = gid.map(rectOf);
+  C.groupsNow().forEach((g) => {
+    const gid = [...cards.keys()].filter((id) => C.groupOf(id) === g.id), rs = gid.map(rectOf);
     if (!rs.length) return;
     const x0 = Math.min(...rs.map((r) => r.x)) - 14, y0 = Math.min(...rs.map((r) => r.y)) - 38;
     const x1 = Math.max(...rs.map((r) => r.x + r.w)) + 14, y1 = Math.max(...rs.map((r) => r.y + r.h)) + 14;
@@ -416,6 +420,9 @@ export function paint() {
     // colour read from the tokens on every paint: the theme chosen in Customize applies immediately
     o.path.style.stroke = `var(--mira-${{ ok: "ok", warn: "warn", fail: "bad", off: "off" }[st] || "edge"})`;
     o.path.classList.toggle("dim", !!dim || !!S.search);
+    o.path.classList.toggle("quiet", !f && !S.search && edges.size > 12);
+    const away = !!o.e.away && !(f && f.has(`e:${k}`));
+    o.path.classList.toggle("away", away); o.hit.style.pointerEvents = away ? "none" : "";
     o.path.classList.toggle("flow", st === "ok" && !dim);
     o.path.classList.toggle("hot", !!(f && f.has(`e:${k}`) && (S.flow || hk)));
     const fs = steps.filter((s) => s.edge === k);
@@ -425,7 +432,7 @@ export function paint() {
       o.lab.classList.toggle("on", S.flowStep < 0 || fs.some((s) => s.i === S.flowStep));
     } else {
       o.lab.textContent = o.e.label; o.lab.classList.remove("step");
-      o.lab.classList.toggle("on", !!(f && f.has(`e:${k}`) && !S.flow && hk) || T.k > 1.35);
+      o.lab.classList.toggle("on", !!(f && f.has(`e:${k}`) && !S.flow && hk) || (T.k > 1.35 && !o.e.away));
     }
   });
 }

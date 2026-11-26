@@ -143,6 +143,17 @@ body.noside #stage { left: 0; }
 
 #zoomctl { position: absolute; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 6; }
 #flowbar { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; background: var(--card3); border: 1px solid var(--line2); border-radius: var(--mira-radius); padding: 7px 8px 7px 14px; z-index: 7; max-width: calc(100% - 140px); box-shadow: var(--mira-shadow-float); }
+/* inside a block: the way back, top left (in the app too) */
+#roombar { position: absolute; left: 14px; top: 14px; display: flex; align-items: center; gap: 4px; background: var(--card3); border: 1px solid var(--line2); border-radius: var(--mira-radius); padding: 4px 10px 4px 4px; z-index: 7; max-width: calc(100% - 28px); box-shadow: var(--mira-shadow-float); }
+#roombar .ibtn { border: 0; background: transparent; }
+#roombar .crumb { border: 0; background: transparent; color: var(--text2); padding: 4px 6px; border-radius: var(--mira-radius-sm); white-space: nowrap; cursor: pointer; transition: background-color var(--fast), color var(--fast); }
+#roombar .crumb:hover { background: var(--card2); color: var(--text); }
+#roombar .crumb.here { color: var(--text); font-weight: 600; cursor: default; background: transparent; overflow: hidden; text-overflow: ellipsis; }
+#roombar .sep { color: var(--muted); }
+.ibtn.on { background: var(--card2); color: var(--text); border-color: var(--line2); }
+/* many cables at rest: they step back behind the blocks; hovering a block brings its own forward */
+.edge.quiet { opacity: .45; }
+.edge.away { opacity: 0; }
 #flowbar .fn { font-weight: 600; white-space: nowrap; }
 #flowbar .fs { color: var(--text2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #flowbar .fs b { color: var(--text); margin-right: 6px; font-weight: 500; font-variant-numeric: tabular-nums; }

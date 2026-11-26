@@ -28,6 +28,8 @@ const S = {
   map: null, mtime: 0, byId: {}, kids: {}, groups: [], gcolor: {}, res: {}, saved: {}, saved3: {}, auto: {},
   expanded: new Set(JSON.parse(store("pm.exp") || "[]")), depth: EMBED ? "essential" : store("pm.depth") || "essential",
   mode: EMBED ? "2d" : store("pm.mode") || "2d", sel: null, hover: null, flow: null, flowStep: -1, search: "", act: {},
+  // the block one has gone into (2D), and whether the import links are hidden
+  room: null, mainSaved: null, noImports: store("pm.noimp") === "1",
 };
 let R = null;            // active renderer
 let Scene = null;        // 3D module loaded on demand
@@ -57,6 +59,7 @@ const labelOf = (el) => el.__kind === "link" ? el.label || `${S.byId[el.source]?
 const isExpanded = (id) => S.depth === "all" || S.expanded.has(id);
 const descendants = (id) => (S.kids[id] || []).flatMap((c) => [c, ...descendants(c)]);
 function rep(id) {
+  if (roomOn()) return roomRep(id);
   const chain = [];
   for (let n = S.byId[id]; n; n = n.parent ? S.byId[n.parent] : null) chain.unshift(n.id);
   for (const a of chain) { if (a !== id && !isExpanded(a)) return a; }
@@ -69,9 +72,71 @@ function nodeStatus(id) {
 }
 const edgeStatus = (e) => worst(e.members.map((l) => elStatus(`link:${linkId(l)}`)));
 
+/* Inside a block (2D): its components fill the page, and what it talks to stands at the edges as small cards,
+   "Used by" on the left and "Uses" on the right (as Floorplan does), instead of cables across the whole map.
+   Double-click a block to go in, Escape or the bar at the top left to come back. */
+const roomOn = () => !!S.room && S.mode === "2d";
+const inRoom = (id) => { for (let n = S.byId[id]?.parent ? S.byId[S.byId[id].parent] : null; n; n = n.parent ? S.byId[n.parent] : null) if (n.id === S.room) return true; return false; };
+function roomRep(id) {
+  if (id === S.room) return null;   // a link of the block as a whole says nothing about its parts
+  if (inRoom(id)) {
+    const chain = [];
+    for (let n = S.byId[id]; n && n.id !== S.room; n = n.parent ? S.byId[n.parent] : null) chain.unshift(n.id);
+    for (const a of chain) { if (a !== id && !isExpanded(a)) return a; }
+    return id;
+  }
+  // outside: the largest block that does not hold the room (a neighbour's whole card), an outside system under its own name
+  const holds = new Set(); for (let n = S.byId[S.room]; n; n = n.parent ? S.byId[n.parent] : null) holds.add(n.id);
+  let n = S.byId[id];
+  while (n && n.parent && S.byId[n.parent] && !holds.has(n.parent) && n.parent !== OUTSIDE) n = S.byId[n.parent];
+  return n ? n.id : id;
+}
+const shownLink = (l) => !(S.noImports && l.label === "imports");
+function roomView() {
+  const nodes = [];
+  const walk = (n, depth) => { nodes.push({ n, depth }); if (isExpanded(n.id)) (S.kids[n.id] || []).forEach((c) => walk(S.byId[c], depth + 1)); };
+  (S.kids[S.room] || []).forEach((c) => walk(S.byId[c], 0));
+  const inside = new Set(nodes.map(({ n }) => n.id));
+  const pills = new Map(), weight = {}, edges = new Map();
+  S.map.links.forEach((l) => {
+    if (!shownLink(l)) return;
+    const a = rep(l.source), b = rep(l.target);
+    if (!a || !b || a === b || (!inside.has(a) && !inside.has(b))) return;
+    // what uses the block stands on the left, what it uses on the right
+    if (!inside.has(a) && !pills.has(a)) pills.set(a, "by");
+    if (!inside.has(b)) pills.set(b, "uses");
+    [a, b].forEach((x) => { if (!inside.has(x)) weight[x] = (weight[x] || 0) + 1; });
+    const k = a < b ? `${a}>${b}` : `${b}>${a}`;
+    // a cable to a neighbour at the edge is drawn only when one of its two ends is hovered or selected:
+    // the column it stands in already says the block uses it or is used by it
+    if (!edges.has(k)) edges.set(k, { key: k, source: a, target: b, members: [], away: !inside.has(a) || !inside.has(b) });
+    edges.get(k).members.push(l);
+  });
+  const side = (s) => [...pills.keys()].filter((id) => pills.get(id) === s).sort((x, y) => weight[y] - weight[x] || String(S.byId[x].label).localeCompare(S.byId[y].label));
+  const by = side("by"), uses = side("uses");
+  by.concat(uses).forEach((id) => nodes.push({ n: S.byId[id], depth: 0 }));
+  // columns: Used by, the block's own parts (6 cards a column at most), Uses
+  const room = S.byId[S.room], grey = PALETTE[5], groups = [], gof = {};
+  let col = 0;
+  if (by.length) { groups.push({ id: "room-by", label: "Used by", color: grey, col: col++, row: 0 }); by.forEach((id) => (gof[id] = "room-by")); }
+  const own = nodes.filter(({ n }) => inside.has(n.id));
+  for (let i = 0; i < Math.max(1, Math.ceil(own.length / 6)); i++) {
+    const g = `room-in-${i}`;
+    groups.push({ id: g, label: room.label, color: S.gcolor[room.group] || grey, col: col++, row: 0 });
+    own.slice(i * 6, i * 6 + 6).forEach(({ n }) => (gof[n.id] = g));
+  }
+  if (uses.length) { groups.push({ id: "room-uses", label: "Uses", color: grey, col: col++, row: 0 }); uses.forEach((id) => (gof[id] = "room-uses")); }
+  return { nodes, edges: [...edges.values()], groups, gof, pills };
+}
+const groupsNow = () => (roomOn() ? view().groups : S.groups);
+const groupOf = (id) => (roomOn() ? view().gof[id] : S.byId[id]?.group);
+const isPill = (id) => roomOn() && view().pills.has(id);
+const small = (n) => n.size === "s" || isPill(n.id);
+
 let VIEW = null;
 function view() {
   if (VIEW) return VIEW;
+  if (roomOn()) { VIEW = roomView(); labelEdges(VIEW.edges); return VIEW; }
   const nodes = [];
   const walk = (n, depth) => {
     nodes.push({ n, depth });
@@ -80,41 +145,70 @@ function view() {
   S.map.nodes.filter((n) => !n.parent || !S.byId[n.parent]).forEach((n) => walk(n, 0));
   const edges = new Map();
   S.map.links.forEach((l) => {
+    if (!shownLink(l)) return;
     const a = rep(l.source), b = rep(l.target);
     if (a === b) return;
-    const k = `${a}>${b}`;
+    // one cable per pair of blocks, whatever the direction : it keeps the direction of the first link
+    const k = a < b ? `${a}>${b}` : `${b}>${a}`;
     if (!edges.has(k)) edges.set(k, { key: k, source: a, target: b, members: [] });
     edges.get(k).members.push(l);
   });
-  edges.forEach((e) => {
+  VIEW = { nodes, edges: [...edges.values()] };
+  labelEdges(VIEW.edges);
+  return VIEW;
+}
+function labelEdges(list) {
+  list.forEach((e) => {
     e.label = e.members.length === 1 ? e.members[0].label || "" : `${e.members.length} links`;
     e.selKey = `link:${linkId(e.members[0])}`;
   });
-  VIEW = { nodes, edges: [...edges.values()] };
-  return VIEW;
 }
 function invalidate() { VIEW = null; }
+
+/* The outside systems (services, registries, APIs: top-level blocks with no file of the project) are many in a large project.
+   Drawn one by one they fill columns of their own, and every block sends a long cable across the map to each of them.
+   Here they become the components of one "Outside services" block, folded like any other block: one card and a few
+   cables at first, every system and its links when it is opened. Only in the page: map.json is not changed. */
+const OUTSIDE = "mira-outside";
+function foldOutside(m) {
+  if (m.nodes.some((n) => n.id === OUTSIDE)) return;
+  const hasKids = new Set(m.nodes.map((n) => n.parent).filter(Boolean));
+  const out = m.nodes.filter((n) => !n.parent && n.kind !== "user" && !(n.files || []).length && !hasKids.has(n.id));
+  if (out.length < 4) return;
+  const groups = {};
+  out.forEach((n) => { groups[n.group] = (groups[n.group] || 0) + 1; });
+  const group = Object.keys(groups).sort((a, b) => groups[b] - groups[a])[0];
+  m.nodes.push({ id: OUTSIDE, __kind: "node", __virtual: true, label: "Outside services", kind: "external", group, status: "live",
+    summary: `The ${out.length} systems outside the code this project talks to.` });
+  out.forEach((n) => { n.parent = OUTSIDE; n.group = group; });
+}
 
 function normalize(m) {
   m.nodes = m.nodes || []; m.links = m.links || []; m.flows = m.flows || [];
   m.nodes.forEach((n) => { n.__kind = "node"; n.group = n.group || "other"; });
   m.links.forEach((l) => { l.__kind = "link"; });
+  foldOutside(m);
   S.byId = Object.fromEntries(m.nodes.map((n) => [n.id, n]));
   S.kids = {};
   m.nodes.forEach((n) => { if (n.parent && S.byId[n.parent]) (S.kids[n.parent] = S.kids[n.parent] || []).push(n.id); });
-  const order = (m.groups || []).map((g) => g.id);
+  // a group left without blocks (its outside systems went into the one "Outside services" block) takes no room
+  const used = new Set(m.nodes.map((n) => n.group));
+  const order = (m.groups || []).map((g) => g.id).filter((id) => used.has(id));
   m.nodes.forEach((n) => { if (!order.includes(n.group)) order.push(n.group); });
   S.groups = order.map((id, i) => {
     const g = (m.groups || []).find((x) => x.id === id) || {};
     return { id, label: g.label || id, color: safeColor(g.color) || PALETTE[i % PALETTE.length], col: g.col ?? i, row: g.row ?? 0 };
   });
+  // columns left empty (their blocks went into another group) take no room: the others close up, in the same order
+  const cols = [...new Set(S.groups.map((g) => g.col))].sort((a, b) => a - b);
+  S.groups.forEach((g) => (g.col = cols.indexOf(g.col)));
   S.gcolor = Object.fromEntries(S.groups.map((g) => [g.id, g.color]));
   return m;
 }
 
 // ------------------------------------------------------------ layout
 export const CARD = { w: 232, h: 136, sw: 232, sh: 40, gapY: 16, head: 46, rowGap: 120, gapMin: 96, labPad: 40 };
-const cardH = (n) => (n.size === "s" ? CARD.sh : CARD.h);
+const cardH = (n) => (small(n) ? CARD.sh : CARD.h);
 // width of a link label (same font as .elabel: 11px, weight 600, 8px padding on each side, border)
 let measureCtx;
 export function labelW(txt) {
@@ -129,10 +223,11 @@ const LANE = 16;
 function layout() {
   const v = view();
   S.auto = {};
-  const colOf = (id) => S.groups.find((g) => g.id === S.byId[id].group)?.col ?? 0;
-  const ncol = Math.max(0, ...S.groups.map((g) => g.col)) + 1;
+  const G = groupsNow();
+  const colOf = (id) => G.find((g) => g.id === groupOf(id))?.col ?? 0;
+  const ncol = Math.max(0, ...G.map((g) => g.col)) + 1;
   const lab = new Array(ncol).fill(0), lanes = new Array(ncol).fill(0);   // aisle i: between column i and i+1
-  v.edges.forEach((e) => {
+  v.edges.filter((e) => !e.away).forEach((e) => {
     const a = colOf(e.source), b = colOf(e.target), w = labelW(e.label);
     const lo = Math.min(a, b), hi = Math.max(a, b);
     // a cable only goes up or down in the start aisle and the end aisle; in between it runs flat.
@@ -145,13 +240,13 @@ function layout() {
   });
   S.colX = [0];
   for (let i = 1; i < ncol; i++) S.colX[i] = S.colX[i - 1] + CARD.w + Math.max(CARD.gapMin, lab[i - 1] + CARD.labPad + lanes[i - 1] * LANE);
-  const rows = [...new Set(S.groups.map((g) => g.row))].sort((a, b) => a - b);
+  const rows = [...new Set(G.map((g) => g.row))].sort((a, b) => a - b);
   let top = 0;
   rows.forEach((r) => {
     let bottom = top;
-    S.groups.filter((g) => g.row === r).forEach((g) => {
+    G.filter((g) => g.row === r).forEach((g) => {
       let y = top + CARD.head;
-      v.nodes.filter(({ n }) => n.group === g.id).forEach(({ n }) => {
+      v.nodes.filter(({ n }) => groupOf(n.id) === g.id).forEach(({ n }) => {
         S.auto[n.id] = { x: S.colX[g.col] ?? 0, y };
         y += cardH(n) + CARD.gapY;
       });
@@ -193,6 +288,7 @@ function moveNode(id, x, y, done) {
   if (done) saveLayout();
 }
 function saveLayout() {
+  if (S.room) return;   // inside a block the cards are placed for this page only
   clearTimeout(saveT);
   saveT = setTimeout(() => api("/api/layout", { method: "POST", body: JSON.stringify({ positions: S.saved, positions3d: S.saved3 }) }).catch(() => toast("Position not saved")), 300);
 }
@@ -207,6 +303,7 @@ function stepHist(back) {
   saveLayout(); R && R.resize && R.resize();
 }
 async function resetLayout() {
+  if (roomOn()) { S.saved = {}; return rerender(true); }
   if (S.mode !== "3d") pushHist();
   if (S.mode === "3d") S.saved3 = {}; else S.saved = {};
   await api("/api/layout", { method: "POST", body: JSON.stringify({ positions: S.saved, positions3d: S.saved3 }) }).catch(() => {});
@@ -238,7 +335,7 @@ function focusSet() {
     const l = byKey(key); if (!l) return null;
     const a = rep(l.source), b = rep(l.target);
     set.add(`n:${a}`); set.add(`n:${b}`);
-    view().edges.forEach((e) => { if (e.source === a && e.target === b) set.add(`e:${e.key}`); });
+    view().edges.forEach((e) => { if ((e.source === a && e.target === b) || (e.source === b && e.target === a)) set.add(`e:${e.key}`); });
   }
   return set;
 }
@@ -271,6 +368,7 @@ async function loadMap(first) {
   // label widths are measured with Geist: wait for the font before the first layout
   if (first && document.fonts) { try { await document.fonts.load(`600 11px ${getComputedStyle(document.body).fontFamily}`); } catch (e) { /* font unavailable */ } }
   S.map = normalize(j.map);
+  if (S.room && !S.byId[S.room]) leaveRoom();
   if (first) { try { const L = await api("/api/layout"); S.saved = L.positions || {}; S.saved3 = L.positions3d || {}; } catch (e) { S.saved = {}; S.saved3 = {}; } }
   $("#pname").textContent = S.map.project || "Mira Terminal";
   document.title = S.map.project ? `${S.map.project} map` : "Mira Terminal";
@@ -317,7 +415,37 @@ async function rerender(fit) {
   } else R = Diagram;
   if (S.mode === "3d") Diagram.sleep(); else Scene && Scene.sleep();
   R.render(fit);
-  renderFlowbar();
+  renderFlowbar(); renderRoombar();
+}
+
+// ------------------------------------------------------------ going into a block
+function leaveRoom() { if (!S.room) return; S.room = null; S.saved = S.mainSaved || S.saved; S.mainSaved = null; invalidate(); }
+function setRoom(id) {
+  if (S.room === id) return;
+  if (!id) leaveRoom();
+  else { if (!S.room) S.mainSaved = S.saved; S.room = id; S.saved = {}; invalidate(); }
+  // a flow plays on the whole map
+  if (S.flow) { clearInterval(flowTimer); S.flow = null; S.flowStep = -1; renderSide(); }
+  S.hover = null; $("#tip").hidden = true; closePanel();
+  rerender(true);
+}
+function openRoom(id) {
+  if (S.mode !== "2d" || !S.byId[id]) return;
+  if ((S.kids[id] || []).length) return setRoom(id);
+  // a neighbour with nothing inside: back to the whole map, on it
+  if (isPill(id)) { setRoom(null); select(`node:${id}`, true, true); }
+}
+function roomUp() { if (S.room) setRoom(S.byId[S.room]?.parent || null); }
+function renderRoombar() {
+  const b = $("#roombar");
+  if (!roomOn()) { b.hidden = true; return; }
+  const chain = [];
+  for (let n = S.byId[S.room]; n; n = n.parent ? S.byId[n.parent] : null) chain.unshift(n);
+  b.hidden = false;
+  b.innerHTML = `<button class="ibtn" data-up title="Back (Esc)">${icon("arrow-left", 15)}</button><button class="crumb" data-room="">Whole map</button>`
+    + chain.map((n, i) => `<span class="sep">/</span>${i === chain.length - 1 ? `<span class="crumb here">${esc(n.label)}</span>` : `<button class="crumb" data-room="${esc(n.id)}">${esc(n.label)}</button>`}`).join("");
+  b.querySelector("[data-up]").onclick = roomUp;
+  b.querySelectorAll("[data-room]").forEach((x) => (x.onclick = () => setRoom(x.dataset.room || null)));
 }
 function paint() { R && R.paint(); }
 function renderCounts() {
@@ -353,6 +481,7 @@ function renderSide() {
 let flowTimer = null;
 function setFlow(id) {
   clearInterval(flowTimer);
+  if (id && S.room) leaveRoom();
   S.flow = id ? S.map.flows.find((f) => f.id === id) : null;
   S.flowStep = -1;
   if (S.flow) {
@@ -479,6 +608,7 @@ function postBlock(id) {
 function blank() { if (EMBED) window.parent.postMessage({ type: "mira:blank" }, "*"); }
 function select(key, focus, quiet) {
   if (EMBED && !key.startsWith("node:")) return;   // in the app: clicking a link does nothing special
+  if (roomOn() && key.startsWith("node:")) { const id = key.slice(5); if (id === S.room || (!inRoom(id) && !isPill(id))) { leaveRoom(); rerender(false); } }
   S.sel = key; $("#tip").hidden = true; S.hover = null;
   if (key.startsWith("node:")) {
     const id = key.slice(5);
@@ -604,6 +734,8 @@ async function loadActivity(key) {
   try { const a = await api(`/api/activity?key=${encodeURIComponent(key)}`); S.act[key] = a; if (S.sel === key) paintA(a); } catch (e) { /* not a git repo */ }
 }
 async function session(key, launch) {
+  // the "Outside services" block exists only in the page : the agent is asked about one of its systems
+  if (byKey(key)?.__virtual) { toast("Open Outside services and pick one system"); return; }
   const q = ($("#q") || {}).value || "";
   const b = launch ? $("#go") : $("#cp");
   b.disabled = true;
@@ -623,15 +755,22 @@ async function session(key, launch) {
 const ctx = {
   S, $, esc, icon, STATUS_TXT, stWord, EMBED, blank, kindIcon, COL, CARD, view, pos, moveNode, save3, nodeStatus, edgeStatus, elStatus, focusSet, flowSteps, matches, metricOf,
   openTodos, isExpanded, toggleExpand, select, hover, moveTip, closePanel, rerender, labelOf, byKey, cardH, labelW, snap, pushHist, stepHist, saveLayout, toast,
+  groupsNow, groupOf, isPill, small, openRoom,
 };
 
 // ------------------------------------------------------------ controls
 $("#side-toggle").innerHTML = icon("panel-left", 16);
 $("#search-ic").innerHTML = icon("search", 14);
 $("#pclose").innerHTML = icon("x", 16);
-const ZI = { in: "plus", out: "minus", fit: "maximize", reset: "rotate-ccw" };
+const ZI = { in: "plus", out: "minus", fit: "maximize", reset: "rotate-ccw", links: "filter" };
+const paintLinksBtn = (b) => { b.classList.toggle("on", S.noImports); b.title = S.noImports ? "Show the import links" : "Hide the import links"; };
 document.querySelectorAll("#zoomctl [data-z]").forEach((b) => {
   b.innerHTML = icon(ZI[b.dataset.z], 15);
+  if (b.dataset.z === "links") {
+    paintLinksBtn(b);
+    b.onclick = () => { S.noImports = !S.noImports; store("pm.noimp", S.noImports ? "1" : "0"); paintLinksBtn(b); toast(S.noImports ? "Import links hidden" : "Import links shown"); rerender(false); };
+    return;
+  }
   b.onclick = () => (b.dataset.z === "reset" ? resetLayout() : R && R.zoom(b.dataset.z));
 });
 if (store("pm.side") === "0") document.body.classList.add("noside");
@@ -657,7 +796,8 @@ $("#search").onkeydown = (e) => {
 };
 document.addEventListener("keydown", (e) => {
   if (e.target.matches("input, textarea")) return;
-  if (e.key === "Escape") { if (S.flow) setFlow(null); else closePanel(); }
+  if (e.key === "Escape") { if (S.flow) setFlow(null); else if (!$("#panel").hidden) closePanel(); else if (roomOn()) roomUp(); else closePanel(); }
+  if (e.key === "Backspace" && roomOn()) { e.preventDefault(); roomUp(); }
   if (e.key === "/") { e.preventDefault(); $("#search").focus(); }
   if (e.key === "r" || e.key === "R") runChecks(true);
   if (e.key === "f" || e.key === "F") R && R.zoom("fit");

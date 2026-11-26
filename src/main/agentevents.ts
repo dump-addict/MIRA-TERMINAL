@@ -1,7 +1,7 @@
 /* Agent events : Claude Code and Codex tell Mira when they work, wait for you or finish.
    Their own hooks (added for Mira's sessions only) write a tiny file named after the terminal ; Mira watches the folder. */
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { mkdirSync, readdirSync, rmSync, watch } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, rmSync, watch } from 'node:fs'
 import { join } from 'node:path'
 
 export const eventsDir = () => join(app.getPath('userData'), 'events')
@@ -17,6 +17,8 @@ export function registerAgentEvents(): void {
     if (!name) return
     const m = String(name).match(/^(t\d+)\.(working|needs|done)$/)
     if (!m || !KINDS.has(m[2])) return
+    // removing the file below is an event too : without this, every event came twice, and a late "working" could follow the "done"
+    if (!existsSync(join(dir, String(name)))) return
     rmSync(join(dir, String(name)), { force: true })
     for (const w of BrowserWindow.getAllWindows()) w.webContents.send('agent:event', m[1], m[2])
   })

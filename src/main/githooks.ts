@@ -5,6 +5,9 @@ import { app } from 'electron'
 import { chmodSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+/* Mira's own GitHub account (miraterminal), named as co-author of the commits agents make from Mira */
+export const MIRA_COAUTHOR = 'Co-Authored-By: Mira Terminal <361582628+miraterminal@users.noreply.github.com>'
+
 const HOOKS = ['applypatch-msg', 'pre-applypatch', 'post-applypatch', 'pre-commit', 'pre-merge-commit', 'prepare-commit-msg', 'commit-msg', 'post-commit',
   'pre-rebase', 'post-checkout', 'post-merge', 'pre-push', 'pre-receive', 'update', 'post-receive', 'post-update', 'push-to-checkout', 'pre-auto-gc', 'post-rewrite', 'sendemail-validate', 'reference-transaction']
 
@@ -38,6 +41,8 @@ awk -v line="$line" '
     if (t <= end) { print ""; for (i = t; i <= end; i++) print l[i] }
     for (i = end + 1; i <= NR; i++) print l[i]
   }' "$1" > "$1.mira" && mv "$1.mira" "$1"
+# Mira as co-author : GitHub lists it among the repository's contributors
+git interpret-trailers --in-place --if-exists addIfDifferent --trailer "${MIRA_COAUTHOR}" "$1" 2>/dev/null
 exit 0
 `
 

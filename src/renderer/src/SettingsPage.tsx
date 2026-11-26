@@ -339,7 +339,7 @@ export function SettingsPage({ onClose, version, initial = 'general', project = 
                 {L('askBeforeDelete', 'Ask before deleting files', 'Claude Code asks before rm, git clean and git reset --hard, even when it accepts edits.', <Toggle on={s.askBeforeDelete} set={(v) => set({ askBeforeDelete: v })} />)}
               </Card>
               <Card>
-                {L('markCommits', 'Mention Mira in agent commits', 'Adds Made with Mira Terminal and the agent name to commits agents make from Mira, and to Claude Code pull requests. The agent keeps its own mention. Never over your own attribution setting.', <Toggle on={s.markCommits} set={(v) => set({ markCommits: v })} />)}
+                {L('markCommits', 'Mention Mira in agent commits', 'Adds Made with Mira Terminal and the agent name to commits agents make from Mira, with Mira Terminal as co-author, and to Claude Code pull requests. The agent keeps its own mention. Never over your own attribution setting.', <Toggle on={s.markCommits} set={(v) => set({ markCommits: v })} />)}
               </Card>
               {agents.filter((a) => a.installed).map((a) => {
                 const c = s.agents[a.id]

@@ -533,7 +533,8 @@ def split_tall(groups, nodes):
         for o in groups:
             if o["row"] == g["row"] and o["col"] > g["col"]: o["col"] += cols - 1
         for c in range(1, cols):
-            g2 = {"id": f"{g['id']}-{c + 1}", "label": g["label"], "col": g["col"] + c, "row": g["row"]}
+            # the next columns of the same group are numbered: two columns with one same name read as two different groups
+            g2 = {"id": f"{g['id']}-{c + 1}", "label": f"{g['label']} ({c + 1})", "col": g["col"] + c, "row": g["row"]}
             groups.append(g2)
             for v in mine[c * per:(c + 1) * per]: v["group"] = g2["id"]
     for v in nodes.values():   # components follow their parent

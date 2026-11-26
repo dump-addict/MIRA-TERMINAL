@@ -212,7 +212,9 @@ export function App() {
   const addNote = async (into?: string) => { const f = await window.mira.notes.create(current?.path); addTerm({ title: f.split('/').pop()!, note: f }, into) }
   // a click on a part's tab, even the one already open : the map selects that part and moves to it
   const showBlock = (key: number) => { const b = tabs.find((x) => x.key === key)?.block; if (b) setTimeout(() => postToMap({ type: 'mira:show', id: b.id }), 80) }
-  const select = (key: number) => { setForceHome(false); setLay((l) => L.selectTab(l, key)); showBlock(key) }
+  // the picked tab's terminal takes the keyboard (see TerminalView), once its pane is shown
+  const focusTerm = () => setTimeout(() => window.dispatchEvent(new Event('mira-focus-term')))
+  const select = (key: number) => { setForceHome(false); setLay((l) => L.selectTab(l, key)); showBlock(key); focusTerm() }
   // the map lives in the right panel ; it moves into a pane only when asked from a pane's + menu
   const showMap = (into?: string) => {
     if (!into && !L.leafOf(lay.root, MAP_KEY)) { void window.mira.settings.set({ rightPanel: 'map' }); return }
@@ -342,7 +344,7 @@ export function App() {
   const showTodo = (f: TodoFilter = {}) => { setTodoFilter(f); setPage('todo'); setPicked(null) }
 
   // a tab of any project : the sidebar goes there
-  const goTab = (p: ProjectInfo, key: number) => { setPage(null); if (current?.id !== p.id) open(p); setLay((l) => L.selectTab(l, key), p.id); showBlock(key) }
+  const goTab = (p: ProjectInfo, key: number) => { setPage(null); if (current?.id !== p.id) open(p); setLay((l) => L.selectTab(l, key), p.id); showBlock(key); focusTerm() }
   const rename = (key: number, title: string) => setTabs((x) => x.map((t) => (t.key === key ? { ...t, title } : t)))
 
   // messages from the map : a click on a block shows a small panel, the user decides whether to develop it in a terminal

@@ -13,7 +13,7 @@ export type Status = { model?: string; effort?: string; mode?: string }
 
 // a path as the agent reads it : inside the project as @relative/path, else the full path (quoted when it has spaces)
 const IMG = /\.(png|jpe?g|gif|webp)$/i
-const refOf = (p: string, cwd?: string) => (cwd && p.startsWith(cwd + '/') && !IMG.test(p) ? '@' + p.slice(cwd.length + 1) : /\s/.test(p) ? `"${p}"` : p)
+export const refOf = (p: string, cwd?: string) => (cwd && p.startsWith(cwd + '/') && !IMG.test(p) ? '@' + p.slice(cwd.length + 1) : /\s/.test(p) ? `"${p}"` : p)
 
 /* one line of the agent's input ; every piece says its row and where it starts, so a click can be turned into a cursor move */
 function Line({ spans, caret, row }: { spans: Span[]; caret?: number; row: number }) {

@@ -4,7 +4,7 @@ import { settingsNow, useSettings } from './settings'
 import { terminalTheme, WEIGHTS } from './appearance'
 import { setDictationTarget } from './dictation'
 import { keepScreen } from './peek'
-import { Composer, statusOf, type InputView, type Status, type Span } from './Composer'
+import { Composer, refOf, statusOf, type InputView, type Status, type Span } from './Composer'
 import { MessageSquare } from 'lucide-react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
@@ -263,20 +263,46 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
   // dictation shown on the box's mic while this tab has the focus
   useEffect(() => { if (!focus) return; const h = (e: Event) => setVoice((e as CustomEvent).detail); window.addEventListener('mira-voice', h); return () => { window.removeEventListener('mira-voice', h); setVoice('off') } }, [focus])
   useEffect(() => {
-    // the keyboard always stays in the terminal : the message box is only a front
-    if (focus && api.current) api.current.term.focus()
+    // the keyboard always stays in the terminal : the message box is only a front.
+    // A frame later : a tab is picked on mousedown, and the browser's own mousedown would take the focus back right after
+    if (focus) requestAnimationFrame(() => api.current?.term.focus())
     // dictated text is typed into the focused terminal (no Enter : you check it first)
     // (with the message box, the box shows the recording, not the floating pill)
     if (focus) setDictationTarget((t) => { const id = api.current?.id; if (id) window.mira.term.write(id, t) }, front)
   }, [focus, front])
+  // a tab clicked again (or picked in the sidebar) gives the keyboard back to its terminal
+  useEffect(() => {
+    if (!focus || !active) return
+    const h = () => requestAnimationFrame(() => api.current?.term.focus())
+    window.addEventListener('mira-focus-term', h); return () => window.removeEventListener('mira-focus-term', h)
+  }, [focus, active])
   // text typed into the agent's input as one paste (files, dictation) ; no Enter
   const paste = (t: string) => { const i = api.current?.id; if (i) window.mira.term.write(i, `\x1b[200~${t}\x1b[201~`) }
+  // files dropped anywhere on the terminal : their paths are typed into the input, as on the message box (an agent reads @path,
+  // a shell gets the path quoted)
+  const shellQuote = (p: string) => (/^[\w@%+=:,./-]+$/.test(p) ? p : `'${p.replace(/'/g, `'\\''`)}'`)
+  const [dropOver, setDropOver] = useState(false)
+  const dropFiles = {
+    onDragOver: (e: React.DragEvent) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDropOver(true) } },
+    // only when the files leave the whole terminal, not when they pass from one of its parts to another
+    onDragLeave: (e: React.DragEvent) => { if (!wrap.current?.contains(e.relatedTarget as Node)) setDropOver(false) },
+    onDrop: (e: React.DragEvent) => {
+      setDropOver(false)
+      // dropped on the message box : it has typed them already
+      if (e.defaultPrevented || !e.dataTransfer.files.length) return
+      e.preventDefault()
+      const ps = [...e.dataTransfer.files].map((f) => window.mira.composer.pathOf(f)).filter(Boolean)
+      const t = ps.map((p) => (composer || agent ? refOf(p, cwd) : shellQuote(p))).join(' ')
+      if (t) paste(t + ' ')
+      api.current?.term.focus()
+    }
+  }
   const keys = (seq: string) => { const i = api.current?.id; if (i) window.mira.term.write(i, seq) }
 
   const send = () => { const i = api.current?.id; if (i && ask) window.mira.term.write(i, ask); setAsk(null); api.current?.term.focus() }
   const lines = ask ? ask.replace(/[\r\n]+$/, '').split(/\r\n|\r|\n/).length : 0
   return (
-    <div ref={wrap} className="absolute inset-0 flex flex-col" style={{ visibility: active ? 'visible' : 'hidden', background: terminalTheme(st).background }}>
+    <div ref={wrap} {...dropFiles} className="absolute inset-0 flex flex-col" style={{ visibility: active ? 'visible' : 'hidden', background: terminalTheme(st).background }}>
       <div className="relative min-h-0 flex-1">
       <div className="absolute inset-0" onMouseMove={() => typing && setTyping(false)} style={{ cursor: typing ? 'none' : undefined, background: terminalTheme(st).background, padding: `${st?.padY ?? 10}px ${st?.padX ?? 14}px 0` }}>
         <div ref={host} className="relative h-full w-full" />
@@ -288,6 +314,7 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
       </div>
       {front && composer && <Composer agent={composer.agent} view={view} status={status} showFooter={cover?.height === null} focused={focus && active} paste={paste} keys={keys} focusTerm={() => api.current?.term.focus()} cwd={cwd} voice={voice} onRaw={() => setRaw(true)} />}
       {ring && <div className="pointer-events-none absolute inset-0 border border-warn" />}
+      {dropOver && <div className="pointer-events-none absolute inset-1.5 z-[2] rounded-md border border-accent-line bg-accent-soft" />}
       {ask && (
         <div className="absolute top-3 right-3 z-10 w-80 rounded-md border border-line-strong bg-bg p-3 shadow-[var(--mira-shadow-float)]">
           <div className="text-body text-text">Paste {lines} lines?</div>

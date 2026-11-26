@@ -62,33 +62,42 @@ export async function claudeToken(dir: string | null = activeDir('claude')): Pro
   try { return JSON.parse(raw)?.claudeAiOauth?.accessToken || null } catch { return null }
 }
 
+// the last answer of each agent : a failed request (slow network, too many requests, a token being renewed) keeps it on screen.
+// Only an agent with no account signed in loses its meter
+const last: Record<string, Usage> = {}
+const kept = (id: string): Usage | null => last[id] ?? null
+const signedOut = (id: string): null => { delete last[id]; return null }
+const keep = (u: Usage): Usage => (last[u.id] = u)
+
 async function claudeUsage(): Promise<Usage | null> {
   const token = await claudeToken()
-  if (!token) return null
+  if (!token) return signedOut('claude')
   const r = await fetch('https://api.anthropic.com/api/oauth/usage', {
     headers: { Authorization: `Bearer ${token}`, 'anthropic-beta': 'oauth-2025-04-20', 'User-Agent': 'claude-code/2.1.0' },
     signal: AbortSignal.timeout(10_000)
   }).catch(() => null)
-  if (!r?.ok) return null
-  const d = await r.json().catch(() => ({}))
+  if (!r?.ok) return kept('claude')
+  const d = await r.json().catch(() => null)
+  if (!d) return kept('claude')
   const w = (x: { utilization?: number; used_percentage?: number; resets_at?: unknown } | undefined) => x ? win(x.utilization ?? x.used_percentage, x.resets_at) : null
-  return { id: 'claude', session: w(d.five_hour), weekly: w(d.seven_day) }
+  return keep({ id: 'claude', session: w(d.five_hour), weekly: w(d.seven_day) })
 }
 
 async function codexUsage(): Promise<Usage | null> {
   const auth = await readFile(join(activeDir('codex') || join(homedir(), '.codex'), 'auth.json'), 'utf8').then(JSON.parse).catch(() => null)
   const token = auth?.tokens?.access_token
-  if (!token) return null
+  if (!token) return signedOut('codex')
   const headers: Record<string, string> = { Authorization: `Bearer ${token}`, 'User-Agent': 'codex-cli', 'OpenAI-Beta': 'codex-1', originator: 'Codex Desktop' }
   if (auth.tokens.account_id) headers['ChatGPT-Account-Id'] = auth.tokens.account_id
   const r = await fetch('https://chatgpt.com/backend-api/wham/usage', { headers, signal: AbortSignal.timeout(10_000) }).catch(() => null)
-  if (!r?.ok) return null
-  const d = await r.json().catch(() => ({}))
+  if (!r?.ok) return kept('codex')
+  const d = await r.json().catch(() => null)
+  if (!d) return kept('codex')
   // the shorter window is the session, the longer one the week
   const ws = [d.rate_limit?.primary_window, d.rate_limit?.secondary_window].filter(Boolean)
     .sort((a: { limit_window_seconds?: number }, b: { limit_window_seconds?: number }) => (a.limit_window_seconds ?? 0) - (b.limit_window_seconds ?? 0))
   const w = (x?: { used_percent?: number; reset_at?: unknown }) => x ? win(x.used_percent, x.reset_at) : null
-  return { id: 'codex', session: w(ws[0]), weekly: w(ws[1]) }
+  return keep({ id: 'codex', session: w(ws[0]), weekly: w(ws[1]) })
 }
 
 // limits change slowly : asked at most once a minute

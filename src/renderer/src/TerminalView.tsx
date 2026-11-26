@@ -138,8 +138,12 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
         const c = frontRef.current
         if (!c) { setCover(null); return }
         const b = term.buffer.active, rows = term.rows
+        // scrolled up into the history : the agent's box is not on screen, nothing to read (each frame of a scroll stays light)
+        if (b.viewportY !== b.baseY) { clearTimeout(retry); missed = 0; setCover(null); return }
         const L = (r: number) => b.getLine(b.viewportY + r)
-        const line = (r: number) => L(r)?.translateToString(true) ?? ''
+        // each row is read once per frame : the checks below look at the same rows many times
+        const seen = new Map<number, string>()
+        const line = (r: number) => { let t = seen.get(r); if (t === undefined) { t = L(r)?.translateToString(true) ?? ''; seen.set(r, t) } return t }
         const rule = (r: number) => r >= 0 && /^\s*[─━]{8,}\s*$/.test(line(r))
         // a menu of the agent ("❯ 2. No" among "  1. Yes" and "  3. …") is left alone ; a message that starts with "1." is typed text
         const option = (r: number) => r >= 0 && /^\s+\d+\.\s/.test(line(r))

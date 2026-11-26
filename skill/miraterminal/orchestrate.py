@@ -679,7 +679,11 @@ def run():
         whole = [r for r in rs if r[1] == 10 ** 9]
         if whole:
             return whole[0][2]
-        return Counter(nodes[r[2]]["parent"] or r[2] for r in rs).most_common(1)[0][0]
+        # a file cut into line ranges: the block that holds most of its lines, else (shared evenly) their common parent
+        span = Counter()
+        for r in rs: span[r[2]] += r[1] - r[0] + 1
+        nid, n = span.most_common(1)[0]
+        return nid if n * 2 > sum(span.values()) else Counter(nodes[r[2]]["parent"] or r[2] for r in rs).most_common(1)[0][0]
 
     # a source file no reader placed: the block that holds most of its folder, else the block of the file that imports it
     for f in SRC:

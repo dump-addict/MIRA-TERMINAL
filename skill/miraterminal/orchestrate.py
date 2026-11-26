@@ -124,11 +124,12 @@ def parse(raw: str):
 
 
 def ask_json(prompt: str, model=None, effort: str | None = "", session: str | None = None) -> dict | None:
+    # only an object is an answer: a bare string or list (a sentence in quotes, a refusal) would break every reader of it
     r = ask(prompt, model, effort, session=session)
     d = parse(r["result"])
-    if d is None and not r.get("error"):
+    if not isinstance(d, dict) and not r.get("error"):
         d = parse(ask(prompt + "\n\nReturn strictly valid JSON (escape backslashes and quotes inside strings).", model, effort)["result"])
-    return d
+    return d if isinstance(d, dict) else None
 
 
 # --- cutting the project into parts ------------------------------------------------------------------------------
@@ -489,7 +490,8 @@ def build_nodes(d, o, pblocks):
         nodes[eid] = {"id": eid, "label": e[1], "kind": e[2], "parent": None, "group": xg, "summary": str(e[3] if len(e) > 3 else ""), "size": "s" if len(e) > 4 and e[4] == "s" else None}
         for name in (e[5] if len(e) > 5 and isinstance(e[5], list) else []):
             extmap[str(name)] = eid
-    for path, i in ((o or {}).get("paths") or {}).items():
+    paths = (o or {}).get("paths")
+    for path, i in (paths.items() if isinstance(paths, dict) else ()):
         if isinstance(i, int) and i in where:
             extmap[str(path)] = where[i]
     # two outside systems with the same name are one system; two components with the same name under one parent are one component
@@ -660,7 +662,8 @@ def run():
             for f in inside:
                 if f not in ranges: ranges[f].append((0, 10 ** 9, where[i]))
             if not inside: ranges[x].append((0, 10 ** 9, where[i]))
-    for f, nid in (d.get("files") or {}).items():
+    files = d.get("files")
+    for f, nid in (files.items() if isinstance(files, dict) else ()):
         nid = alias.get(str(nid), nid)
         if nid in nodes and f not in ranges: ranges[f].append((0, 10 ** 9, nid))
 

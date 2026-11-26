@@ -810,7 +810,9 @@ export function App() {
                 : <Explorer root={current.path} current={tabs.find((t) => t.key === active)?.file} onOpen={openFile} />}
             </div>
             <PanelEdge onEnd={() => { panelDrag.current = null }} onDrag={(w) => {
-              const next = Math.round(Math.min(900, Math.max(260, w)))
+              // as wide as the window allows : the panes on the left keep only their minimum (a few lines of a terminal)
+              const room = (panelDrag.current ? panelDrag.current.main + panelDrag.current.panel : (area.current?.getBoundingClientRect().width ?? 0) + (st?.rightWidth ?? 420)) - L.minSize(lay.root, 'right')
+              const next = Math.round(Math.min(Math.max(260, room), Math.max(260, w)))
               // only the pane next to the panel gives or takes the room : the panes further left keep their width
               const r = lay.root
               if (!panelDrag.current) panelDrag.current = { main: area.current?.getBoundingClientRect().width ?? 0, panel: st?.rightWidth ?? 420, ratio: L.isLeaf(r) ? 0 : r.ratio, id: !L.isLeaf(r) && r.dir === 'right' ? r.id : '' }

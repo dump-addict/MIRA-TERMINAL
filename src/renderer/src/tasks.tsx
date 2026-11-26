@@ -84,6 +84,22 @@ export const branchOf = (t: Task) => `${t.id}-${t.title}`.toLowerCase().normaliz
 // the task written out for an agent, to paste anywhere
 export const promptOf = (t: Task, project: string, part?: Part) => [`Task ${t.id} of ${project}: ${t.title}`, t.description, part && `Part of the project map: ${part.label}`].filter(Boolean).join('\n\n')
 
+/* A cross on a task, shown on hover, to delete it without opening it ; it asks once before deleting. */
+export function DeleteTask({ onDelete }: { onDelete: () => void }) {
+  const [ask, setAsk] = useState(false)
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation()
+  if (ask) return (
+    <span onClick={stop} onMouseDown={stop} className="flex shrink-0 items-center gap-1 text-meta">
+      <button onClick={onDelete} className="h-6 rounded-xs bg-bad px-2 text-accent-text">Delete</button>
+      <button onClick={() => setAsk(false)} className="h-6 rounded-xs px-2 text-text-2 hover:text-text">Cancel</button>
+    </span>
+  )
+  return (
+    <button onClick={(e) => { stop(e); setAsk(true) }} onMouseDown={stop} title="Delete this task"
+      className="grid h-6 w-6 shrink-0 place-items-center rounded-xs text-text-3 opacity-0 hover:bg-surface-3 hover:text-text group-hover:opacity-100 focus-visible:opacity-100"><X size={ICON} /></button>
+  )
+}
+
 export function TaskRow({ t, project, part, open, parts, agent, agentName, tab, onOpen, onSave, onStart, onDelete, onCopy, drag }: {
   t: Task; project: string; part?: Part; open: boolean; parts: Part[]; agent: string; agentName: string
   tab?: { status?: 'working' | 'needs' | 'done'; seen?: boolean }
@@ -108,6 +124,7 @@ export function TaskRow({ t, project, part, open, parts, agent, agentName, tab, 
         <span className={`min-w-0 flex-1 truncate ${closed ? 'text-text-3' : 'text-text'}`}>{t.title}</span>
         {part && <span title="Part of the diagram" className="hidden h-6 shrink-0 items-center gap-1.5 rounded-full border border-line-strong px-2 text-meta text-text-2 sm:flex"><KindIcon kind={part.kind} size={12} /><span className="max-w-40 truncate">{part.label}</span></span>}
         {tab && <span title={`${agentName} has a tab on it`} className="flex shrink-0 items-center gap-1 text-text-2"><AgentIcon id={agent} />{tab.status && <StatusIcon status={tab.status} seen={tab.seen} />}</span>}
+        {!open && <DeleteTask onDelete={onDelete} />}
       </div>
       {open && (
         <div className="flex flex-col gap-2 px-3 pt-1 pb-3">

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Boxes, ChevronDown, ChevronRight, CircleCheck, Columns3, Flag, UserRound, Layers, Table2, FolderGit2, FolderOpen, GitBranch, GitPullRequest, Lightbulb, List, Plus, Search, Trash2, X } from 'lucide-react'
 import type { Idea, ProjectInfo, Reviews, Task, TaskStatus } from '../../preload'
-import { Pick, PRIORITY, priorityStyle, PriorityGlyph, STATUS, STATUS_COLOR, StatusGlyph, TaskPage, TaskRow, type Part } from './tasks'
+import { DeleteTask, Pick, PRIORITY, priorityStyle, PriorityGlyph, STATUS, STATUS_COLOR, StatusGlyph, TaskPage, TaskRow, type Part } from './tasks'
 import { AgentIcon, listAgents } from './agents'
 import { KindIcon } from './kinds'
 import { IconButton, PrimaryButton, SecondaryButton, ICON } from './ui'
@@ -203,8 +203,11 @@ export function TodoPage({ projects, tasks, ideas, reviews, filter, onFilter, ta
                               onDrop={(e) => { e.preventDefault(); e.stopPropagation(); dropCol(s, t) }}
                               onClick={() => setDetail({ pid: p.id, id: t.id })}
                               style={over === k && drag?.id !== t.id ? { boxShadow: '0 -2px 0 var(--mira-accent)' } : undefined}
-                              className={`cursor-default rounded-md border border-line bg-bg p-3 hover:border-line-strong ${drag?.id === t.id ? 'opacity-40' : ''}`}>
-                              <div className={`text-body font-medium ${s === 'done' ? 'text-text-3' : 'text-text'}`}>{t.title}</div>
+                              className={`group cursor-default rounded-md border border-line bg-bg p-3 hover:border-line-strong ${drag?.id === t.id ? 'opacity-40' : ''}`}>
+                              <div className="flex items-start gap-2">
+                                <div className={`min-w-0 flex-1 text-body font-medium ${s === 'done' ? 'text-text-3' : 'text-text'}`}>{t.title}</div>
+                                <span className="-mt-1 -mr-1"><DeleteTask onDelete={() => void window.mira.tasks.remove(p.path, t.id).then(() => say('Task deleted'))} /></span>
+                              </div>
                               <div className="mt-2 flex items-center gap-1.5">
                                 <span title={tab ? `${nameOf(whoOf(t))} works on it` : t.agent ? `For ${nameOf(t.agent)}` : 'No agent chosen: the default one takes it'} className="grid h-6 w-6 place-items-center rounded-xs border border-line text-text-3">{tab || t.agent ? <AgentIcon id={whoOf(t)} /> : <UserRound size={12} />}</span>
                                 <span className="flex h-6 items-center gap-1.5 rounded-xs border border-line px-2 text-meta text-text-2"><StatusGlyph s={t.status} size={12} />{STATUS.find((x) => x.id === t.status)?.label}</span>

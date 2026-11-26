@@ -50,6 +50,9 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
   frontRef.current = front && composer ? { agent: composer.agent } : null
   // the agent's input box on screen, covered by Mira's (its rows, in pixels) ; its menus and suggestions stay visible
   const [cover, setCover] = useState<{ top: number; height: number | null } | null>(null)
+  // the terminal runs on under Mira's box by the height of the agent's own box and footer (in pixels) :
+  // the conversation reaches down to Mira's box, with no empty band where the agent's box was
+  const [under, setUnder] = useState(0)
   const [view, setView] = useState<InputView | null>(null)
   // a pane too short to show anything above the agent's box : the last lines before it (from the scrollback) are shown in its place
   const [above, setAbove] = useState<string[] | null>(null)
@@ -136,7 +139,7 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
         const c = frontRef.current
-        if (!c) { setCover(null); return }
+        if (!c) { setCover(null); setUnder(0); return }
         const b = term.buffer.active, rows = term.rows
         // scrolled up into the history : the agent's box is not on screen, nothing to read (each frame of a scroll stays light)
         if (b.viewportY !== b.baseY) { clearTimeout(retry); missed = 0; setCover(null); return }
@@ -177,7 +180,7 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
         if (start < 0) {
           if (!missed) missed = Date.now()
           if (Date.now() - missed < 400) { retry = window.setTimeout(findInput, 450); return }
-          setCover(null); setView(null); setAbove(null); return
+          setCover(null); setView(null); setAbove(null); setUnder(0); return
         }
         missed = 0
         if (start <= 1 && b.viewportY === b.baseY) {
@@ -238,6 +241,11 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
         const h = core?._renderService?.dimensions?.css?.cell?.height || (host.current ? host.current.clientHeight / rows : 0)
         const n = h ? { top: Math.round(start * h), height: onlyFoot ? null : Math.round((end - start + 1) * h) } : null
         setCover((o) => (o?.top === n?.top && o?.height === n?.height ? o : n))
+        // only a box with nothing but its footer below runs on under Mira's ; a menu or suggestions under it stay in sight.
+        // Its own rows only (the rule, the input, the footer), never the empty rows of a screen not yet full : the same count whatever the height
+        let foot = end; for (let r = end + 1; r < rows; r++) if (line(r).trim()) foot = r
+        const u = onlyFoot && h ? Math.round((foot - start + 1) * h) : 0
+        setUnder((o) => (o === u ? o : u))
         // the model, effort and mode, from the banner and the last lines
         const all: string[] = []
         for (let i = 0; i < Math.min(12, b.length); i++) all.push(b.getLine(i)?.translateToString(true) ?? '')
@@ -309,9 +317,9 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
   const send = () => { const i = api.current?.id; if (i && ask) window.mira.term.write(i, ask); setAsk(null); api.current?.term.focus() }
   const lines = ask ? ask.replace(/[\r\n]+$/, '').split(/\r\n|\r|\n/).length : 0
   return (
-    <div ref={wrap} {...dropFiles} className="absolute inset-0 flex flex-col" style={{ visibility: active ? 'visible' : 'hidden', background: terminalTheme(st).background }}>
+    <div ref={wrap} {...dropFiles} className="absolute inset-0 flex flex-col overflow-hidden" style={{ visibility: active ? 'visible' : 'hidden', background: terminalTheme(st).background }}>
       <div className="relative min-h-0 flex-1">
-      <div className="absolute inset-0" onMouseMove={() => typing && setTyping(false)} style={{ cursor: typing ? 'none' : undefined, background: terminalTheme(st).background, padding: `${st?.padY ?? 10}px ${st?.padX ?? 14}px 0` }}>
+      <div className="absolute inset-x-0 top-0" onMouseMove={() => typing && setTyping(false)} style={{ bottom: front ? -under : 0, cursor: typing ? 'none' : undefined, background: terminalTheme(st).background, padding: `${st?.padY ?? 10}px ${st?.padX ?? 14}px 0` }}>
         <div ref={host} className="relative h-full w-full" />
         {front && cover && <div className="pointer-events-none absolute inset-x-0 overflow-hidden" style={{ top: (st?.padY ?? 10) + cover.top, ...(cover.height === null ? { bottom: 0 } : { height: cover.height }), background: terminalTheme(st).background }}>
           {above && cover.height === null && <div className="absolute inset-x-0 bottom-0 overflow-hidden whitespace-pre" style={{ padding: `0 ${st?.padX ?? 14}px`, color: terminalTheme(st).foreground, fontFamily: fontOf(st?.fontFamily), fontSize: st?.fontSize ?? 13, lineHeight: st?.lineHeight ?? 1.25, letterSpacing: st?.letterSpacing ?? 0 }}>{above.map((l, i) => <div key={i}>{l || ' '}</div>)}</div>}
@@ -319,7 +327,7 @@ export function TerminalView({ composer, onPty, cwd, run, once, agent, label, ac
         {composer && raw && !short && <button onClick={() => setRaw(false)} title="Back to the message box" className="absolute top-2 right-3 z-10 flex h-7 items-center gap-1.5 rounded-md border border-line bg-surface-2 px-2 text-meta text-text-2 hover:text-text"><MessageSquare size={13} />Message box</button>}
       </div>
       </div>
-      {front && composer && <Composer agent={composer.agent} view={view} status={status} showFooter={cover?.height === null} focused={focus && active} paste={paste} keys={keys} focusTerm={() => api.current?.term.focus()} cwd={cwd} voice={voice} onRaw={() => setRaw(true)} />}
+      {front && composer && <div className="relative z-[1]" style={{ background: terminalTheme(st).background }}><Composer agent={composer.agent} view={view} status={status} showFooter={cover?.height === null} focused={focus && active} paste={paste} keys={keys} focusTerm={() => api.current?.term.focus()} cwd={cwd} voice={voice} onRaw={() => setRaw(true)} /></div>}
       {ring && <div className="pointer-events-none absolute inset-0 border border-warn" />}
       {dropOver && <div className="pointer-events-none absolute inset-1.5 z-[2] rounded-md border border-accent-line bg-accent-soft" />}
       {ask && (

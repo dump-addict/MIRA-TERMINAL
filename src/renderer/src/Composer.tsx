@@ -23,7 +23,9 @@ function Line({ spans, caret, row }: { spans: Span[]; caret?: number; row: numbe
   }
   // the caret drawn where the agent has it
   const flat = spans.flatMap((s) => [...s.text].map((ch) => ({ ch, dim: s.dim })))
-  const at = Math.min(caret, flat.length)
+  // the spaces typed at the end are trimmed off the screen's line : put them back up to the caret, or a space would not show until the next letter
+  while (flat.length < caret) flat.push({ ch: ' ', dim: false })
+  const at = caret
   return (
     <div className="min-h-5" data-r={row}>
       {flat.slice(0, at).map((c, k) => <span key={k} data-c={k} className={c.dim ? 'text-text-3' : ''}>{c.ch}</span>)}
